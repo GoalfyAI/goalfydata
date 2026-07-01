@@ -21,17 +21,18 @@
 </p>
 
 <p align="center">
+  <a href="https://goalfydata.ai"><img alt="Website" src="https://img.shields.io/badge/website-goalfydata.ai-6366F1"></a>
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue">
   <img alt="Status" src="https://img.shields.io/badge/status-preview-orange">
   <img alt="Agent Callable" src="https://img.shields.io/badge/agent--callable-yes-green">
 </p>
 
 <p align="center">
-  <a href="#overview"><strong>概览</strong></a>
+  <a href="https://goalfydata.ai"><strong>官网</strong></a>
+  ·
+  <a href="#overview">概览</a>
   ·
   <a href="#problem">解决问题</a>
-  ·
-  <a href="#preview">产品预览</a>
   ·
   <a href="#quickstart">快速开始</a>
 </p>

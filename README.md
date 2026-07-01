@@ -21,17 +21,18 @@ for AI agents,and teams.
 </p>
 
 <p align="center">
+  <a href="https://goalfydata.ai"><img alt="Website" src="https://img.shields.io/badge/website-goalfydata.ai-6366F1"></a>
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue">
   <img alt="Status" src="https://img.shields.io/badge/status-preview-orange">
   <img alt="Agent Callable" src="https://img.shields.io/badge/agent--callable-yes-green">
 </p>
 
 <p align="center">
-  <a href="#overview"><strong>Overview</strong></a>
+  <a href="https://goalfydata.ai"><strong>Website</strong></a>
+  ·
+  <a href="#overview">Overview</a>
   ·
   <a href="#problem">Problem</a>
-  ·
-  <a href="#preview">Product Preview</a>
   ·
   <a href="#quickstart">Quickstart</a>
 </p>
