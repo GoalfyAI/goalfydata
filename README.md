@@ -48,7 +48,7 @@ AI agents can quickly generate datasets, scripts, reports, and dashboards.
 
 But agent-generated data often stays trapped in one conversation, one local file, or one agent workspace.
 
-**GoalfyData turns those outputs into durable data assets that can be reused across conversations, agents, applications, and teams.**
+**GoalfyData turns those outputs into durable data assets that can be reused across conversations, agents and teams.**
 
 > [!TIP]
 > Agents create the first version. GoalfyData keeps it running, governed, shared, and reusable.
