@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <strong>给 AI Agent 调用的可治理数据集，支持持续更新和安全共享。</strong>
+  <strong>Agent 生成的数据，不应该在一次任务结束后就消失。</strong>
 </p>
 
 <p align="center">
-  让 AI Agent 生成的文件、脚本、数据集和数据面板，<br>
-  从一次性产物变成可持续运行、可治理、可共享的数据资产。
+  GoalfyData 会把 Agent 的输出结果，变成结构化、可治理、可持续复用的数据资产<br>
+供 AI Agent 和团队长期使用。
 </p>
 
 <p align="center">
@@ -45,10 +45,13 @@
 ## 🔗 一句话理解
 
 AI Agent 可以快速生成数据集、脚本、报告和 dashboard。
-**GoalfyData 负责让这些产物持续运行、持续更新、被规则约束，并安全分享给团队、客户或其他 Agent。**
+
+但 Agent 生成的数据，常常会被困在一次对话、一个本地文件、或某个 Agent 工作区里。
+
+**GoalfyData 会把这些输出结果变成持久的数据资产，让它们可以在不同会话、不同 Agent、应用和团队成员之间持续复用。**
 
 > [!TIP]
-> Agent 可以构建第一版，GoalfyData 负责让它进入持续运行、治理和复用的生命周期。
+> Agent 负责生成第一版，GoalfyData 负责让它持续运行、治理、共享和复用。
 
 ---
 
@@ -113,21 +116,22 @@ GoalfyData 围绕 **Build → Run → Share** 组织 Agent 数据资产的生命
   </a>
 </p>
 -->
-
-
-
 ## 🔐 分享与授权逻辑
 
-GoalfyData 支持将数据资产安全分享给团队成员、客户、协作者或其他 Agent。
+GoalfyData 帮助团队安全地把数据资产分享给团队成员、客户、协作者和授权 Agent。
 
-支持的典型分享方式包括：
+你不需要复制文件、发送表格、或手动限制字段，而是可以直接描述谁应该访问什么：
 
-* 分享给团队成员协作查看与使用
-* 分享给客户交付持续更新的数据结果
-* 授权给其他 Agent 作为统一数据上下文
-* 基于角色控制访问范围和操作权限
+> 除了财务明细表，其余表都可以分享给 xxx@company.com。
 
+GoalfyData 会把这个意图转化为数据边界和权限规则，确保正确的数据交给正确的人和 Agent。
 
+典型分享方式包括：
+
+* 分享数据集给团队成员，用于协作分析
+* 分享持续更新的数据结果给客户
+* 授权另一个 Agent 把数据集作为业务上下文
+* 按角色、表、字段或规则控制访问范围
 ---
 
 ## 🧩 核心能力
@@ -189,14 +193,14 @@ GoalfyData 支持将数据资产安全分享给团队成员、客户、协作者
 
 ## 🤝 社区与反馈
 
-欢迎反馈 GoalfyData 的使用问题、接入需求和真实场景。
+欢迎反馈 GoalfyData 的使用问题、集成需求和真实业务场景。
 
-| 入口                                                                                      | 适合提交什么                                     |
-| --------------------------------------------------------------------------------------- | ------------------------------------------ |
-| [反馈使用问题](https://github.com/GoalfyAI/goalfydata/issues/new?template=bug_report.md)      | 安装失败、Agent 接入异常、数据更新失败、权限问题等               |
-| [提出能力建议](https://github.com/GoalfyAI/goalfydata/issues/new?template=feature_request.md) | 新 Agent 接入、数据集能力、治理规则、分享授权、dashboard 更新等建议 |
-| [分享使用场景](https://github.com/GoalfyAI/goalfydata/blob/main/.github/ISSUE_TEMPLATE/use_case.md) | 你希望用 GoalfyData 处理的业务数据、Agent 工作流或团队协作场景   |
-| [参与贡献](./CONTRIBUTING.zh-CN.md)                                                               | 文档、示例、插件适配、问题修复和其他贡献方式                     |
+| 入口 | 适合提交什么 |
+|---|---|
+| [报告 Bug](https://github.com/GoalfyAI/goalfydata/issues/new?template=bug_report.md) | 已确认的 bug、安装失败、Agent 集成异常、数据更新失败、权限问题和回归问题。 |
+| [提问](https://github.com/GoalfyAI/goalfydata/discussions/categories/q-a) | 安装、配置、使用和排查问题。 |
+| [提出想法](https://github.com/GoalfyAI/goalfydata/discussions/categories/ideas) | 新 Agent 集成、数据集能力、治理规则、分享权限、dashboard 想法和 workflow 改进。 |
+| [分享用例](https://github.com/GoalfyAI/goalfydata/discussions/categories/show-and-tell) | 业务数据场景、Agent workflow、团队协作场景和 demo。 |
 
 ⭐ 如果 GoalfyData 帮助你把 AI Agent 的输出变成了可持续更新的数据资产，欢迎支持我们。
 
