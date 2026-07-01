@@ -106,6 +106,9 @@ GoalfyData 围绕 **Build → Run → Share** 组织 Agent 数据资产的生命
 <a id="preview"></a>
 
 ## 🖼️ 产品界面预览
+
+了解更多产品详情，请访问 [GoalfyData 官网](https://goalfydata.ai)。
+
 > [!NOTE]
 > Demo 视频即将补充。  
 > 视频将展示 GoalfyData 如何把 Agent 生成的数据集、脚本和 dashboard，变成可持续更新、可治理、可共享的数据资产。
