@@ -22,12 +22,6 @@ Cursor 插件，用于连接 GoalfyData 通用数据集服务。
    uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
    ```
 
-   Windows (PowerShell):
-   ```powershell
-   irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
-   uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
-   ```
-
 ## 安装
 
 安装前确保已完成上述前置条件（Token 创建 + uds-cli 安装并登录）。

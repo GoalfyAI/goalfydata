@@ -22,12 +22,6 @@ Cursor plugin for connecting to the GoalfyData universal dataset service.
    uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
    ```
 
-   Windows (PowerShell):
-   ```powershell
-   irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
-   uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
-   ```
-
 ## Installation
 
 Make sure you have completed the prerequisites above (Token creation + uds-cli installed and logged in) before installing.

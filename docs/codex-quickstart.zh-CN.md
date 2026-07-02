@@ -21,12 +21,6 @@ source ~/.zshrc  # or source ~/.bashrc
 uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
 ```
 
-Windows (PowerShell):
-```powershell
-irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
-uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
-```
-
 ## 第 3 步 — 安装插件
 
 Codex CLI：

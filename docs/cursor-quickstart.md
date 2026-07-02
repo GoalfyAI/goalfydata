@@ -21,12 +21,6 @@ source ~/.zshrc  # or source ~/.bashrc
 uds-cli login --token gfk_your_token --api-url https://api.goalfydata.ai
 ```
 
-Windows (PowerShell):
-```powershell
-irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
-uds-cli login --token gfk_your_token --api-url https://api.goalfydata.ai
-```
-
 ## Step 3 -- Install the Plugin
 
 ### Option 1: Download ZIP

@@ -25,12 +25,6 @@ source ~/.zshrc  # or source ~/.bashrc
 uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
 ```
 
-Windows (PowerShell):
-```powershell
-irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
-uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
-```
-
 ### 第 3 步：配置 MCP 连接
 
 将以下配置合并到你的工具对应的 MCP 配置文件中，将 `gfk_YOUR_TOKEN_HERE` 替换为真实 token：
