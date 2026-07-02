@@ -1,5 +1,7 @@
 # GoalfyData — Manus Integration
 
+> **Note: Manus does NOT support pasting this document to the agent for automatic installation. Adding the connector and uploading the skill must be done manually by you in the Manus web interface — follow the steps below one by one.**
+
 Manus is a cloud-based agent with two parts to configure separately: **Tools (MCP)** are added as a connector in the plugin page; **Skills** are uploaded as skill files.
 
 ## Step 1: Obtain API Token
