@@ -22,7 +22,6 @@ jobs:
 
       - name: Build ZIPs
         run: |
-          cd claude-code && zip -r goalfydata-claude-code.zip .claude-plugin/ .mcp.json skills/ LICENSE README.md README.zh-CN.md && cd ..
           cd cursor && zip -r goalfydata-cursor.zip .cursor-plugin/ mcp.json skills/ LICENSE README.md README.zh-CN.md && cd ..
           cd codex && zip -r goalfydata-codex.zip .codex-plugin/ .mcp.json skills/ assets/ LICENSE README.md README.zh-CN.md && cd ..
           cd manus/skill && zip -r ../goalfydata-skill.zip SKILL.md references/ && cd ../..
@@ -32,7 +31,7 @@ jobs:
         run: |
           git config user.name "GoalfyData"
           git config user.email "goalfymax@goalfyai.com"
-          git add claude-code/goalfydata-claude-code.zip cursor/goalfydata-cursor.zip codex/goalfydata-codex.zip manus/goalfydata-skill.zip generic/goalfydata-generic.zip
+          git add cursor/goalfydata-cursor.zip codex/goalfydata-codex.zip manus/goalfydata-skill.zip generic/goalfydata-generic.zip
           if git diff --cached --quiet; then
             echo "No ZIP changes detected, skipping commit."
           else
