@@ -35,7 +35,7 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-Codex Desktop: First run the marketplace add command above in a terminal, then open Plugins -> Search for `goalfydata` -> Install (it will not appear in search before the marketplace is added).
+Codex Desktop: Paste this entire document into the chat — Codex will run the install commands and complete the configuration itself.
 
 ## Step 4 -- Configure Token
 

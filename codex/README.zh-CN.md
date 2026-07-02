@@ -37,7 +37,7 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-执行第一条命令添加 marketplace 后，Codex 桌面版的 Plugins 界面也能搜到 `goalfydata` 进行安装（未添加 marketplace 时搜索不到）。
+Codex 桌面版用户：把本 README 全文粘贴到对话中，Codex 会自行执行安装命令并完成配置。
 
 ## 认证
 
