@@ -29,8 +29,6 @@ uds-cli login --token gfk_your_token --api-url https://api.goalfydata.ai
 
 ## Step 3 -- Install the Plugin
 
-### Option 1: Via Marketplace (Recommended)
-
 Codex CLI:
 ```bash
 codex plugin marketplace add GoalfyAI/goalfydata
@@ -38,16 +36,6 @@ codex plugin add goalfydata@goalfydata
 ```
 
 Codex Desktop: Open Plugins -> Search for `goalfydata` -> Install.
-
-### Option 2: Manual Configuration
-
-Add the MCP configuration to `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.goalfydata-mcp]
-url = "https://mcp.goalfydata.ai/mcp"
-bearer_token_env_var = "GOALFY_UDS_API_TOKEN"
-```
 
 ## Step 4 -- Configure Token
 
@@ -127,9 +115,8 @@ Share this dataset with xxx@example.com
 ### MCP Connection Failed
 
 1. Check whether `GOALFY_UDS_API_TOKEN` exists in `~/.codex/.env`
-2. For manual configuration users, check whether `bearer_token_env_var` is correct in `~/.codex/config.toml`
-3. Confirm the token is valid (verify in the console)
-4. Fully quit and restart Codex
+2. Confirm the token is valid (verify in the console)
+3. Fully quit and restart Codex
 
 ### uds-cli Command Not Found
 
@@ -152,8 +139,6 @@ codex plugin marketplace upgrade goalfydata
 codex plugin remove goalfydata@goalfydata
 codex plugin add goalfydata@goalfydata
 ```
-
-**Manual configuration**: MCP config points to the remote service, no update needed. If you need to update Skill files, re-download and overwrite.
 
 ### uds-cli Update
 

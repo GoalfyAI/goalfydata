@@ -32,24 +32,12 @@ OpenAI Codex 插件，用于连接 GoalfyData 通用数据集服务。
 
 安装前确保已完成上述前置条件（Token 创建 + uds-cli 安装并登录）。
 
-### 方式 1：通过 marketplace
-
 ```bash
 codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
 Codex 桌面版也可以通过 Plugins 界面搜索安装。
-
-### 方式 2：手动配置
-
-在 `~/.codex/config.toml` 中添加 MCP 配置：
-
-```toml
-[mcp_servers.goalfydata-mcp]
-url = "https://mcp.goalfydata.ai/mcp"
-bearer_token_env_var = "GOALFY_UDS_API_TOKEN"
-```
 
 ## 认证
 
@@ -76,7 +64,6 @@ MCP 工具和 uds-cli 共用同一套 token 体系。
 
 如果连接失败：
 - 确认 `~/.codex/.env` 中 `GOALFY_UDS_API_TOKEN` 已配置
-- 手动配置的用户检查 `~/.codex/config.toml` 中 `bearer_token_env_var` 是否正确
 - 确认 token 有效（到控制台验证）
 - 完全退出并重启 Codex
 
@@ -91,8 +78,6 @@ codex plugin marketplace upgrade goalfydata
 codex plugin remove goalfydata@goalfydata
 codex plugin add goalfydata@goalfydata
 ```
-
-**手动配置**：MCP 配置无需更新（指向远程服务）。如果需要更新 Skill 文件，重新拉取覆盖即可。
 
 ### uds-cli 更新
 

@@ -32,24 +32,12 @@ OpenAI Codex plugin for connecting to the GoalfyData universal dataset service.
 
 Make sure you have completed the prerequisites above (Token creation + uds-cli installed and logged in) before installing.
 
-### Option 1: Via marketplace
-
 ```bash
 codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
 You can also search and install via the Plugins interface in Codex Desktop.
-
-### Option 2: Manual configuration
-
-Add the MCP configuration to `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.goalfydata-mcp]
-url = "https://mcp.goalfydata.ai/mcp"
-bearer_token_env_var = "GOALFY_UDS_API_TOKEN"
-```
 
 ## Authentication
 
@@ -76,7 +64,6 @@ After restarting Codex, confirm that `goalfydata-mcp` is connected and the tool 
 
 If connection fails:
 - Confirm `GOALFY_UDS_API_TOKEN` is configured in `~/.codex/.env`
-- For manual configuration users, check that `bearer_token_env_var` in `~/.codex/config.toml` is correct
 - Confirm the token is valid (verify in the console)
 - Fully quit and restart Codex
 
@@ -91,8 +78,6 @@ codex plugin marketplace upgrade goalfydata
 codex plugin remove goalfydata@goalfydata
 codex plugin add goalfydata@goalfydata
 ```
-
-**Manual configuration**: MCP configuration does not need updating (it points to the remote service). If you need to update Skill files, pull and overwrite.
 
 ### uds-cli update
 

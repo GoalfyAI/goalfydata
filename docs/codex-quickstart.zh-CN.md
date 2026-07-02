@@ -29,8 +29,6 @@ uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
 
 ## 第 3 步 — 安装插件
 
-### 方式 1：通过 marketplace（推荐）
-
 Codex CLI：
 ```bash
 codex plugin marketplace add GoalfyAI/goalfydata
@@ -38,16 +36,6 @@ codex plugin add goalfydata@goalfydata
 ```
 
 Codex 桌面版：打开 Plugins → 搜索 `goalfydata` → 安装。
-
-### 方式 2：手动配置
-
-在 `~/.codex/config.toml` 中添加 MCP 配置：
-
-```toml
-[mcp_servers.goalfydata-mcp]
-url = "https://mcp.goalfydata.ai/mcp"
-bearer_token_env_var = "GOALFY_UDS_API_TOKEN"
-```
 
 ## 第 4 步 — 配置 Token
 
@@ -127,9 +115,8 @@ export GOALFY_UDS_API_TOKEN="gfk_你的token"
 ### MCP 连接失败
 
 1. 检查 `~/.codex/.env` 中是否有 `GOALFY_UDS_API_TOKEN`
-2. 手动配置的用户检查 `~/.codex/config.toml` 中 `bearer_token_env_var` 是否正确
-3. 确认 token 有效（到控制台验证）
-4. 完全退出并重启 Codex
+2. 确认 token 有效（到控制台验证）
+3. 完全退出并重启 Codex
 
 ### uds-cli 命令找不到
 
@@ -152,8 +139,6 @@ codex plugin marketplace upgrade goalfydata
 codex plugin remove goalfydata@goalfydata
 codex plugin add goalfydata@goalfydata
 ```
-
-**手动配置**：MCP 配置指向远程服务，无需更新。如需更新 Skill 文件，重新下载覆盖即可。
 
 ### uds-cli 更新
 
