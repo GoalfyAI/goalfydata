@@ -1,5 +1,7 @@
 # Manus Quick Start
 
+> **Note: Manus does NOT support pasting this document to the agent for automatic installation. Adding the connector and uploading the skill must be done manually by you in the Manus web interface — follow the steps below one by one.**
+
 Get set up in 3 minutes and let Manus help you build real-time data assets.
 
 ---
