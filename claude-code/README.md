@@ -25,6 +25,7 @@ Claude Code plugin for connecting to the GoalfyData universal dataset service.
    Windows (PowerShell):
    ```powershell
    irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
+   # Reopen PowerShell so PATH takes effect, then:
    uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
    ```
 
@@ -41,24 +42,19 @@ claude plugin marketplace add GoalfyAI/goalfydata
 claude plugin install goalfydata@goalfydata
 ```
 
-### Option 2: Download ZIP
+### Option 2: Git clone + local marketplace
 
-Download [goalfydata-claude-code.zip](https://github.com/GoalfyAI/goalfydata/raw/main/claude-code/goalfydata-claude-code.zip), extract, and copy to the plugin directory:
-
-```bash
-unzip goalfydata-claude-code.zip -d ~/.claude/skills/goalfydata
-```
-
-### Option 3: Git clone
+Clone the repository and add it as a local marketplace — this goes through the plugin mechanism, so both MCP and Skill load correctly:
 
 ```bash
 git clone https://github.com/GoalfyAI/goalfydata.git
-cp -r goalfydata/claude-code ~/.claude/skills/goalfydata
+claude plugin marketplace add ./goalfydata
+claude plugin install goalfydata@goalfydata
 ```
 
-> **Note: Copy the entire `claude-code/` directory, not just `skills/`. It contains `.claude-plugin/`, `.mcp.json`, and `skills/` — missing any will cause failures.**
+> **Do NOT copy files into `~/.claude/skills/` manually.** The `.mcp.json` inside a skills directory is never read by Claude Code, so the MCP connection would silently fail.
 
-### Option 4: Local development testing
+### Option 3: Local development testing
 
 ```bash
 claude --plugin-dir ./claude-code
@@ -108,10 +104,11 @@ If connection fails:
 claude plugin update goalfydata@goalfydata
 ```
 
-**Manual installation**: Re-download the latest [ZIP](https://github.com/GoalfyAI/goalfydata/raw/main/claude-code/goalfydata-claude-code.zip) and overwrite, or pull with git:
+**Local marketplace installation**: Pull the latest changes and refresh the marketplace:
 
 ```bash
-unzip -o goalfydata-claude-code.zip -d ~/.claude/skills/goalfydata
+cd goalfydata && git pull
+claude plugin marketplace update goalfydata
 ```
 
 After updating, run `/reload-plugins` in your session to reload, or restart Claude Code.

@@ -24,6 +24,7 @@ uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
 Windows (PowerShell):
 ```powershell
 irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
+# 重新打开 PowerShell 让 PATH 生效，然后：
 uds-cli login --token gfk_你的token --api-url https://api.goalfydata.ai
 ```
 
@@ -38,22 +39,17 @@ claude plugin marketplace add GoalfyAI/goalfydata
 claude plugin install goalfydata@goalfydata
 ```
 
-### 备选 A：下载 ZIP
+### 备选：Git clone + 本地 marketplace
 
-下载 [goalfydata-claude-code.zip](https://github.com/GoalfyAI/goalfydata/raw/main/claude-code/goalfydata-claude-code.zip)，解压并复制到插件目录：
-
-```bash
-unzip goalfydata-claude-code.zip -d ~/.claude/skills/goalfydata
-```
-
-### 备选 B：Git clone
-
-> **注意：必须复制整个 `claude-code/` 目录，不是只复制 `skills/` 子目录。** 缺少 `.claude-plugin/` 或 `.mcp.json` 会导致 MCP 无法加载。
+克隆仓库后添加为本地 marketplace——走插件机制安装，MCP 和 Skill 都能正常加载：
 
 ```bash
 git clone https://github.com/GoalfyAI/goalfydata.git
-cp -r goalfydata/claude-code ~/.claude/skills/goalfydata
+claude plugin marketplace add ./goalfydata
+claude plugin install goalfydata@goalfydata
 ```
+
+> **禁止手动把文件复制到 `~/.claude/skills/`。** skills 目录下的 `.mcp.json` 不会被 Claude Code 读取，MCP 连接会静默失败。
 
 ## 第 4 步 — 配置 Token
 
@@ -154,10 +150,11 @@ cp -r goalfydata/claude-code ~/.claude/skills/goalfydata
 claude plugin update goalfydata@goalfydata
 ```
 
-**手动安装**：重新下载最新 [ZIP](https://github.com/GoalfyAI/goalfydata/raw/main/claude-code/goalfydata-claude-code.zip) 并覆盖：
+**本地 marketplace 安装**：拉取最新代码后刷新 marketplace：
 
 ```bash
-unzip -o goalfydata-claude-code.zip -d ~/.claude/skills/goalfydata
+cd goalfydata && git pull
+claude plugin marketplace update goalfydata
 ```
 
 更新后执行 `/reload-plugins` 或重启 Claude Code。
