@@ -37,7 +37,7 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-You can also search and install via the Plugins interface in Codex Desktop.
+After running the first command to add the marketplace, `goalfydata` also becomes searchable and installable from the Plugins interface in Codex Desktop (it will not appear in search before the marketplace is added).
 
 ## Authentication
 
