@@ -19,7 +19,6 @@ Describe the capability, integration, or improvement you would like to see.
 Which agent or platform is this related to?
 
 - [ ] Claude Code
-- [ ] Cursor
 - [ ] Codex
 - [ ] Manus
 - [ ] ChatGPT / Custom GPTs

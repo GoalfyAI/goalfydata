@@ -6,7 +6,7 @@ Get set up in 3 minutes and let Manus help you build real-time data assets.
 
 ---
 
-## Step 1 -- Get an API Token
+## Step 1 -- Get an API Key
 
 Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
 
@@ -18,7 +18,7 @@ Go to **Plugins** in the left sidebar -> click **Create** in the top right -> ch
 
 ### Option 1: Import MCP via JSON (Recommended)
 
-Copy the following JSON, replace `gfk_YOUR_TOKEN_HERE` with your actual token, paste it in, and save:
+Copy the following JSON, replace `gfk_YOUR_API_KEY_HERE` with your actual API Key, paste it in, and save:
 
 ```json
 {
@@ -27,7 +27,7 @@ Copy the following JSON, replace `gfk_YOUR_TOKEN_HERE` with your actual token, p
       "url": "https://mcp.goalfydata.ai/mcp",
       "transport": "streamable_http",
       "headers": {
-        "Authorization": "Bearer gfk_YOUR_TOKEN_HERE"
+        "Authorization": "Bearer gfk_YOUR_API_KEY_HERE"
       }
     }
   }
@@ -43,7 +43,7 @@ Fill in each field as follows:
 | **Server Name** | `GoalfyData` |
 | **Transport Type** | `HTTP` |
 | **Server URL** | `https://mcp.goalfydata.ai/mcp` |
-| **Custom Headers** | Name: `Authorization`, Value: `Bearer gfk_your_actual_token` |
+| **Custom Headers** | Name: `Authorization`, Value: `Bearer gfk_your_actual_api_key` |
 
 ## Step 3 -- Upload Skill
 
@@ -69,7 +69,7 @@ Once the connector status shows connected and `goalfydata` appears in Skills, sa
 
 If the connection fails:
 - Confirm the server URL is correct
-- Confirm the token is entered correctly, including the `Bearer ` prefix
+- Confirm the API Key is entered correctly, including the `Bearer ` prefix
 - Manus runs in the cloud -- the URL must be publicly accessible
 
 ## Getting Started
@@ -111,7 +111,7 @@ Share this dataset with xxx@example.com
 ### Connector Shows Error
 
 1. The server URL must be publicly accessible (Manus runs in the cloud)
-2. Check whether the token is incorrect or missing the `Bearer ` prefix
+2. Check whether the API Key is incorrect or missing the `Bearer ` prefix
 3. For transport type, start with `HTTP`. If that doesn't work, check whether Manus offers a `Streamable HTTP` option
 
 ### Skill Not Recognized
@@ -130,11 +130,6 @@ MCP connector points to the remote service, no update needed. Skill files need t
 2. Download the latest [goalfydata-skill.zip](https://github.com/GoalfyAI/goalfydata/raw/main/manus/goalfydata-skill.zip) and re-upload
 3. Close the current conversation and reopen (Skills are only loaded at session start)
 
-### uds-cli Update
-
-```bash
-uds-cli self-update
-```
 
 ---
 

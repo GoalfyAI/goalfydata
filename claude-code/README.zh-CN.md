@@ -12,19 +12,19 @@ Claude Code 插件，用于连接 GoalfyData 通用数据集服务。
 
 ## 前置条件
 
-1. **GoalfyData API Token**: 到 https://goalfydata.ai/settings 创建
+1. **GoalfyData API Key**: 到 https://goalfydata.ai/settings 创建
 2. **uds-cli**:
 
    macOS / Linux:
    ```bash
    curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
-   source ~/.zshrc  # or source ~/.bashrc
-   uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
+   # 若提示 command not found：用 "$HOME/.goalfy/bin/uds-cli" 代替 uds-cli
+   uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
    ```
 
 ## 安装
 
-安装前确保已完成上述前置条件（Token 创建 + uds-cli 安装并登录）。
+安装前确保已完成上述前置条件（API Key 创建 + uds-cli 安装并登录）。
 
 ### 方式 1：通过 marketplace（推荐）
 
@@ -57,7 +57,7 @@ claude --plugin-dir ./claude-code
 
 ## 认证
 
-MCP 连接需要 `GOALFY_UDS_API_TOKEN` 环境变量。Claude Code 支持 `${VAR}` 展开，会自动注入到请求头。
+MCP 连接需要 `GOALFY_UDS_API_KEY` 环境变量。Claude Code 支持 `${VAR}` 展开，会自动注入到请求头。
 
 **配置方式（按优先级，选一种即可）**：
 
@@ -66,14 +66,14 @@ MCP 连接需要 `GOALFY_UDS_API_TOKEN` 环境变量。Claude Code 支持 `${VAR
    ```json
    {
      "env": {
-       "GOALFY_UDS_API_TOKEN": "gfk_your_token_here"
+       "GOALFY_UDS_API_KEY": "gfk_your_api_key_here"
      }
    }
    ```
 
 2. **Shell 环境变量（仅从终端启动 `claude` 时生效）**：
    ```bash
-   export GOALFY_UDS_API_TOKEN="gfk_your_token_here"  # 加到 ~/.zshrc 或 ~/.bashrc
+   export GOALFY_UDS_API_KEY="gfk_your_api_key_here"  # 加到 ~/.zshrc 或 ~/.bashrc
    ```
 
    注意：从桌面应用或 IDE 启动 Claude Code 时不会 source shell 配置文件，此方式不生效。
@@ -83,8 +83,8 @@ MCP 连接需要 `GOALFY_UDS_API_TOKEN` 环境变量。Claude Code 支持 `${VAR
 重启 Claude Code 后输入 `/mcp`，确认 `goalfydata-mcp` 状态为 connected + 20 tools。
 
 如果连接失败：
-- 确认 `~/.claude/settings.json` 中 `GOALFY_UDS_API_TOKEN` 已配置
-- 确认 token 是有效的 `gfk_` 前缀
+- 确认 `~/.claude/settings.json` 中 `GOALFY_UDS_API_KEY` 已配置
+- 确认 API Key 是有效的 `gfk_` 前缀
 - 完全退出 Claude Code 重新启动
 
 ## 更新

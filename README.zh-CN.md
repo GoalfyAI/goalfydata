@@ -49,7 +49,7 @@ AI Agent 可以快速生成数据集、脚本、报告和 dashboard。
 
 但 Agent 生成的数据，常常会被困在一次对话、一个本地文件、或某个 Agent 工作区里。
 
-**GoalfyData 会把这些输出结果变成持久的数据资产，让它们可以在不同会话、不同 Agent和团队成员之间持续复用。**
+**GoalfyData 会把这些输出结果变成持久的数据资产，让它们可以在不同会话、不同 Agent 和团队成员之间持续复用。**
 
 > [!TIP]
 > Agent 负责生成第一版，GoalfyData 负责让它持续运行、治理、共享和复用。
@@ -120,6 +120,7 @@ GoalfyData 围绕 **Build → Run → Share** 组织 Agent 数据资产的生命
   </a>
 </p>
 -->
+
 ## 🔐 分享与授权逻辑
 
 GoalfyData 帮助团队安全地把数据资产分享给团队成员、客户、协作者和授权 Agent。
@@ -136,18 +137,20 @@ GoalfyData 会把这个意图转化为数据边界和权限规则，确保正确
 * 分享持续更新的数据结果给客户
 * 授权另一个 Agent 把数据集作为业务上下文
 * 按角色、表、字段或规则控制访问范围
+
 ---
 
 ## 🧩 核心能力
 
 | 能力           | 说明                                                                          |
 | ------------ | --------------------------------------------------------------------------- |
-| **Agent 接入** | 通过 MCP、CLI、API 或 Actions 接入 Claude Code、Codex、Cursor、Manus、ChatGPT 等 Agent |
+| **Agent 接入** | 通过 MCP、CLI、API 或 Actions 接入 Claude Code、Codex、Manus、ChatGPT 等 Agent |
 | **数据集托管**    | 托管 Agent 生成或整理的数据集，让它们不再只是本地文件或一次性表格                                       |
 | **治理上下文**    | 管理字段含义、计算口径、表间关系、业务规则和使用约束                                                 |
 | **持续更新**     | 支持定时刷新、数据同步、脚本执行、版本管理和失败通知                                                 |
 | **安全共享**     | 支持团队、客户和其他 Agent 的权限化访问，避免重复传文件                                            |
 | **结果输出**     | 支持将数据集用于报告、分析、dashboard 和自动化工作流                                            |
+
 > GoalfyData 的核心不是替代 Agent，而是为不同 Agent 提供一层可复用、可治理、可持续更新的数据资产层。
 
 ---
@@ -156,13 +159,12 @@ GoalfyData 会把这个意图转化为数据边界和权限规则，确保正确
 
 ## 🚀 快速开始
 
-| 平台 | 指南 |
-|------|------|
-| **Claude Code** | [Claude Code 快速开始](./docs/claude-code-quickstart.zh-CN.md) |
-| **Cursor** | [Cursor 快速开始](./docs/cursor-quickstart.zh-CN.md) |
-| **Codex** | [Codex 快速开始](./docs/codex-quickstart.zh-CN.md) |
-| **Manus** | [Manus 快速开始](./docs/manus-quickstart.zh-CN.md) |
-| **其他平台** | [通用接入指南](./generic/README.zh-CN.md) |
+| 平台 | 指南 | 让 Agent 帮你装 |
+|------|------|----------------|
+| **Claude Code** | [Claude Code 快速开始](./docs/claude-code-quickstart.zh-CN.md) | [AGENTS.zh-CN.md](./claude-code/AGENTS.zh-CN.md) |
+| **Codex** | [Codex 快速开始](./docs/codex-quickstart.zh-CN.md) | [AGENTS.zh-CN.md](./codex/AGENTS.zh-CN.md) |
+| **Manus** | [Manus 快速开始](./docs/manus-quickstart.zh-CN.md) | — |
+| **其他平台** | [通用接入指南](./generic/README.zh-CN.md) | — |
 
 ---
 
@@ -171,7 +173,6 @@ GoalfyData 会把这个意图转化为数据边界和权限规则，确保正确
 | Agent / 平台                | 接入方式           | 状态        |
 | ------------------------- | -------------- | --------- |
 | **Claude Code**           | MCP / Plugin   | Available |
-| **Cursor**                | MCP / Plugin   | Available |
 | **Codex**                 | CLI / Plugin   | Available |
 | **Manus**                 | API            | Available |
 | **ChatGPT / Custom GPTs** | Actions        | Planned   |
@@ -185,10 +186,11 @@ GoalfyData 会把这个意图转化为数据边界和权限规则，确保正确
 | 文档                                                    | 说明                                         |
 | ----------------------------------------------------- | ------------------------------------------ |
 | [Claude Code 快速开始](./docs/claude-code-quickstart.zh-CN.md) | 安装并使用 Claude Code 插件                       |
-| [Cursor 快速开始](./docs/cursor-quickstart.zh-CN.md)           | 安装并使用 Cursor 插件                            |
 | [Codex 快速开始](./docs/codex-quickstart.zh-CN.md)             | 安装并使用 Codex 插件                             |
 | [Manus 快速开始](./docs/manus-quickstart.zh-CN.md)             | 安装并使用 Manus                                |
 | [核心概念](./docs/concepts.zh-CN.md)                           | 理解 Dataset、Governance Rules、Skills 和 Relationships |
+| [Agent 安装手册（Claude Code）](./claude-code/AGENTS.zh-CN.md)     | 发给你的 Agent，自动完成安装与更新                  |
+| [Agent 安装手册（Codex）](./codex/AGENTS.zh-CN.md)                 | 发给你的 Agent，自动完成安装与更新                  |
 | [常见问题](./FAQ.zh-CN.md)                                     | GoalfyData 常见问题                            |
 
 ---

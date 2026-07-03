@@ -18,7 +18,6 @@ Brief description of changes.
 ## Testing
 
 - [ ] Tested on Claude Code
-- [ ] Tested on Cursor
 - [ ] Tested on Codex
 - [ ] Not needed (docs only)
 

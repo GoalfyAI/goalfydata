@@ -14,7 +14,6 @@ Through Skill / MCP / CLI, GoalfyData integrates into your existing Agent workfl
 
 - Claude Code
 - Codex
-- Cursor
 - Manus
 - ChatGPT / Custom GPTs
 
@@ -88,7 +87,7 @@ GoalfyData fills exactly this gap.
 ## Architecture Overview
 
 ```
-AI Agents (Claude / Codex / Cursor / Manus)
+AI Agents (Claude / Codex / Manus)
     |
     |  Build: Skill / MCP / CLI
     v

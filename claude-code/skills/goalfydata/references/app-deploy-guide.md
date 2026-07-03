@@ -41,7 +41,7 @@
 ### 数据库连接
 
 - 开发态：`uds-cli --task-id <task_id> connect --mode reader --schema uds_{dataset_id} | head -3 > backend/.env`（凭证 1h 有效）
-- 部署后：平台自动注入应用级凭证（`DATASETS_DATABASE_URL`），永不过期，无需在应用里处理 token 刷新
+- 部署后：平台自动注入应用级凭证（`DATASETS_DATABASE_URL`），永不过期，无需在应用里处理凭证刷新
 - 代码中用 `tableOf(dataset_id, table)` 引用数据集表，不硬编码 schema 名（不同环境可能不同）
 - 单数据集场景可直接写裸表名（search_path 已指到数据集 schema）；跨多个数据集 JOIN 时用 `tableOf` 显式限定
 - `db` 可能为 `null`（应用未绑数据集），判空**必须**在函数体内做，**禁止**写在模块顶层
@@ -92,7 +92,7 @@
 
 ## 4. 完整部署流程（Step by Step）
 
-以下是从起项目到确认上线的完整 6 步流程：
+以下是从起项目到确认上线的完整流程：
 
 ```
 1. 起项目
@@ -110,7 +110,7 @@
 4. 打包（从项目根目录内部打，Dockerfile 必须在 tar 包根层）
    cd <project-root> && tar czf /tmp/app.tar.gz --exclude=node_modules --exclude=.git --exclude=.venv --exclude=.env .
 
-5. 部署（两步）
+5. 部署
    Step 1: uds_app_deploy(dataset_id=..., app_name="my-app", filename="app.tar.gz", task_id=<task_id>)
            → 返回 upload_url + package_key
    Step 2: 本地 curl -X PUT --upload-file /tmp/app.tar.gz -H "Content-Type: application/gzip" '<upload_url>'

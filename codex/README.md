@@ -12,34 +12,34 @@ OpenAI Codex plugin for connecting to the GoalfyData universal dataset service.
 
 ## Prerequisites
 
-1. **GoalfyData API Token**: Create one at https://goalfydata.ai/settings
+1. **GoalfyData API Key**: Create one at https://goalfydata.ai/settings
 2. **uds-cli**:
 
    macOS / Linux:
    ```bash
    curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
-   source ~/.zshrc  # or source ~/.bashrc
-   uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
+   # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
+   uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
    ```
 
 ## Installation
 
-Make sure you have completed the prerequisites above (Token creation + uds-cli installed and logged in) before installing.
+Make sure you have completed the prerequisites above (API Key creation + uds-cli installed and logged in) before installing.
 
 ```bash
 codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-Codex Desktop users: paste this entire README into the chat — Codex will run the install commands and complete the configuration itself.
+Codex Desktop users: paste the full content of [AGENTS.md](./AGENTS.md) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself.
 
 ## Authentication
 
-Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to configure the token in `~/.codex/.env`:
+Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to configure the API Key in `~/.codex/.env`:
 
 ```bash
 # ~/.codex/.env
-GOALFY_UDS_API_TOKEN=gfk_your_token_here
+GOALFY_UDS_API_KEY=gfk_your_api_key_here
 ```
 
 Restart Codex Desktop after configuration for it to take effect.
@@ -47,18 +47,18 @@ Restart Codex Desktop after configuration for it to take effect.
 Codex CLI (terminal) can also use standard shell export:
 
 ```bash
-export GOALFY_UDS_API_TOKEN="gfk_your_token_here"
+export GOALFY_UDS_API_KEY="gfk_your_api_key_here"
 ```
 
-MCP tools and uds-cli share the same token system.
+MCP tools and uds-cli share the same API Key.
 
 ## Verification
 
 After restarting Codex, confirm that `goalfydata-mcp` is connected and the tool list contains 20 tools (`uds_query`, `uds_dataset_manage`, etc.).
 
 If connection fails:
-- Confirm `GOALFY_UDS_API_TOKEN` is configured in `~/.codex/.env`
-- Confirm the token is valid (verify in the console)
+- Confirm `GOALFY_UDS_API_KEY` is configured in `~/.codex/.env`
+- Confirm the API Key is valid (verify in the console)
 - Fully quit and restart Codex
 
 ## Update

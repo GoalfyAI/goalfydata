@@ -10,7 +10,7 @@
 
 1. 你在做什么操作
 2. 实际发生了什么
-3. Agent和环境信息（Claude Code / Cursor / Codex、操作系统、版本）
+3. Agent和环境信息（Claude Code / Codex、操作系统、版本）
 4. 错误日志或消息
 
 ### 功能请求
@@ -50,21 +50,16 @@ cd goalfydata
 
 ### 插件开发
 
-每个平台目录（`claude-code/`、`cursor/`、`codex/`）是独立的。本地测试方法：
+每个平台目录（`claude-code/`、`codex/`）是独立的。本地测试方法：
 
 **Claude Code：**
 ```bash
 claude --plugin-dir ./claude-code
 ```
 
-**Cursor：**
-```bash
-cp -r ./cursor ~/.cursor/plugins/goalfydata
-```
-
 ### 编辑 SKILL.md
 
-修改 SKILL.md 或 references 时，需要同时更新所有平台目录（`claude-code/`、`cursor/`、`codex/`、`manus/`、`generic/`）。Manus 的 skill zip 会在 `manus/skill/` 变更后由 GitHub Actions 自动重新打包。
+修改 SKILL.md 或 references 时，需要同时更新所有平台目录（`claude-code/`、`codex/`、`manus/`、`generic/`）。Manus 的 skill zip 会在 `manus/skill/` 变更后由 GitHub Actions 自动重新打包。
 
 ## 行为准则
 

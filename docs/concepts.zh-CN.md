@@ -14,7 +14,6 @@ GoalfyData 不会替代你的 AI Agent，而是增强它。
 
 - Claude Code
 - Codex
-- Cursor
 - Manus
 - ChatGPT / 自定义 GPTs
 
@@ -88,7 +87,7 @@ GoalfyData 正是填补这一空白。
 ## 架构概览
 
 ```
-AI Agents（Claude / Codex / Cursor / Manus）
+AI Agents（Claude / Codex / Manus）
     │
     │  构建：Skill / MCP / CLI
     ▼
