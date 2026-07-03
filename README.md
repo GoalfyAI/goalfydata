@@ -17,7 +17,7 @@
 
 <p align="center">
   GoalfyData turns agent outputs into structured, governed, and continuously reusable data assets<br>
-for AI agents,and teams.
+for AI agents and teams.
 </p>
 
 <p align="center">
@@ -133,13 +133,14 @@ Typical sharing patterns include:
 * Share continuously updated results with clients
 * Authorize another agent to use a dataset as business context
 * Control access by role, table, field, or rule
+
 ---
 
 ## 🧩 Core Capabilities
 
 | Capability             | Description                                                                                                      |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Agent Integration**  | Connect Claude Code, Codex, Cursor, Manus, ChatGPT, and other agents through MCP, CLI, API, or Actions           |
+| **Agent Integration**  | Connect Claude Code, Codex, Manus, ChatGPT, and other agents through MCP, CLI, API, or Actions           |
 | **Dataset Hosting**    | Host datasets generated or organized by agents, so they are no longer just local files or one-off spreadsheets   |
 | **Governed Context**   | Manage field meanings, metric definitions, table relationships, business rules, and usage constraints            |
 | **Continuous Updates** | Support scheduled refresh, data synchronization, script execution, version management, and failure notifications |
@@ -154,13 +155,12 @@ Typical sharing patterns include:
 
 ## 🚀 Quickstart
 
-| Platform            | Guide                                                      |
-| ------------------- | ---------------------------------------------------------- |
-| **Claude Code**     | [Claude Code Quickstart](./docs/claude-code-quickstart.md) |
-| **Cursor**          | [Cursor Quickstart](./docs/cursor-quickstart.md)           |
-| **Codex**           | [Codex Quickstart](./docs/codex-quickstart.md)             |
-| **Manus**           | [Manus Quickstart](./docs/manus-quickstart.md)             |
-| **Other Platforms** | [Generic Setup](./generic/README.md)                       |
+| Platform            | Guide                                                      | Agent-assisted Install                    |
+| ------------------- | ---------------------------------------------------------- | ----------------------------------------- |
+| **Claude Code**     | [Claude Code Quickstart](./docs/claude-code-quickstart.md) | [AGENTS.md](./claude-code/AGENTS.md)      |
+| **Codex**           | [Codex Quickstart](./docs/codex-quickstart.md)             | [AGENTS.md](./codex/AGENTS.md)            |
+| **Manus**           | [Manus Quickstart](./docs/manus-quickstart.md)             | —                                         |
+| **Other Platforms** | [Generic Setup](./generic/README.md)                       | —                                         |
 
 ---
 
@@ -169,7 +169,6 @@ Typical sharing patterns include:
 | Agent / Platform          | Integration Method | Status    |
 | ------------------------- | ------------------ | --------- |
 | **Claude Code**           | MCP / Plugin       | Available |
-| **Cursor**                | MCP / Plugin       | Available |
 | **Codex**                 | CLI / Plugin       | Available |
 | **Manus**                 | API                | Available |
 | **ChatGPT / Custom GPTs** | Actions            | Planned   |
@@ -182,10 +181,11 @@ Typical sharing patterns include:
 | Document                                                   | Description                                                     |
 | ---------------------------------------------------------- | --------------------------------------------------------------- |
 | [Claude Code Quickstart](./docs/claude-code-quickstart.md) | Install and use the Claude Code plugin                          |
-| [Cursor Quickstart](./docs/cursor-quickstart.md)           | Install and use the Cursor plugin                               |
 | [Codex Quickstart](./docs/codex-quickstart.md)             | Install and use the Codex plugin                                |
 | [Manus Quickstart](./docs/manus-quickstart.md)             | Set up and use Manus                                            |
 | [Core Concepts](./docs/concepts.md)                        | Understand Dataset, Governance Rules, Skills, and Relationships |
+| [Agent Install Runbook (Claude Code)](./claude-code/AGENTS.md) | Send it to your agent for fully automated install & update      |
+| [Agent Install Runbook (Codex)](./codex/AGENTS.md)         | Send it to your agent for fully automated install & update      |
 | [FAQ](./FAQ.md)                                               | Common questions about GoalfyData                               |
 
 ---

@@ -26,5 +26,5 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 - All credentials encrypted at rest (AES-256) and in transit (TLS 1.3)
 - User scripts run in isolated sandboxes with no host access
-- API Tokens can be rotated or revoked at any time
+- API Keys can be rotated or revoked at any time
 - Sensitive data is never logged in execution logs

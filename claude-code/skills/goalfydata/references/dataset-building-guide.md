@@ -135,11 +135,11 @@ uds-cli 命令失败
 
 `uds-cli import` 写入前按单表上限（当前固定 20,000,000 行，暂不支持调整）做批校验，超限时整批 rollback 并返回 `ROW_LIMIT_EXCEEDED`。
 
-**禁止**盲目分批/截断重试——会导致数据被静默截断，违反约束 2。正确处置：停下来用问题让用户三选一：
+**禁止**盲目分批/截断重试——会导致数据被静默截断，违反约束 2。正确处置：停下来让用户三选一：
 
 1. **改用 `full_replace` 模式** — 先 TRUNCATE 再写，写入后行数 = 新数据行数。前提：用户确认旧数据可丢；append/upsert 下**禁止**自作主张切换
 2. **清理旧数据** — 给一段示意 `uds-cli --task-id <task_id> exec "DELETE FROM uds_{dataset_id}.<table> WHERE <条件>"`（按时间窗口/业务维度），用户确认条件后执行，**禁止**直接 TRUNCATE 不问
-3. **当前单表上限 2000 万行** — 暂不支持调整，建议按时间窗口或业务维度拆分为多张表
+3. **按维度拆表** — 单表上限 2000 万行暂不支持调整，按时间窗口或业务维度拆分为多张表
 
 **禁止**：收到 ROW_LIMIT_EXCEEDED 后悄悄丢部分行重试；把超限当普通"导入失败"走重试（重试也是同样失败）；未经确认就切 `full_replace`。
 
@@ -157,7 +157,7 @@ uds-cli 命令失败
 |------|------|
 | 用户只传了原始数据文件（干净或类别 A） | 只建底表，不主动建中间表 |
 | 用户明确要汇总表 / 宽表 | 建底表 + 中间表（用户确认聚合维度和粒度后） |
-| 你发现底表间有明显汇总需求 | 用问题向用户建议，同意后再建 |
+| 你发现底表间有明显汇总需求 | 主动向用户建议，同意后再建 |
 | 中间表数据来自 SQL 聚合（不是文件导入） | 中间表注册 `script` 源、入口 `fetch`，更新脚本用 `uds-cli --task-id <task_id> exec` 做 SQL 聚合（`INSERT INTO 中间表 SELECT ... FROM 底表 GROUP BY ...`），不读文件 |
 
 中间表也是表，**同样要 `uds_table_manage` 注册元数据**（约束 4）；要定时刷新就配 `schedule`（见 `scheduled-sync-guide.md`）。
@@ -215,7 +215,7 @@ uds-cli 命令失败
 
 1. **表间关系**：`uds_relations_set(action="replace", relations=[...], task_id=<task_id>)`
 2. **治理规则补录**：回顾访谈，补齐未落库的规则（正常应为空，已实时落库）
-3. **使用指南**：`uds_dataset_manage(action="update", tool_usage_guide="...", task_id=<task_id>)`（约束 5）。内容包含：数据集业务背景、核心表说明、关键业务口径、常用查询入口
+3. **使用指南**：`uds_dataset_manage(action="update", tool_usage_guide="...", task_id=<task_id>)`（约束 4）。内容包含：数据集业务背景、核心表说明、关键业务口径、常用查询入口
 4. **权限策略**（可选）：询问用户是否需要分表/分列/分行的细粒度分享控制
 5. **自查清单**：每张表有 dataset_table 记录且 target_columns 非空？tool_usage_guide 有实质内容？关系/规则引用的 table_name 都存在？有不通过项按约束 2 汇报
 

@@ -10,7 +10,7 @@ Use the [Bug Report template](https://github.com/GoalfyAI/goalfydata/issues/new?
 
 1. What you were doing
 2. What actually happened
-3. Agent and environment info (Claude Code / Cursor / Codex, OS, version)
+3. Agent and environment info (Claude Code / Codex, OS, version)
 4. Error logs or messages
 
 ### Feature Requests
@@ -50,21 +50,16 @@ cd goalfydata
 
 ### Plugin Development
 
-Each platform directory (`claude-code/`, `cursor/`, `codex/`) is self-contained. Local testing:
+Each platform directory (`claude-code/`, `codex/`) is self-contained. Local testing:
 
 **Claude Code:**
 ```bash
 claude --plugin-dir ./claude-code
 ```
 
-**Cursor:**
-```bash
-cp -r ./cursor ~/.cursor/plugins/goalfydata
-```
-
 ### Editing SKILL.md
 
-When modifying SKILL.md or references, update all platform directories (`claude-code/`, `cursor/`, `codex/`, `manus/`, `generic/`) together. The Manus skill zip is automatically rebuilt by GitHub Actions when `manus/skill/` changes.
+When modifying SKILL.md or references, update all platform directories (`claude-code/`, `codex/`, `manus/`, `generic/`) together. The Manus skill zip is automatically rebuilt by GitHub Actions when `manus/skill/` changes.
 
 ## Code of Conduct
 

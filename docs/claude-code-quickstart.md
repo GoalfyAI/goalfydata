@@ -2,9 +2,11 @@
 
 Get set up in 3 minutes and let Claude Code help you build real-time data assets.
 
+> Prefer automated install? Send [AGENTS.md](../claude-code/AGENTS.md) to your agent and it handles everything.
+
 ---
 
-## Step 1 -- Get an API Token
+## Step 1 -- Get an API Key
 
 Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
 
@@ -17,8 +19,8 @@ uds-cli is used for data plane operations (executing SQL, importing data, viewin
 macOS / Linux:
 ```bash
 curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
-source ~/.zshrc  # or source ~/.bashrc
-uds-cli login --token gfk_your_token --api-url https://api.goalfydata.ai
+# if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
+uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
 ```
 
 ## Step 3 -- Install the Plugin
@@ -44,19 +46,19 @@ claude plugin install goalfydata@goalfydata
 
 > **Do NOT copy files into `~/.claude/skills/` manually.** The `.mcp.json` inside a skills directory is never read by Claude Code, so the MCP connection would silently fail.
 
-## Step 4 -- Configure Token
+## Step 4 -- Configure API Key
 
-Add your Token in the `env` section of `~/.claude/settings.json`:
+Add your API Key in the `env` section of `~/.claude/settings.json`:
 
 ```json
 {
   "env": {
-    "GOALFY_UDS_API_TOKEN": "gfk_your_token"
+    "GOALFY_UDS_API_KEY": "gfk_your_api_key"
   }
 }
 ```
 
-> This step is required -- otherwise the MCP connection will fail. When launching Claude Code from a desktop app or IDE, shell environment variables are not read. The token must be configured via settings.json.
+> This step is required -- otherwise the MCP connection will fail. When launching Claude Code from a desktop app or IDE, shell environment variables are not read. The API Key must be configured via settings.json.
 
 ## Step 5 -- Restart Claude Code
 
@@ -67,8 +69,8 @@ Fully quit and reopen Claude Code to activate the plugin and MCP.
 Type `/mcp` in Claude Code and confirm that `goalfydata-mcp` shows as connected with 20 tools.
 
 If it shows as failed:
-- Confirm that `GOALFY_UDS_API_TOKEN` is configured in `~/.claude/settings.json`
-- Confirm the token has a valid `gfk_` prefix
+- Confirm that `GOALFY_UDS_API_KEY` is configured in `~/.claude/settings.json`
+- Confirm the API Key has a valid `gfk_` prefix
 - Fully quit and restart Claude Code
 
 ## Getting Started
@@ -119,13 +121,13 @@ Share this dataset with xxx@example.com
 
 ### MCP Shows Error / Not Connected
 
-1. Check whether `GOALFY_UDS_API_TOKEN` exists in `~/.claude/settings.json`
-2. Confirm the token is valid (verify in the console)
+1. Check whether `GOALFY_UDS_API_KEY` exists in `~/.claude/settings.json`
+2. Confirm the API Key is valid (verify in the console)
 3. Fully quit and restart Claude Code
 
 ### uds-cli Command Not Found
 
-After installation, you need to reopen your terminal (or run `source ~/.zshrc`) to refresh the PATH.
+Reopen your terminal to refresh the PATH, or invoke the binary by absolute path `"$HOME/.goalfy/bin/uds-cli"` (agent non-interactive shells do not load rc files; the absolute path always works). If login reports `unknown flag: --api-key`, run `uds-cli self-update` first.
 
 ### Plugin Installation Fails with "source type not supported"
 

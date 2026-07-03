@@ -42,7 +42,7 @@ Which part of GoalfyData is affected?
 
 ## Environment
 
-- **Agent / Platform**: Claude Code / Cursor / Codex / Manus / ChatGPT / Other
+- **Agent / Platform**: Claude Code / Codex / Manus / ChatGPT / Other
 - **Operating System**: macOS / Linux / Windows
 - **GoalfyData CLI Version**: `goalfydata version`
 - **Browser**:

@@ -102,6 +102,7 @@ def transform(file_path, filename, table_name, update_mode, target_columns, **kw
 - 连接用 `try/finally` 确保释放
 - 凭证从 `os.environ` 读取（通过 `uds_credential_store` 存储）
 - 增量同步配合 `update_mode=upsert`，用时间戳或自增 ID 做增量起点
+- upsert 模式：每块 import 都必须带 `--upsert-keys`（从 target_columns 取 primary_key，参考 3.1 模板），且每块都用 `--mode upsert`，不能改用 append
 
 ### 3.1 外部 MySQL 拉取
 
@@ -129,6 +130,7 @@ def fetch(table_name, update_mode, target_columns, **kwargs):
     try:
         CHUNK_SIZE = 5000
         total_rows = 0
+        upsert_keys = [c["name"] for c in target_columns if c.get("primary_key")]
 
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM source_orders ORDER BY id")
@@ -145,8 +147,10 @@ def fetch(table_name, update_mode, target_columns, **kwargs):
                 chunk_rows = int(len(df))
                 del df; gc.collect()
 
-                mode = "append" if total_rows > 0 else update_mode
+                mode = update_mode if update_mode == "upsert" else ("append" if total_rows > 0 else update_mode)  # upsert 每块保持 upsert，避免 append 撞主键
                 cmd = ["uds-cli", "--task-id", TASK_ID, "import", tmp_csv, "--table", table_name, "--mode", mode]
+                if update_mode == "upsert" and upsert_keys:
+                    cmd += ["--upsert-keys", ",".join(upsert_keys)]
                 r = subprocess.run(cmd, capture_output=True, text=True)
                 os.remove(tmp_csv)
                 if r.returncode != 0:
@@ -216,7 +220,7 @@ def fetch(table_name, update_mode, target_columns, **kwargs):
                 writer.writerow({c["name"]: item.get(c["name"], "") for c in target_columns})
 
         chunk_rows = len(items)
-        mode = "append" if total_rows > 0 else update_mode
+        mode = update_mode if update_mode == "upsert" else ("append" if total_rows > 0 else update_mode)  # upsert 每块保持 upsert，避免 append 撞主键
         r = subprocess.run(["uds-cli", "--task-id", TASK_ID, "import", tmp_csv, "--table", table_name, "--mode", mode],
                            capture_output=True, text=True)
         os.remove(tmp_csv)
@@ -268,7 +272,7 @@ def fetch(table_name, update_mode, target_columns, **kwargs):
                 chunk_rows = int(len(df))
                 del df; gc.collect()
 
-                mode = "append" if total_rows > 0 else update_mode
+                mode = update_mode if update_mode == "upsert" else ("append" if total_rows > 0 else update_mode)  # upsert 每块保持 upsert，避免 append 撞主键
                 r = subprocess.run(["uds-cli", "--task-id", TASK_ID, "import", tmp_csv, "--table", table_name, "--mode", mode],
                                    capture_output=True, text=True)
                 os.remove(tmp_csv)
@@ -315,7 +319,7 @@ def fetch(table_name, update_mode, target_columns, **kwargs):
             chunk_rows = int(len(df))
             del df; gc.collect()
 
-            mode = "append" if total_rows > 0 else update_mode
+            mode = update_mode if update_mode == "upsert" else ("append" if total_rows > 0 else update_mode)  # upsert 每块保持 upsert，避免 append 撞主键
             r = subprocess.run(["uds-cli", "--task-id", TASK_ID, "import", tmp_csv, "--table", table_name, "--mode", mode],
                                capture_output=True, text=True)
             os.remove(tmp_csv)

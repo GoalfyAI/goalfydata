@@ -13,4 +13,4 @@ dependencies:
     value: goalfydata-mcp
     transport: streamable_http
     url: https://mcp.goalfydata.ai/mcp
-    bearer_token_env_var: GOALFY_UDS_API_TOKEN
+    bearer_token_env_var: GOALFY_UDS_API_KEY

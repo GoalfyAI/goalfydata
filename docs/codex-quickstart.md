@@ -2,9 +2,11 @@
 
 Get set up in 3 minutes and let Codex help you build real-time data assets.
 
+> Prefer automated install? Send [AGENTS.md](../codex/AGENTS.md) to your agent and it handles everything.
+
 ---
 
-## Step 1 -- Get an API Token
+## Step 1 -- Get an API Key
 
 Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
 
@@ -17,8 +19,8 @@ uds-cli is used for data plane operations (executing SQL, importing data, viewin
 macOS / Linux:
 ```bash
 curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
-source ~/.zshrc  # or source ~/.bashrc
-uds-cli login --token gfk_your_token --api-url https://api.goalfydata.ai
+# if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
+uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
 ```
 
 ## Step 3 -- Install the Plugin
@@ -29,15 +31,15 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-Codex Desktop: Paste this entire document into the chat — Codex will run the install commands and complete the configuration itself.
+Codex Desktop: Paste the full content of [AGENTS.md](../codex/AGENTS.md) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself.
 
-## Step 4 -- Configure Token
+## Step 4 -- Configure API Key
 
-Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to write the token into `~/.codex/.env`:
+Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to write the API Key into `~/.codex/.env`:
 
 ```bash
 # ~/.codex/.env
-GOALFY_UDS_API_TOKEN=gfk_your_token
+GOALFY_UDS_API_KEY=gfk_your_api_key
 ```
 
 Restart Codex Desktop after configuration for changes to take effect.
@@ -45,7 +47,7 @@ Restart Codex Desktop after configuration for changes to take effect.
 Codex CLI (terminal) can also use a standard shell export:
 
 ```bash
-export GOALFY_UDS_API_TOKEN="gfk_your_token"
+export GOALFY_UDS_API_KEY="gfk_your_api_key"
 ```
 
 > This step is required -- otherwise the MCP connection will fail due to authentication errors.
@@ -59,8 +61,8 @@ Fully quit and reopen Codex to activate the plugin and MCP.
 In Codex, confirm that `goalfydata-mcp` is connected and the tool list contains 20 tools (`uds_query`, `uds_dataset_manage`, etc.).
 
 If the connection fails:
-- Confirm that `GOALFY_UDS_API_TOKEN` is configured in `~/.codex/.env`
-- Confirm the token has a valid `gfk_` prefix
+- Confirm that `GOALFY_UDS_API_KEY` is configured in `~/.codex/.env`
+- Confirm the API Key has a valid `gfk_` prefix
 - Fully quit and restart Codex
 
 ## Getting Started
@@ -108,13 +110,13 @@ Share this dataset with xxx@example.com
 
 ### MCP Connection Failed
 
-1. Check whether `GOALFY_UDS_API_TOKEN` exists in `~/.codex/.env`
-2. Confirm the token is valid (verify in the console)
+1. Check whether `GOALFY_UDS_API_KEY` exists in `~/.codex/.env`
+2. Confirm the API Key is valid (verify in the console)
 3. Fully quit and restart Codex
 
 ### uds-cli Command Not Found
 
-After installation, you need to reopen your terminal (or run `source ~/.zshrc`) to refresh the PATH.
+Reopen your terminal to refresh the PATH, or invoke the binary by absolute path `"$HOME/.goalfy/bin/uds-cli"` (agent non-interactive shells do not load rc files; the absolute path always works). If login reports `unknown flag: --api-key`, run `uds-cli self-update` first.
 
 ### Plugin Installation Failed
 

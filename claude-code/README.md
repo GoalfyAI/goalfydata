@@ -12,19 +12,19 @@ Claude Code plugin for connecting to the GoalfyData universal dataset service.
 
 ## Prerequisites
 
-1. **GoalfyData API Token**: Create one at https://goalfydata.ai/settings
+1. **GoalfyData API Key**: Create one at https://goalfydata.ai/settings
 2. **uds-cli**:
 
    macOS / Linux:
    ```bash
    curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
-   source ~/.zshrc  # or source ~/.bashrc
-   uds-cli login --token gfk_xxx --api-url https://api.goalfydata.ai
+   # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
+   uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
    ```
 
 ## Installation
 
-Make sure you have completed the prerequisites above (Token creation + uds-cli installed and logged in) before installing.
+Make sure you have completed the prerequisites above (API Key creation + uds-cli installed and logged in) before installing.
 
 ### Option 1: Via marketplace (recommended)
 
@@ -57,7 +57,7 @@ After installation, restart Claude Code and the plugin will automatically load t
 
 ## Authentication
 
-MCP connection requires the `GOALFY_UDS_API_TOKEN` environment variable. Claude Code supports `${VAR}` expansion and automatically injects it into request headers.
+MCP connection requires the `GOALFY_UDS_API_KEY` environment variable. Claude Code supports `${VAR}` expansion and automatically injects it into request headers.
 
 **Configuration methods (by priority, choose one)**:
 
@@ -66,14 +66,14 @@ MCP connection requires the `GOALFY_UDS_API_TOKEN` environment variable. Claude 
    ```json
    {
      "env": {
-       "GOALFY_UDS_API_TOKEN": "gfk_your_token_here"
+       "GOALFY_UDS_API_KEY": "gfk_your_api_key_here"
      }
    }
    ```
 
 2. **Shell environment variable (only works when launching `claude` from terminal)**:
    ```bash
-   export GOALFY_UDS_API_TOKEN="gfk_your_token_here"  # Add to ~/.zshrc or ~/.bashrc
+   export GOALFY_UDS_API_KEY="gfk_your_api_key_here"  # Add to ~/.zshrc or ~/.bashrc
    ```
 
    Note: When launching Claude Code from a desktop app or IDE, shell config files are not sourced, so this method will not work.
@@ -83,8 +83,8 @@ MCP connection requires the `GOALFY_UDS_API_TOKEN` environment variable. Claude 
 After restarting Claude Code, type `/mcp` and confirm that `goalfydata-mcp` shows status connected + 20 tools.
 
 If connection fails:
-- Confirm `GOALFY_UDS_API_TOKEN` is configured in `~/.claude/settings.json`
-- Confirm the token has a valid `gfk_` prefix
+- Confirm `GOALFY_UDS_API_KEY` is configured in `~/.claude/settings.json`
+- Confirm the API Key has a valid `gfk_` prefix
 - Fully quit and restart Claude Code
 
 ## Update
