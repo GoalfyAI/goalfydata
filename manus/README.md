@@ -85,6 +85,14 @@ The MCP connector points to a remote service and does not need updating. Skill f
 3. Close the current conversation and open a new one (Skills are only loaded at session start)
 
 
+## Rotating the API Key
+
+When the old key is deleted or needs rotation:
+
+1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+2. In the Manus connector settings, update the `Authorization` value to `Bearer gfk_your_new_key` and save
+3. Close the current conversation and open a new one (connector changes take effect in new sessions)
+
 ## Troubleshooting
 
 1. **Server URL must be publicly accessible** -- Manus runs on its own cloud and cannot reach private networks. This is the most common cause of failure.

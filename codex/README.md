@@ -79,6 +79,17 @@ codex plugin add goalfydata@goalfydata
 uds-cli self-update
 ```
 
+## Rotating the API Key
+
+When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP).
+
+The easiest way: copy the setup text from the official integration page ( https://goalfydata.ai/integrations/codex ) and send it to your agent again and it handles everything. Manual steps:
+
+1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
+3. Update the value of `GOALFY_UDS_API_KEY` in `~/.codex/.env` to the new key
+4. Quit Codex completely and reopen it
+
 ## Usage
 
 Once the plugin is loaded, Codex automatically activates skills based on the task. You can also invoke manually:

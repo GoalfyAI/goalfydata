@@ -133,6 +133,16 @@ MCP connector points to the remote service, no update needed. Skill files need t
 
 ---
 
+## Rotating the API Key
+
+When the old key is deleted or needs rotation:
+
+1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+2. In the Manus connector settings, update the `Authorization` value to `Bearer gfk_your_new_key` and save
+3. Close the current conversation and open a new one (connector changes take effect in new sessions)
+
+---
+
 ## Next Steps
 
 - [Core Concepts](./concepts.md) -- Understand the Build / Run / Share architecture

@@ -118,6 +118,10 @@ Share this dataset with xxx@example.com
 
 Reopen your terminal to refresh the PATH, or invoke the binary by absolute path `"$HOME/.goalfy/bin/uds-cli"` (agent non-interactive shells do not load rc files; the absolute path always works). If login reports `unknown flag: --api-key`, run `uds-cli self-update` first.
 
+### Operations still fail after changing the API Key
+
+A stale key remains in the environment (config file or terminal export), which takes precedence over the saved login. Complete all steps in "Rotating the API Key" and fully restart.
+
 ### Plugin Installation Failed
 
 Confirm you are running the latest version of Codex. Run `codex plugin marketplace upgrade` to update the cache and try again.
@@ -141,6 +145,19 @@ codex plugin add goalfydata@goalfydata
 ```bash
 uds-cli self-update
 ```
+
+---
+
+## Rotating the API Key
+
+When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP).
+
+The easiest way: copy the setup text from the official integration page ( https://goalfydata.ai/integrations/codex ) and send it to your agent again and it handles everything. Manual steps:
+
+1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
+3. Update the value of `GOALFY_UDS_API_KEY` in `~/.codex/.env` to the new key
+4. Quit Codex completely and reopen it
 
 ---
 
