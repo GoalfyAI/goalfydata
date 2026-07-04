@@ -31,7 +31,7 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-Codex 桌面版用户：把 [AGENTS.zh-CN.md](./AGENTS.zh-CN.md) 全文粘贴到对话中（这是面向 Agent 的执行手册），Codex 会自行执行安装命令并完成配置。
+Codex 桌面版用户：把 [AGENTS.zh-CN.md](./AGENTS.zh-CN.md) 全文粘贴到对话中（Windows 用户用 [AGENTS.windows.zh-CN.md](./AGENTS.windows.zh-CN.md)），Codex 会自行执行安装命令并完成配置。
 
 ## 认证
 

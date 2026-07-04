@@ -162,7 +162,7 @@ GoalfyData 会把这个意图转化为数据边界和权限规则，确保正确
 | 平台 | 指南 | 让 Agent 帮你装 |
 |------|------|----------------|
 | **Claude Code** | [Claude Code 快速开始](./docs/claude-code-quickstart.zh-CN.md) | [AGENTS.zh-CN.md](./claude-code/AGENTS.zh-CN.md) |
-| **Codex** | [Codex 快速开始](./docs/codex-quickstart.zh-CN.md) | [AGENTS.zh-CN.md](./codex/AGENTS.zh-CN.md) |
+| **Codex** | [Codex 快速开始](./docs/codex-quickstart.zh-CN.md) | [AGENTS.zh-CN.md](./codex/AGENTS.zh-CN.md) · [Windows](./codex/AGENTS.windows.zh-CN.md) |
 | **Manus** | [Manus 快速开始](./docs/manus-quickstart.zh-CN.md) | — |
 | **其他平台** | [通用接入指南](./generic/README.zh-CN.md) | — |
 

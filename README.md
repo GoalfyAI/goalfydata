@@ -158,7 +158,7 @@ Typical sharing patterns include:
 | Platform            | Guide                                                      | Agent-assisted Install                    |
 | ------------------- | ---------------------------------------------------------- | ----------------------------------------- |
 | **Claude Code**     | [Claude Code Quickstart](./docs/claude-code-quickstart.md) | [AGENTS.md](./claude-code/AGENTS.md)      |
-| **Codex**           | [Codex Quickstart](./docs/codex-quickstart.md)             | [AGENTS.md](./codex/AGENTS.md)            |
+| **Codex**           | [Codex Quickstart](./docs/codex-quickstart.md)             | [AGENTS.md](./codex/AGENTS.md) · [Windows](./codex/AGENTS.windows.md) |
 | **Manus**           | [Manus Quickstart](./docs/manus-quickstart.md)             | —                                         |
 | **Other Platforms** | [Generic Setup](./generic/README.md)                       | —                                         |
 

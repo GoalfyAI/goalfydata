@@ -31,7 +31,7 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-Codex Desktop users: paste the full content of [AGENTS.md](./AGENTS.md) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself.
+Codex Desktop users: paste the full content of [AGENTS.md](./AGENTS.md) (Windows users: [AGENTS.windows.md](./AGENTS.windows.md)) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself.
 
 ## Authentication
 
