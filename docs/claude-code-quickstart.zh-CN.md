@@ -129,6 +129,10 @@ claude plugin install goalfydata@goalfydata
 
 重新打开终端让 PATH 生效；或直接用绝对路径 `"$HOME/.goalfy/bin/uds-cli"` 调用（Agent 的非交互 shell 不加载 rc 文件，绝对路径始终有效）。若 login 提示 `unknown flag: --api-key`，先执行 `uds-cli self-update` 升级。
 
+### 换了 API Key 后操作仍失败
+
+环境里（配置文件或终端 export）残留旧 Key，其优先级高于 login 保存的配置。按「更换 API Key」小节走完全部步骤并完全重启。
+
 ### 插件安装失败 "source type not supported"
 
 执行 `claude plugin marketplace update goalfydata` 更新缓存后重试。
@@ -159,6 +163,19 @@ claude plugin marketplace update goalfydata
 ```bash
 uds-cli self-update
 ```
+
+---
+
+## 更换 API Key
+
+旧 Key 删除或需要轮换时，按顺序完成全部步骤（只做 login 不够：环境变量的优先级高于登录保存的配置，残留的旧值会让 uds-cli 和 MCP 继续使用旧 Key）。
+
+最简单的方式：到官网集成页（ https://goalfydata.ai/integrations/claude-code ）重新复制接入文本发给你的 Agent，由它自动完成全部步骤。手动操作如下：
+
+1. 到 [GoalfyData 控制台](https://goalfydata.ai/settings) 删除旧 Key，创建并复制新 Key
+2. 重新登录：`uds-cli login --api-key gfk_新Key --api-url https://api.goalfydata.ai`
+3. 把 `~/.claude/settings.json` 中 `GOALFY_UDS_API_KEY` 的值更新为新 Key
+4. 完全退出并重新打开 Claude Code
 
 ---
 

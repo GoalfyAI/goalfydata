@@ -14,22 +14,29 @@
 
 ### 第 1 步：确认 API Key
 
-先询问用户是否已有 GoalfyData API Key（形如 `gfk_xxx`）：
+向用户逐字输出下面模板的内容（作为正文直接输出，不要放进代码块或引用块；一级标题和加粗必须保留，不得改写成普通句子），拿到 API Key 后再继续：
 
-- 已有 → 请用户直接发给你，进入第 2 步
-- 没有 → 向用户原样输出以下内容，拿到 API Key 后再继续：
+```markdown
+# 需要你操作：提供 GoalfyData API Key
 
-> ## 需要你操作：创建 GoalfyData API Key
->
-> **请到 GoalfyData 控制台创建 API Key：https://goalfydata.ai/settings （「设置 → API Key」，形如 `gfk_xxx`，明文仅在创建时显示一次，请妥善保存。）**
->
-> **如果你还没有 GoalfyData 账号，可以打开 https://goalfydata.ai 注册申请。**
->
-> 创建后把 API Key 发给我，我来完成剩余步骤。
+**你是否已有 GoalfyData API Key（形如 `gfk_xxx`）？已有请直接发给我。**
+
+**如果还没有，请到 GoalfyData 控制台创建：https://goalfydata.ai/settings （「设置 → API Key」，明文仅在创建时显示一次，请妥善保存）。没有账号可打开 https://goalfydata.ai 注册申请。**
+
+创建后把 API Key 发给我，我来完成剩余步骤。
+```
 
 ### 第 2 步：安装 uds-cli
 
-检查：`command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"`，任一有输出则已安装，跳到第 3 步。
+检查：`command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"`，任一有输出则已安装。已安装时**不要直接跳过**，先更新到最新版，成功后进入第 3 步：
+
+```bash
+"$HOME/.goalfy/bin/uds-cli" self-update --api-url https://api.goalfydata.ai
+```
+
+输出 `already on the latest version` 或 `update succeeded: <旧版本> → <新版本>` 均为正常。
+
+未安装时执行安装：
 
 ```bash
 curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
@@ -95,14 +102,16 @@ claude plugin install goalfydata@goalfydata
 
 ### 第 6 步：重启并验证
 
-MCP 连接在重启后才生效，你在当前会话验证不了，必须由用户完成。向用户原样输出：
+MCP 连接在重启后才生效，你在当前会话验证不了，必须由用户完成。向用户逐字输出下面模板的内容（作为正文直接输出，一级标题和加粗必须保留）：
 
-> ## 需要你操作：重启并验证 MCP
->
-> 1. **完全退出并重新打开 Claude Code**
-> 2. **重启后输入 `/mcp`，确认 `goalfydata-mcp` 状态为 connected + 20 tools**
->
-> 如果显示失败：确认 `~/.claude/settings.json` 里有 `GOALFY_UDS_API_KEY`，且该 Key 在控制台 https://goalfydata.ai/settings 显示有效，然后再完全重启一次。
+```markdown
+# 需要你操作：重启并验证 MCP
+
+1. **完全退出并重新打开 Claude Code**
+2. **重启后输入 `/mcp`，确认 `goalfydata-mcp` 状态为 connected + 20 tools**
+
+如果显示失败：确认 `~/.claude/settings.json` 里有 `GOALFY_UDS_API_KEY`，且该 Key 在控制台 https://goalfydata.ai/settings 显示有效，然后再完全重启一次。
+```
 
 ### 汇报
 
@@ -149,11 +158,34 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 
 ### 第 3 步：重启生效
 
-向用户原样输出：
+向用户逐字输出下面模板的内容（作为正文直接输出，一级标题和加粗必须保留）：
 
-> ## 需要你操作：重启生效
->
-> **请在会话中执行 `/reload-plugins`，或完全退出并重新打开 Claude Code，更新才会生效。**
+```markdown
+# 需要你操作：重启生效
+
+**请在会话中执行 `/reload-plugins`，或完全退出并重新打开 Claude Code，更新才会生效。**
+```
+
+---
+
+## 更换 API Key
+
+用户要求更换 API Key（或旧 Key 已删除/失效）时，不需要单独的流程：**重新执行本手册的安装流程**，从第 1 步开始走一遍即可——流程幂等，会自动引导用户到控制台创建新 Key、重新登录、更新 MCP 侧存储并提示重启。
+
+用户手上没有本手册时，向用户逐字输出下面模板的内容（作为正文直接输出，一级标题和加粗必须保留）：
+
+```markdown
+# 需要你操作：重新获取接入文本
+
+**请打开 GoalfyData 官网集成页：https://goalfydata.ai/integrations/claude-code**
+
+**复制页面上的接入文本并重新发给我，我会自动完成包括更换 API Key 在内的全部步骤。**
+```
+
+换 Key 场景的两条例外（覆盖幂等跳过规则）：
+
+- 第 3 步（登录）不得因 whoami 通过而跳过——旧 Key 可能尚未删除，必须用新 Key 重新执行 login
+- login 输出 `WARNING: environment variable ...` 时，第 5 步必须执行，完成后必须让用户重启
 
 ---
 
@@ -167,3 +199,4 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 | `/mcp` 显示未连接 | 检查 settings.json 的 `GOALFY_UDS_API_KEY`，然后让用户完全重启（你不能替用户重启） |
 | 工具返回未认证 | Key 缺失或失效，回到安装第 1 步 |
 | 插件更新后不生效 | 让用户执行 `/reload-plugins` 或完全重启 |
+| login 成功但后续命令 401/未认证 | 环境变量残留旧 Key（优先级高于登录保存的配置）。按「更换 API Key」重新执行安装流程并让用户重启 |

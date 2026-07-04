@@ -93,6 +93,17 @@ uds-cli self-update
 
 ---
 
+## 更换 API Key
+
+旧 Key 删除或需要轮换时，按顺序完成全部步骤（只做 login 不够：环境变量的优先级高于登录保存的配置，残留的旧值会让 uds-cli 和 MCP 继续使用旧 Key）：
+
+1. 到 [GoalfyData 控制台](https://goalfydata.ai/settings) 删除旧 Key，创建并复制新 Key
+2. 重新登录：`uds-cli login --api-key gfk_新Key --api-url https://api.goalfydata.ai`
+3. 把你的 MCP 配置中 `Authorization` 头（或对应环境变量）里的 Key 更新为新 Key
+4. 完全重启你的 Agent 工具
+
+---
+
 ## 目录结构
 
 ```

@@ -14,22 +14,29 @@ Every step starts with a check command: skip steps that are already done; re-run
 
 ### Step 1: Confirm the API Key
 
-First ask the user whether they already have a GoalfyData API Key (shaped like `gfk_xxx`):
+Output the contents of the template below to the user word for word (as normal body text — not inside a code block or blockquote; the level-1 heading and bold must be preserved, never rewritten as plain sentences), and continue only after receiving the key:
 
-- Yes → ask the user to send it to you and proceed to Step 2
-- No → output the following to the user verbatim, and continue only after receiving the key:
+```markdown
+# ACTION REQUIRED: Provide your GoalfyData API Key
 
-> ## ACTION REQUIRED: Create your GoalfyData API Key
->
-> **Create an API Key in the GoalfyData console: https://goalfydata.ai/settings ("Settings → API Key", shaped like `gfk_xxx`; the plaintext is shown only once at creation — store it safely.)**
->
-> **If you do not have a GoalfyData account yet, open https://goalfydata.ai to sign up.**
->
-> Send me the API Key once created, and I will finish the remaining steps.
+**Do you already have a GoalfyData API Key (shaped like `gfk_xxx`)? If so, send it to me directly.**
+
+**If not, create one in the GoalfyData console: https://goalfydata.ai/settings ("Settings → API Key"; the plaintext is shown only once at creation — store it safely). No account yet? Open https://goalfydata.ai to sign up.**
+
+Send me the API Key once created, and I will finish the remaining steps.
+```
 
 ### Step 2: Install uds-cli
 
-Check: `command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"` — if either produces output, it is installed; skip to Step 3.
+Check: `command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"` — if either produces output, it is installed. When already installed, **do not skip directly** — update to the latest version first, then proceed to Step 3:
+
+```bash
+"$HOME/.goalfy/bin/uds-cli" self-update --api-url https://api.goalfydata.ai
+```
+
+Both `already on the latest version` and `update succeeded: <old> → <new>` are normal.
+
+If not installed, install it:
 
 ```bash
 curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
@@ -90,14 +97,16 @@ mv "$HOME/.codex/.env.tmp" "$HOME/.codex/.env"
 
 ### Step 6: Restart and verify
 
-The MCP connection only takes effect after restarting Codex; you cannot verify it in the current session — the user must do this. Output to the user verbatim:
+The MCP connection only takes effect after restarting Codex; you cannot verify it in the current session — the user must do this. Output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
 
-> ## ACTION REQUIRED: Restart Codex and verify MCP
->
-> 1. **Quit Codex completely and reopen it**
-> 2. **After restarting, confirm `goalfydata-mcp` is connected with 20 tools listed** (`uds_query`, `uds_dataset_manage`, etc.)
->
-> If it fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.codex/.env` and the key shows as valid in the console at https://goalfydata.ai/settings , then fully restart again.
+```markdown
+# ACTION REQUIRED: Restart Codex and verify MCP
+
+1. **Quit Codex completely and reopen it**
+2. **After restarting, confirm `goalfydata-mcp` is connected with 20 tools listed** (`uds_query`, `uds_dataset_manage`, etc.)
+
+If it fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.codex/.env` and the key shows as valid in the console at https://goalfydata.ai/settings , then fully restart again.
+```
 
 ### Report
 
@@ -143,11 +152,34 @@ Success: output `already on the latest version` or `update succeeded: <old> → 
 
 ### Step 3: Restart to take effect
 
-Output to the user verbatim:
+Output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
 
-> ## ACTION REQUIRED: Restart to take effect
->
-> **Quit Codex completely and reopen it — the update only takes effect afterwards.**
+```markdown
+# ACTION REQUIRED: Restart to take effect
+
+**Quit Codex completely and reopen it — the update only takes effect afterwards.**
+```
+
+---
+
+## Rotating the API Key
+
+When the user wants to rotate the API Key (or the old key has been deleted/invalidated), no separate procedure is needed: **re-run the Installation flow of this guide** from Step 1 — the flow is idempotent and will naturally direct the user to the console for a new key, log in again, update the MCP-side storage, and prompt for a restart.
+
+If the user no longer has this guide, output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
+
+```markdown
+# ACTION REQUIRED: Get the setup text again
+
+**Open the GoalfyData integration page: https://goalfydata.ai/integrations/codex**
+
+**Copy the setup text on the page and send it to me again — I will complete every step automatically, including rotating the API Key.**
+```
+
+Two exceptions that override the idempotent skip rules in the rotation case:
+
+- Step 3 (login) must NOT be skipped just because whoami succeeds — the old key may not be deleted yet; log in again with the new key
+- If login prints `WARNING: environment variable ...`, Step 5 is mandatory, and the user must restart afterwards
 
 ---
 
@@ -161,3 +193,4 @@ Output to the user verbatim:
 | MCP not connected | Check `GOALFY_UDS_API_KEY` in `~/.codex/.env`, then ask the user to fully restart Codex (you cannot restart on the user's behalf) |
 | Tools return unauthenticated | Key missing or invalid; return to Installation Step 1 |
 | Exported in terminal but Desktop cannot connect | The Desktop app does not read terminal environment variables; the key must be in `~/.codex/.env` (Installation Step 5) |
+| login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Re-run the Installation flow per "Rotating the API Key" and have the user restart |
