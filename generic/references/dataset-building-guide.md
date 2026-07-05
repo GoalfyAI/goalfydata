@@ -19,7 +19,7 @@
 
 ### 1.2 节奏
 
-- 一次问一组（不超过 5 个相关问题），**禁止**一次甩 20 个
+- 每次提问一组（不超过 5 个相关问题），**禁止**一次性提出 20 个问题
 - 每组答复后用业务语言复述确认（"所以您的 GMV 是扣退款不扣运费的净额，对吗？"）
 - 全部维度覆盖完才进入建表——浅尝辄止会导致后续方案反复推倒
 - 访谈中发现的业务口径实时调 `uds_rule_manage(action="create", task_id=<task_id>)` 落库，并一句话告知用户
@@ -32,7 +32,7 @@
 |---|---|
 | "订单状态有哪些值？" | "我扫描了状态列，发现 3 个值：已完成 / 已取消 / 处理中。这是完整的状态吗？" |
 
-**先分析再问，不反问用户不知道的** — 遇到用户可能不了解的信息，先基于数据样本自主推断，带着结论让用户确认。
+**先分析后提问，不反问用户不了解的信息** — 遇到用户可能不了解的信息，先基于数据样本自主推断，带推断结论向用户确认。
 
 | 反例（反问） | 正例（带结论确认） |
 |---|---|
@@ -47,7 +47,7 @@
 ### 1.4 自主决策 vs **必须**确认
 
 - **可自主决策**：字段命名（snake_case 转换）、表名前缀生成、衍生列命名、清洗的技术实现
-- **必须用确认（停下问用户）**：业务口径、表结构方案、数据质量处理策略、更新模式、跨表关系、大数据量处理、开启定时任务
+- **必须暂停并询问用户确认**：业务口径、表结构方案、数据质量处理策略、更新模式、跨表关系、大数据量处理、开启定时任务
 
 ### 1.5 治理规则随时落库
 
@@ -63,11 +63,11 @@
 
 **格式**：`<业务域前缀>_<表名>`
 
-**前缀生成**（向用户确认时只展示中文业务名，不展示英文前缀）：
+**前缀生成**（向用户确认时只展示业务名——使用与用户一致的语言，不展示 snake_case 前缀）：
 
 1. 从业务背景提取 2-4 个关键词，按顺序：平台/来源 + 主体 + 时间粒度
 2. 每个关键词独立转 snake_case（小写英文字母、数字、下划线）
-3. 非英文词（如中文店铺名）用拼音首字母或音译简写
+3. 非英文词（如中文店铺名）用拼音首字母或音译简写；用户语言本身为英文时直接取英文关键词
 4. 关键词之间用 `_` 连接
 5. 前缀总长度 ≤ 30 字符，前缀 + 表名总长度 ≤ 63（PG 标识符上限）
 
@@ -88,7 +88,7 @@
 | `uds-cli --task-id <task_id> schemas` | 列出可见数据集（含 schema 名） |
 | `uds-cli --task-id <task_id> exec "<SQL>" --mode reader/writer` | 执行 SQL（查询 reader，DDL/DML writer），支持 `;` 分隔多条 |
 | `uds-cli --task-id <task_id> exec --file x.sql --mode writer` | 从文件执行多条 SQL |
-| `uds-cli --task-id <task_id> import <file> --table <name> --mode <mode>` | 导入 CSV/Excel，mode=append/full_replace/upsert，upsert 加 `--upsert-keys k1,k2` |
+| `uds-cli --task-id <task_id> import <file> --table <name> --mode <mode>` | 导入数据，**只收 CSV/NDJSON**（xlsx 先 pandas 读真实值转 CSV），mode=append/full_replace/upsert，upsert 加 `--upsert-keys k1,k2` |
 | `uds-cli --task-id <task_id> inspect --table <name>` | 查看表结构（反读 target_columns 用） |
 
 表名一律用全限定名 `uds_{dataset_id}.表名`。
@@ -105,7 +105,7 @@
 
 ### 3.3 建表 COMMENT 规范
 
-建表时每个字段补独立的 `COMMENT ON COLUMN uds_{dataset_id}.<table>.<col> IS '<原始列名/业务中文名> - <含义/单位/枚举>'`，原始列名即 display_name，便于其他 Agent 理解字段。
+建表时每个字段补独立的 `COMMENT ON COLUMN uds_{dataset_id}.<table>.<col> IS '<原始列名/业务名> - <含义/单位/枚举>'`（业务名使用与用户一致的语言），原始列名即 display_name，便于其他 Agent 理解字段。
 
 ---
 
@@ -117,13 +117,13 @@
 uds-cli 命令失败
 ├── 参数/用法错误 → 修正后重试（≤ 1 次）
 ├── SQL 语法错误  → 修正后重试（≤ 1 次）
-├── 数据质量问题  → 停下来让用户决策（约束 3）
-└── 其他错误      → 停下来如实汇报（约束 2）
+├── 数据质量问题  → 暂停操作，由用户决策（约束 3）
+└── 其他错误      → 停止操作并如实汇报（约束 2）
 ```
 
 ### 4.2 重试上限
 
-单条命令最多执行 2 次（首次 + 1 次修正重试）。超过**必须**停下来按约束 2 汇报。
+单条命令最多执行 2 次（首次 + 1 次修正重试）。超过后**必须**停止操作并按约束 2 汇报。
 
 **禁止盲重试**：失败后**必须**先分析错误、定位根因、确认修正方案再重试，**禁止**不改任何东西重复执行：
 
@@ -135,13 +135,13 @@ uds-cli 命令失败
 
 `uds-cli import` 写入前按单表上限（当前固定 20,000,000 行，暂不支持调整）做批校验，超限时整批 rollback 并返回 `ROW_LIMIT_EXCEEDED`。
 
-**禁止**盲目分批/截断重试——会导致数据被静默截断，违反约束 2。正确处置：停下来让用户三选一：
+**禁止**盲目分批/截断重试——会导致数据被静默截断，违反约束 2。正确处置：暂停操作，由用户在以下三种方案中选择：
 
 1. **改用 `full_replace` 模式** — 先 TRUNCATE 再写，写入后行数 = 新数据行数。前提：用户确认旧数据可丢；append/upsert 下**禁止**自作主张切换
-2. **清理旧数据** — 给一段示意 `uds-cli --task-id <task_id> exec "DELETE FROM uds_{dataset_id}.<table> WHERE <条件>"`（按时间窗口/业务维度），用户确认条件后执行，**禁止**直接 TRUNCATE 不问
+2. **清理旧数据** — 提供一段示例 `uds-cli --task-id <task_id> exec "DELETE FROM uds_{dataset_id}.<table> WHERE <条件>"`（按时间窗口/业务维度），用户确认条件后执行，**禁止**直接 TRUNCATE 不问
 3. **按维度拆表** — 单表上限 2000 万行暂不支持调整，按时间窗口或业务维度拆分为多张表
 
-**禁止**：收到 ROW_LIMIT_EXCEEDED 后悄悄丢部分行重试；把超限当普通"导入失败"走重试（重试也是同样失败）；未经确认就切 `full_replace`。
+**禁止**：收到 ROW_LIMIT_EXCEEDED 后悄悄丢部分行重试；把超限当作普通"导入失败"进行重试（重试也是同样失败）；未经确认即切换为 `full_replace`。
 
 ---
 
@@ -179,15 +179,17 @@ uds-cli 命令失败
 | 2. 建表方案确认 | 向用户展示字段业务含义，确认表结构 | 约束 3 |
 | 3. 建表 | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.表名 (...)"` | 字段 snake_case；建表前先读本文档第 2-3 节（命名规范 + PG 语法陷阱） |
 | 4. 注册元数据 | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | 约束 4 |
-| 5. 导入数据 | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.表名 --mode full_replace` | |
-| 6. 质量检查 | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.表名"` 检查行数、空值、重复 | upsert 需跑两次验幂等 |
+| 5. 导入数据 | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.表名 --mode full_replace` | 只收 CSV/NDJSON；源文件是 xlsx 时先 pandas 读真实值转 CSV |
+| 6. 质量检查 | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.表名"` 检查行数、空值、重复 | upsert 需执行两次以验证幂等性 |
 | 7. 反读列定义 | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.表名` → 取 target_columns | 禁止凭空编造 |
-| 8. 确认更新模式 | 问用户：append / full_replace / upsert？是否需要定时更新？ | |
-| 9. 完善配置 | `uds_table_manage(action="update", update_mode=..., target_columns=..., sources=..., task_id=<task_id>)` | |
+| 8. 确认更新模式 | 询问用户：append / full_replace / upsert？后续手动上传更新还是定时拉取？ | |
+| 9. 写更新脚本 | 按 SKILL.md 4.3 脚本规范写脚本（upload 源 `transform` / script 源 `fetch`），`uds-cli --task-id <task_id> upload 脚本.py --dataset ... --type script` → 获取 workspace_path | **必做**：脚本必须复刻本表建表时的全部清洗动作（步骤 1-5 中确认过的类型转换/列名规范化/衍生列）；非显而易见的清洗动作同步 `uds_rule_manage(create, rule_type="cleaning")` 落库（业务口径事实源）。跨会话修脚本用 `uds-cli download-script <script_file> --dataset ...` 获取下载 URL、curl 下载后修改 |
+| 10. 生成模板文件 | upload 源表必做：生成 xlsx 模板（规范见 data-quality-guide 4.2/4.3），`uds-cli upload 模板.xlsx --dataset ... --type sample` → 获取 workspace_path | 用户原始文件干净时可直接将其以 `--type sample` 上传登记为样例 |
+| 11. 完善配置 | `uds_table_manage(action="update", update_mode=..., target_columns=..., sources=[{type: upload, entry: transform}]或[{type: script, entry: fetch, schedule: ...}], script_file=..., sample_file=..., task_id=<task_id>)` | **强制脚本契约**：upload/script 源必须有 script_file；upload 源还必须有 sample_file，缺一注册被拒 |
 
 **upsert 幂等性验证**（update_mode=upsert 时必做）：
 
-步骤 5 首次导入成功后，用同样的数据再跑一次导入，然后检查：
+步骤 5 首次导入成功后，用同样的数据再执行一次导入，然后检查：
 1. `SELECT COUNT(*)` — 行数应与首次一致（无重复行）
 2. `SELECT ... GROUP BY <upsert_keys> HAVING COUNT(*) > 1` — 应为空（主键无重复）
 3. 行数翻倍或主键重复 → 修复 `--upsert-keys` 配置后重新从步骤 5 开始
@@ -205,7 +207,7 @@ uds-cli 命令失败
 - **业务逻辑合理性**：金额 >= 0、日期在合理范围内、枚举值在预期集合内
 - **业务查询验证**：写 2-3 条典型业务查询，向用户展示结果确认
 
-任何问题停下来让用户决策（约束 3）。
+任何问题暂停操作，由用户决策（约束 3）。
 
 ---
 
@@ -237,5 +239,6 @@ uds-cli 命令失败
 | 表清单或字段含义变了 | `uds_dataset_manage(update, tool_usage_guide=..., task_id=<task_id>)` |
 | 新增关联字段 | `uds_relations_set(action="create", task_id=<task_id>)` 增量新增，或 replace 全量覆盖 |
 | 新增计算口径 | `uds_rule_manage(action="create", task_id=<task_id>)` |
-| 脚本逻辑受影响 | 修改脚本 → `uds-cli --task-id <task_id> upload` 重新上传 → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
+| 脚本逻辑受影响 | 修改脚本 → `uds-cli --task-id <task_id> upload --type script` 重新上传 → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
+| upload 表结构变了 | 重新生成模板文件 → `uds-cli upload --type sample` → `uds_table_manage(update, sample_file=..., task_id=<task_id>)` |
 | 删列/改列名且该表有权限策略 | `uds_policy_manage(action="update", task_id=<task_id>)` 更新 row_filters/column_rules 中引用的列，否则策略 View 失效 |
