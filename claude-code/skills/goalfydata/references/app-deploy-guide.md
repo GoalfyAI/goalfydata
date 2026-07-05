@@ -76,26 +76,26 @@
 **新应用 vs 新版本**：
 - 不传 `app_id` = 创建全新应用（新 app_id + 新 URL）
 - 传 `app_id` = 更新已有应用（复用 app_name + 数据集绑定，URL 不变）
-- 同名 + 同数据集但不传 app_id = 另一个全新应用（不会覆盖旧的）
+- 同名 + 同数据集但不传 app_id = 另一个全新应用（不会覆盖原应用）
 
 **回滚行为**：
-- `direction="back"` — 当前版下线、上一版上线，秒切同 URL
+- `direction="back"` — 当前版下线、上一版上线，瞬时切换且 URL 不变
 - `direction="forward"` — 撤销回滚，把更新的版本切回来
 - 回滚前先 `uds_app_status(task_id=<task_id>)` 检查 `can_rollback`
 
 **下线与恢复**：
 - `offline` 拆容器，URL 不可访问，代码和配置保留
-- `online` 重新拉起（重建容器），URL 恢复可访问
+- `online` 重新启动（重建容器），URL 恢复可访问
 - `delete` 永久删除，不可恢复
 
 ---
 
 ## 4. 完整部署流程（Step by Step）
 
-以下是从起项目到确认上线的完整流程：
+以下是从初始化项目到确认上线的完整流程：
 
 ```
-1. 起项目
+1. 初始化项目
    uds_init_project(mode="template", task_id=<task_id>) → 返回 download_url（tar.gz 源码包）
    本地下载解包到工作目录
 
@@ -121,7 +121,7 @@
    uds_app_status(deploy_id=..., task_id=<task_id>) → status="online" 即部署成功
 
 7. 新版本部署（同 URL 覆盖）
-   传 app_id（首次部署返回的）→ uds_app_deploy(app_id=..., filename=..., task_id=<task_id>) 走同样两步流程
+   传 app_id（首次部署返回的）→ uds_app_deploy(app_id=..., filename=..., task_id=<task_id>) 执行同样的两步流程
    不传 app_id = 创建全新应用（新 URL），传 app_id = 更新已有应用（URL 不变，保留最近 2 版可回滚）
 ```
 
