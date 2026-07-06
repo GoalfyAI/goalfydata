@@ -40,7 +40,7 @@
 未安装时执行安装：
 
 ```powershell
-irm https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.ps1 | iex
+irm https://cdn.goalfydata.ai/dataset-uds/install.ps1 | iex
 ```
 
 成功标志：输出 `uds-cli <版本号> installed to <路径>\.goalfy\bin\uds-cli.exe`。
