@@ -20,7 +20,7 @@ uds-cli is used for data plane operations (executing SQL, importing data, viewin
 
 macOS / Linux:
 ```bash
-curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
+curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
 # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
 uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
 ```
