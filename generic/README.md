@@ -77,19 +77,20 @@ If the Agent calls the MCP tool and returns a dataset list, the integration is s
 
 ### Skill update
 
-The MCP connection points to a remote service and does not require configuration updates. Skill files need to be pulled again:
+The MCP connection points to a remote service and does not require configuration updates. Re-fetch the skill files the same way you originally obtained them:
 
-```bash
-cd goalfydata && git pull
-```
+- **Downloaded the zip**: download [goalfydata-generic.zip](https://github.com/GoalfyAI/goalfydata/raw/main/generic/goalfydata-generic.zip) again and unpack it
+- **Cloned the repository**: `cd goalfydata && git pull`
 
-Then re-import the latest `SKILL.md` and `references/` into your tool following Step 4.
+Then re-import the latest `SKILL.md` and `references/` into your tool following Step 4, and **start a new session** (skills are only loaded at session start — without a new session the update does not take effect).
 
 ### uds-cli update
 
 ```bash
 uds-cli self-update
 ```
+
+Both `already on the latest version` and `update succeeded: <old> → <new>` are normal; if it reports the API URL is not configured, run `uds-cli self-update --api-url https://api.goalfydata.ai` instead.
 
 ---
 

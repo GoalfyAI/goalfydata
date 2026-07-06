@@ -77,19 +77,20 @@ Agent 调用 MCP 工具返回数据集列表即为接入成功。
 
 ### Skill 更新
 
-MCP 连接指向远程服务，无需更新配置。Skill 文件需要重新拉取：
+MCP 连接指向远程服务，无需更新配置。Skill 文件按你当初的获取方式重新获取：
 
-```bash
-cd goalfydata && git pull
-```
+- **下载 zip 的**：重新下载 [goalfydata-generic.zip](https://github.com/GoalfyAI/goalfydata/raw/main/generic/goalfydata-generic.zip) 并解压
+- **clone 仓库的**：`cd goalfydata && git pull`
 
-然后按第 4 步的方式重新导入最新的 `SKILL.md` 和 `references/` 到你的工具。
+然后按第 4 步的方式重新导入最新的 `SKILL.md` 和 `references/` 到你的工具，并**重开会话**（技能仅在会话开始时加载，不重开不生效）。
 
 ### uds-cli 更新
 
 ```bash
 uds-cli self-update
 ```
+
+输出 `already on the latest version` 或 `update succeeded: <旧版本> → <新版本>` 均为正常；若提示 API URL 未配置，改用 `uds-cli self-update --api-url https://api.goalfydata.ai`。
 
 ---
 
