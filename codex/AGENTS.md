@@ -180,9 +180,31 @@ Output the template below to the user word for word:
 
 ## Rotating the API Key
 
-When the user wants to rotate the API Key (or the old key has been deleted/invalidated), no separate procedure is needed: **re-run the Installation flow of this guide** from Step 1 (skip the Step 0 routing in the rotation case — the key is being replaced, so it must be requested again) — the flow is idempotent and will naturally direct the user to create a new key, log in again, update the MCP-side storage, and prompt for a restart.
+Run this section when the user wants to rotate the API Key (or the old key has been deleted/invalidated). Understand the key's activation model first — otherwise the rotation silently fails:
 
-If the user no longer has this guide, output the template below to the user word for word:
+- The key lives in two places: `~/.goalfy/config.json` (written by login, read by uds-cli) and `~/.codex/.env` (used for the MCP request header, and also injected into the agent's session environment)
+- Precedence: environment variables override the config — if `~/.codex/.env` is not updated, the stale environment value overrides the newly saved key
+- Activation timing: the config takes effect immediately; `~/.codex/.env` and the session environment only take effect **after a full restart**
+
+Execute in order (skip the Step 0 routing in the rotation case):
+
+1. Direct the user to create a new key: run Installation Step 1 (output the key-request template)
+2. Log in again with the new key: run Installation Step 3, **never skipped just because whoami passes** (the old key may not be deleted yet)
+3. Update the MCP-side storage: run Installation Step 5, **unconditionally — never skipped because its check passes**. `~/.codex/.env` still holds the old key; without this update, MCP and new sessions keep using the old key after restart (whether login printed `WARNING: environment variable ...` only reflects the current session environment and must not be used as a reason to skip)
+4. Consistency check: confirm both `~/.goalfy/config.json` and `~/.codex/.env` now hold the new key (compare the first characters after gfk_)
+5. Output the template below to the user word for word:
+
+```markdown
+# ACTION REQUIRED: Restart to activate the new API Key
+
+**Quit Codex completely and reopen it.** The current session environment and the MCP connection are still using the old key; they only switch to the new key after a full restart.
+
+**After restarting, if the old key has not been deleted yet, consider removing it at https://goalfydata.ai/settings to avoid mixing keys.**
+```
+
+Acceptance (in the user's new session after restart): `uds-cli whoami` shows the new key prefix, and MCP tools no longer return unauthenticated.
+
+If the user no longer has this guide, output the template below to the user word for word:If the user no longer has this guide, output the template below to the user word for word:
 
 ```markdown
 # ACTION REQUIRED: Get the setup text again
@@ -191,11 +213,6 @@ If the user no longer has this guide, output the template below to the user word
 
 **Copy the setup text on the page and send it to me again — I will complete every step automatically, including rotating the API Key.**
 ```
-
-Two exceptions that override the idempotent skip rules in the rotation case:
-
-- Step 3 (login) must NOT be skipped just because whoami succeeds — the old key may not be deleted yet; log in again with the new key
-- If login prints `WARNING: environment variable ...`, Step 5 is mandatory, and the user must restart afterwards
 
 ---
 
