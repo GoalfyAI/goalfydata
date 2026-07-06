@@ -186,9 +186,31 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 
 ## 更换 API Key
 
-用户要求更换 API Key（或旧 Key 已删除/失效）时，不需要单独的流程：**重新执行本手册的安装流程**，从第 1 步开始走一遍即可（更换场景不做第 0 步分流，Key 要换所以必须重新索取）——流程幂等，会自动引导用户创建新 Key、重新登录、更新 MCP 侧存储并提示重启。
+用户要求更换 API Key（或旧 Key 已删除/失效）时执行本节。先理解 Key 的生效模型，否则容易换了个寂寞：
 
-用户手上没有本手册时，向用户逐字输出下面的模板：
+- Key 存在两处：`~/.goalfy/config.json`（login 写入，uds-cli 读取）和 `~/.claude/settings.json` 的 `env`（供 MCP 请求头使用，同时会注入 Agent 的会话环境变量）
+- 优先级：环境变量高于 config——`~/.claude/settings.json` 的 `env` 不更新，login 写入的新 Key 会被旧环境值覆盖
+- 生效时点：config 立即生效；`~/.claude/settings.json` 的 `env` 与会话环境仅在**完全重启后**生效
+
+按顺序执行（更换场景不做第 0 步分流）：
+
+1. 引导用户到官网创建新 Key：执行安装流程第 1 步（输出要 Key 模板）
+2. 用新 Key 重新登录：执行安装流程第 3 步，**不得因 whoami 通过而跳过**（旧 Key 可能尚未删除）
+3. 更新 MCP 侧存储：执行安装流程第 5 步，**无条件必做、不得因检查通过而跳过**——`~/.claude/settings.json` 里存的还是旧 Key，不更新则重启后 MCP 和新会话仍用旧 Key（login 是否输出 `WARNING: environment variable ...` 只反映当前会话环境，不能作为跳过依据）
+4. 换 Key 一致性校验：确认 `~/.goalfy/config.json` 与 `~/.claude/settings.json` 中的 Key 均为新值（对比 gfk_ 后的前几位）
+5. 向用户逐字输出下面的模板：
+
+```markdown
+# 需要您操作：重启使新 API Key 生效
+
+**请完全退出并重新打开 Claude Code。** 当前会话的环境变量与 MCP 连接仍在使用旧 Key，仅在完全重启后才会切换为新 Key。
+
+**重启后如旧 Key 尚未删除，建议前往 https://goalfydata.ai/settings 删除，避免混用。**
+```
+
+验收标准（在用户重启后的新会话中）：`uds-cli whoami` 显示的 Key 前缀为新值，MCP 工具调用不再返回未认证。
+
+用户手上没有本手册时，向用户逐字输出下面的模板：用户手上没有本手册时，向用户逐字输出下面的模板：
 
 ```markdown
 # 需要您操作：重新获取接入文本
@@ -197,11 +219,6 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 
 **请复制页面上的接入文本并重新发送给我，我将自动完成包括更换 API Key 在内的全部步骤。**
 ```
-
-换 Key 场景的两条例外（覆盖幂等跳过规则）：
-
-- 第 3 步（登录）不得因 whoami 通过而跳过——旧 Key 可能尚未删除，必须用新 Key 重新执行 login
-- login 输出 `WARNING: environment variable ...` 时，第 5 步必须执行，完成后必须让用户重启
 
 ---
 
