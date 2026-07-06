@@ -8,7 +8,7 @@ Get set up in 3 minutes and let Codex help you build real-time data assets.
 
 ## Step 1 -- Get an API Key
 
-Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
+Go to the [GoalfyData](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
 
 The plaintext key is only shown once at creation time. Save it in a secure location.
 
@@ -111,7 +111,7 @@ Share this dataset with xxx@example.com
 ### MCP Connection Failed
 
 1. Check whether `GOALFY_UDS_API_KEY` exists in `~/.codex/.env`
-2. Confirm the API Key is valid (verify in the console)
+2. Confirm the API Key is valid (verify at https://goalfydata.ai/settings)
 3. Fully quit and restart Codex
 
 ### uds-cli Command Not Found
@@ -154,7 +154,7 @@ When the old key is deleted or needs rotation, complete all steps in order (logg
 
 The easiest way: copy the setup text from the official integration page ( https://goalfydata.ai/integrations/codex ) and send it to your agent again and it handles everything. Manual steps:
 
-1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
 2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
 3. Update the value of `GOALFY_UDS_API_KEY` in `~/.codex/.env` to the new key
 4. Quit Codex completely and reopen it

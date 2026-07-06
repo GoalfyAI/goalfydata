@@ -10,7 +10,7 @@ If you are using one of the platforms above, refer to the README in the correspo
 
 ### Step 1: Obtain API Key
 
-Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
+Go to the [GoalfyData](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
 
 The plaintext key is only shown once at creation time -- save it securely.
 
@@ -97,7 +97,7 @@ uds-cli self-update
 
 When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP):
 
-1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
 2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
 3. Update the key in the `Authorization` header (or the corresponding environment variable) of your MCP configuration
 4. Fully restart your agent tool

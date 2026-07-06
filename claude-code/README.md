@@ -118,7 +118,7 @@ When the old key is deleted or needs rotation, complete all steps in order (logg
 
 The easiest way: copy the setup text from the official integration page ( https://goalfydata.ai/integrations/claude-code ) and send it to your agent again and it handles everything. Manual steps:
 
-1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
 2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
 3. Update the value of `GOALFY_UDS_API_KEY` in `~/.claude/settings.json` to the new key
 4. Quit Claude Code completely and reopen it
