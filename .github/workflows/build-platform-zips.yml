@@ -9,15 +9,32 @@ on:
       - 'manus/skill/**'
       - 'generic/**'
       - '!**/*.zip'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Commits are authored and pushed as goalfydata-bot[bot] via a GitHub App
+      # token, so automation never shows up under a personal or org user account.
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Resolve bot user id
+        id: bot-user
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}%5Bbot%5D" --jq .id)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Build ZIPs
         run: |
@@ -26,8 +43,8 @@ jobs:
 
       - name: Commit and push ZIPs
         run: |
-          git config user.name "GoalfyData"
-          git config user.email "goalfymax@goalfyai.com"
+          git config user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config user.email "${{ steps.bot-user.outputs.id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
           git add manus/goalfydata-skill.zip generic/goalfydata-generic.zip
           if git diff --cached --quiet; then
             echo "No ZIP changes detected, skipping commit."
