@@ -159,6 +159,8 @@ The easiest way: copy the setup text from the official integration page ( https:
 3. Update the value of `GOALFY_UDS_API_KEY` in `~/.codex/.env` to the new key
 4. Quit Codex completely and reopen it
 
+> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the new key after a full restart. Afterwards, run `uds-cli whoami` to confirm the displayed key prefix is the new one.
+
 ---
 
 ## Next Steps

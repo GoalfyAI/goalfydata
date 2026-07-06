@@ -123,6 +123,8 @@ uds-cli self-update
 3. 把 `~/.claude/settings.json` 中 `GOALFY_UDS_API_KEY` 的值更新为新 Key
 4. 完全退出并重新打开 Claude Code
 
+> 为什么必须重启：login 保存的配置立即生效，但配置文件注入的环境变量和 MCP 连接只在完全重启后才切换为新 Key。重启后可用 `uds-cli whoami` 确认显示的 Key 前缀已是新值。
+
 ## 使用
 
 插件加载后，Claude Code 会根据任务自动激活 skill。也可以手动调用：

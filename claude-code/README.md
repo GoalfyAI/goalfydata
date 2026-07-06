@@ -123,6 +123,8 @@ The easiest way: copy the setup text from the official integration page ( https:
 3. Update the value of `GOALFY_UDS_API_KEY` in `~/.claude/settings.json` to the new key
 4. Quit Claude Code completely and reopen it
 
+> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the new key after a full restart. Afterwards, run `uds-cli whoami` to confirm the displayed key prefix is the new one.
+
 ## Usage
 
 Once the plugin is loaded, Claude Code automatically activates skills based on the task. You can also invoke manually:
