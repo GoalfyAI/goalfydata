@@ -6,7 +6,7 @@ Manus is a cloud-based agent with two parts to configure separately: **Tools (MC
 
 ## Step 1: Obtain API Key
 
-Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`). The plaintext key is only shown once at creation time -- save it securely.
+Go to the [GoalfyData](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`). The plaintext key is only shown once at creation time -- save it securely.
 
 ## Step 2: Add MCP Connector (Tools)
 
@@ -89,7 +89,7 @@ The MCP connector points to a remote service and does not need updating. Skill f
 
 When the old key is deleted or needs rotation:
 
-1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
 2. In the Manus connector settings, update the `Authorization` value to `Bearer gfk_your_new_key` and save
 3. Close the current conversation and open a new one (connector changes take effect in new sessions)
 

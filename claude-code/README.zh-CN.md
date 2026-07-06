@@ -118,7 +118,7 @@ uds-cli self-update
 
 最简单的方式：到官网集成页（ https://goalfydata.ai/integrations/claude-code ）重新复制接入文本发给你的 Agent，由它自动完成全部步骤。手动操作如下：
 
-1. 到 [GoalfyData 控制台](https://goalfydata.ai/settings) 删除旧 Key，创建并复制新 Key
+1. 到 [GoalfyData](https://goalfydata.ai/settings) 删除旧 Key，创建并复制新 Key
 2. 重新登录：`uds-cli login --api-key gfk_新Key --api-url https://api.goalfydata.ai`
 3. 把 `~/.claude/settings.json` 中 `GOALFY_UDS_API_KEY` 的值更新为新 Key
 4. 完全退出并重新打开 Claude Code

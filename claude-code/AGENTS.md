@@ -3,7 +3,7 @@
 While executing this guide, you must follow these rules:
 
 1. Only run the commands listed here; only write to `~/.claude/settings.json` (merge-write) and the Claude Code plugin directory
-2. When mentioning obtaining or verifying the API Key to the user, include the console link https://goalfydata.ai/settings
+2. When mentioning obtaining or verifying the API Key to the user, include the settings link https://goalfydata.ai/settings
 3. The API Key must come from the user — never fabricate one or proceed with a placeholder
 
 Every step starts with a check command: skip steps that are already done; re-running any step is safe.
@@ -21,7 +21,7 @@ Output the contents of the template below to the user word for word (as normal b
 
 **Do you already have a GoalfyData API Key (shaped like `gfk_xxx`)? If so, send it to me directly.**
 
-**If not, create one in the GoalfyData console: https://goalfydata.ai/settings ("Settings → API Key"; the plaintext is shown only once at creation — store it safely). No account yet? Open https://goalfydata.ai to sign up.**
+**If not, create one in GoalfyData: https://goalfydata.ai/settings ("Settings → API Key"; the plaintext is shown only once at creation — store it safely). No account yet? Open https://goalfydata.ai to sign up.**
 
 Send me the API Key once created, and I will finish the remaining steps.
 ```
@@ -110,7 +110,7 @@ The MCP connection only takes effect after a restart; you cannot verify it in th
 1. **Quit Claude Code completely and reopen it**
 2. **After restarting, type `/mcp` and confirm `goalfydata-mcp` shows connected + 20 tools**
 
-If it fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.claude/settings.json` and the key shows as valid in the console at https://goalfydata.ai/settings , then fully restart again.
+If it fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.claude/settings.json` and the key shows as valid at https://goalfydata.ai/settings , then fully restart again.
 ```
 
 ### Report
@@ -171,7 +171,7 @@ Output the contents of the template below to the user word for word (as normal b
 
 ## Rotating the API Key
 
-When the user wants to rotate the API Key (or the old key has been deleted/invalidated), no separate procedure is needed: **re-run the Installation flow of this guide** from Step 1 — the flow is idempotent and will naturally direct the user to the console for a new key, log in again, update the MCP-side storage, and prompt for a restart.
+When the user wants to rotate the API Key (or the old key has been deleted/invalidated), no separate procedure is needed: **re-run the Installation flow of this guide** from Step 1 — the flow is idempotent and will naturally direct the user to create a new key, log in again, update the MCP-side storage, and prompt for a restart.
 
 If the user no longer has this guide, output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
 

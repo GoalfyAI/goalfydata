@@ -8,7 +8,7 @@ Get set up in 3 minutes and let Manus help you build real-time data assets.
 
 ## Step 1 -- Get an API Key
 
-Go to the [GoalfyData Console](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
+Go to the [GoalfyData](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
 
 The plaintext key is only shown once at creation time. Save it in a secure location.
 
@@ -137,7 +137,7 @@ MCP connector points to the remote service, no update needed. Skill files need t
 
 When the old key is deleted or needs rotation:
 
-1. Delete the old key and create/copy a new one in the [GoalfyData console](https://goalfydata.ai/settings)
+1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
 2. In the Manus connector settings, update the `Authorization` value to `Bearer gfk_your_new_key` and save
 3. Close the current conversation and open a new one (connector changes take effect in new sessions)
 
