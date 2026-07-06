@@ -79,6 +79,8 @@ codex plugin add goalfydata@goalfydata
 uds-cli self-update
 ```
 
+Both `already on the latest version` and `update succeeded: <old> → <new>` are normal; if it reports the API URL is not configured, run `uds-cli self-update --api-url https://api.goalfydata.ai` instead.
+
 ## Rotating the API Key
 
 When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP).

@@ -112,6 +112,8 @@ claude plugin marketplace update goalfydata
 uds-cli self-update
 ```
 
+输出 `already on the latest version` 或 `update succeeded: <旧版本> → <新版本>` 均为正常；若提示 API URL 未配置，改用 `uds-cli self-update --api-url https://api.goalfydata.ai`。
+
 ## 更换 API Key
 
 旧 Key 删除或需要轮换时，按顺序完成全部步骤（只做 login 不够：环境变量的优先级高于登录保存的配置，残留的旧值会让 uds-cli 和 MCP 继续使用旧 Key）。
