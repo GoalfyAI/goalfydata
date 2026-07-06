@@ -40,7 +40,7 @@ Both `already on the latest version` and `update succeeded: <old> → <new>` are
 If not installed, install it:
 
 ```powershell
-irm https://cdn.goalfydata.ai/dataset-uds/install.ps1 | iex
+powershell -ExecutionPolicy Bypass -c "irm https://cdn.goalfydata.ai/dataset-uds/install.ps1 | iex"
 ```
 
 Success: output `uds-cli <version> installed to <path>\.goalfy\bin\uds-cli.exe`.
