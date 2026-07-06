@@ -5,7 +5,7 @@
 1. 只执行本手册列出的命令；只写入 `~/.claude/settings.json`（合并写入）和 Claude Code 插件目录
 2. 向用户提及获取或核实 API Key 时，附上设置页链接 https://goalfydata.ai/settings
 3. API Key 必须由用户提供，不编造、不用占位符
-4. 凡需要用户亲自操作或提供信息的内容，一律用「需要你操作」模板逐字输出：作为正文直接输出，不要放进代码块或引用块；一级标题和加粗必须保留，不得改写成普通句子
+4. 凡需要用户亲自操作或提供信息的内容，一律用「需要您操作」模板逐字输出：作为正文直接输出，不要放进代码块或引用块；一级标题和加粗必须保留，不得改写成普通句子
 
 每一步开头都有检查命令：已完成的步骤直接跳过，重复执行是安全的。
 
@@ -33,13 +33,13 @@ claude plugin list | grep goalfydata                   # 插件是否已安装
 向用户逐字输出下面的模板，拿到 API Key 后再继续：
 
 ```markdown
-# 需要你操作：提供 GoalfyData API Key
+# 需要您操作：提供 GoalfyData API Key
 
-**你是否已有 GoalfyData API Key（形如 `gfk_xxx`）？已有请直接发给我。**
+**请问您是否已持有 GoalfyData API Key（形如 `gfk_xxx`）？如已持有，请直接发送给我。**
 
-**如果还没有，请到 GoalfyData 创建：https://goalfydata.ai/settings （「设置 → API Key」，明文仅在创建时显示一次，请妥善保存）。没有账号可打开 https://goalfydata.ai 注册申请。**
+**如尚未持有，请前往 GoalfyData 创建：https://goalfydata.ai/settings （「设置 → API Key」，明文仅在创建时显示一次，请妥善保存）。如尚无账号，可访问 https://goalfydata.ai 注册。**
 
-创建后把 API Key 发给我，我来完成剩余步骤。
+创建完成后，请将 API Key 发送给我，我将为您完成剩余步骤。
 ```
 
 ### 第 2 步：安装 uds-cli
@@ -121,12 +121,12 @@ claude plugin install goalfydata@goalfydata
 MCP 连接在重启后才生效，你在当前会话验证不了，必须由用户完成。向用户逐字输出下面的模板：
 
 ```markdown
-# 需要你操作：重启并验证 MCP
+# 需要您操作：重启并验证 MCP
 
-1. **完全退出并重新打开 Claude Code**
-2. **重启后输入 `/mcp`，确认 `goalfydata-mcp` 状态为 connected + 20 tools**
+1. **请完全退出并重新打开 Claude Code**
+2. **重启后请输入 `/mcp`，确认 `goalfydata-mcp` 状态为 connected + 20 tools**
 
-如果显示失败：确认 `~/.claude/settings.json` 里有 `GOALFY_UDS_API_KEY`，且该 Key 在 https://goalfydata.ai/settings 显示有效，然后再完全重启一次。
+若显示失败：请确认 `~/.claude/settings.json` 中已配置 `GOALFY_UDS_API_KEY`，且该 Key 在 https://goalfydata.ai/settings 显示为有效，随后再次完全重启。
 ```
 
 ### 汇报
@@ -141,13 +141,13 @@ GoalfyData 安装结果：
 - 插件 goalfydata 已安装
 - API Key 已写入 ~/.claude/settings.json
 
-【需要你操作】
+【需要您操作】
 - 重启 Claude Code 后输入 /mcp 验证连接（见上）
 
 【未完成】
 -（无 / 列出原因）
 
-之后直接描述需求即可，例如"帮我把这个 Excel 建成数据集"。更多用法见 https://goalfydata.ai 。
+后续您可直接描述需求，例如"帮我把这个 Excel 文件构建为数据集"。更多用法请见 https://goalfydata.ai 。
 ```
 
 ---
@@ -177,7 +177,7 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 向用户逐字输出下面的模板：
 
 ```markdown
-# 需要你操作：重启生效
+# 需要您操作：重启生效
 
 **请在会话中执行 `/reload-plugins`，或完全退出并重新打开 Claude Code，更新才会生效。**
 ```
@@ -191,11 +191,11 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 用户手上没有本手册时，向用户逐字输出下面的模板：
 
 ```markdown
-# 需要你操作：重新获取接入文本
+# 需要您操作：重新获取接入文本
 
 **请打开 GoalfyData 官网集成页：https://goalfydata.ai/integrations/claude-code**
 
-**复制页面上的接入文本并重新发给我，我会自动完成包括更换 API Key 在内的全部步骤。**
+**请复制页面上的接入文本并重新发送给我，我将自动完成包括更换 API Key 在内的全部步骤。**
 ```
 
 换 Key 场景的两条例外（覆盖幂等跳过规则）：
