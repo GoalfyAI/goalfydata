@@ -39,7 +39,7 @@ Both `already on the latest version` and `update succeeded: <old> → <new>` are
 If not installed, install it:
 
 ```bash
-curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
+curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
 ```
 
 Success: output `uds-cli <version> installed to <absolute-home-path>/.goalfy/bin/uds-cli`.

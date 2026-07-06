@@ -39,7 +39,7 @@
 未安装时执行安装：
 
 ```bash
-curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
+curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
 ```
 
 成功标志：输出 `uds-cli <版本号> installed to <家目录绝对路径>/.goalfy/bin/uds-cli`。

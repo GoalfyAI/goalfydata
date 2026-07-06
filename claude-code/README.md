@@ -17,7 +17,7 @@ Claude Code plugin for connecting to the GoalfyData universal dataset service.
 
    macOS / Linux:
    ```bash
-   curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
+   curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
    # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
    uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
    ```

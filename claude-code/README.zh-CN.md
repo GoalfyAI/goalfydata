@@ -17,7 +17,7 @@ Claude Code 插件，用于连接 GoalfyData 通用数据集服务。
 
    macOS / Linux:
    ```bash
-   curl -fsSL https://goalfyagent-public.s3.amazonaws.com/dataset-uds/install.sh | sh
+   curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
    # 若提示 command not found：用 "$HOME/.goalfy/bin/uds-cli" 代替 uds-cli
    uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
    ```
