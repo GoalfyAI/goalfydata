@@ -6,6 +6,7 @@ While executing this guide, you must follow these rules:
 2. When mentioning obtaining or verifying the API Key to the user, include the settings link https://goalfydata.ai/settings
 3. The API Key must come from the user — never fabricate one or proceed with a placeholder
 4. Run all commands in PowerShell
+5. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template word for word: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences
 
 Every step starts with a check command: skip steps that are already done; re-running any step is safe.
 
@@ -13,9 +14,24 @@ Every step starts with a check command: skip steps that are already done; re-run
 
 ## Installation
 
+### Step 0: Detect the current state (install vs update)
+
+The following are all check commands — no user interaction. Route by the result:
+
+```powershell
+Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"          # CLI installed?
+& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami           # logged in? ($LASTEXITCODE 0 = yes)
+Select-String GOALFY_UDS_API_KEY "$env:USERPROFILE\.codex\.env" # MCP-side key configured?
+codex plugin list | Select-String goalfydata                     # plugin installed?
+```
+
+- All four pass → the user has a complete installation: **switch to the Update flow directly**, asking the user for nothing
+- Some pass → run only the steps for the failing items; when whoami passes, skip Steps 1 and 3 (the key is already saved locally — do not ask for it again)
+- None pass → full installation from Step 1
+
 ### Step 1: Confirm the API Key
 
-Output the contents of the template below to the user word for word (as normal body text — not inside a code block or blockquote; the level-1 heading and bold must be preserved, never rewritten as plain sentences), and continue only after receiving the key:
+Output the template below to the user word for word, and continue only after receiving the key:
 
 ```markdown
 # ACTION REQUIRED: Provide your GoalfyData API Key
@@ -102,7 +118,7 @@ Re-run the check command after writing to confirm the line is present.
 
 ### Step 6: Restart and verify
 
-The MCP connection only takes effect after restarting Codex; you cannot verify it in the current session — the user must do this. Output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
+The MCP connection only takes effect after restarting Codex; you cannot verify it in the current session — the user must do this. Output the template below to the user word for word:
 
 ```markdown
 # ACTION REQUIRED: Restart Codex and verify MCP
@@ -157,7 +173,7 @@ Success: output `already on the latest version` or `update succeeded: <old> → 
 
 ### Step 3: Restart to take effect
 
-Output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
+Output the template below to the user word for word:
 
 ```markdown
 # ACTION REQUIRED: Restart to take effect
@@ -169,9 +185,9 @@ Output the contents of the template below to the user word for word (as normal b
 
 ## Rotating the API Key
 
-When the user wants to rotate the API Key (or the old key has been deleted/invalidated), no separate procedure is needed: **re-run the Installation flow of this guide** from Step 1 — the flow is idempotent and will naturally direct the user to create a new key, log in again, update the MCP-side storage, and prompt for a restart.
+When the user wants to rotate the API Key (or the old key has been deleted/invalidated), no separate procedure is needed: **re-run the Installation flow of this guide** from Step 1 (skip the Step 0 routing in the rotation case — the key is being replaced, so it must be requested again) — the flow is idempotent and will naturally direct the user to create a new key, log in again, update the MCP-side storage, and prompt for a restart.
 
-If the user no longer has this guide, output the contents of the template below to the user word for word (as normal body text; the level-1 heading and bold must be preserved):
+If the user no longer has this guide, output the template below to the user word for word:
 
 ```markdown
 # ACTION REQUIRED: Get the setup text again
