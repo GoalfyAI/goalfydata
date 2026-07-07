@@ -186,7 +186,7 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 
 ## 更换 API Key
 
-用户要求更换 API Key（或旧 Key 已删除/失效）时执行本节。先理解 Key 的生效模型，否则容易换了个寂寞：
+用户要求更换 API Key（或旧 Key 已删除/失效）时执行本节。执行前先理解 Key 的生效模型，否则更换可能不生效：
 
 - Key 存在两处：`~/.goalfy/config.json`（login 写入，uds-cli 读取）和 `~/.claude/settings.json` 的 `env`（供 MCP 请求头使用，同时会注入 Agent 的会话环境变量）
 - 优先级：环境变量高于 config——`~/.claude/settings.json` 的 `env` 不更新，login 写入的新 Key 会被旧环境值覆盖
