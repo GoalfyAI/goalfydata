@@ -102,6 +102,7 @@
 - 列别名：`AS col_name` 或 `AS "中文别名"`（双引号），**不能**用单引号
 - NULL 判断：`IS NULL` / `IS NOT NULL`
 - 类型转换：`::type` 或 `CAST(x AS type)`
+- 外键：**禁止** `FOREIGN KEY` / `REFERENCES`（数据集 schema 不支持，服务端拦截，报错 `FOREIGN_KEY_NOT_ALLOWED`）。表间关系改用 `uds_relations_set` 登记逻辑关系，不在 DDL 里建物理外键
 
 ### 3.3 建表 COMMENT 规范
 
