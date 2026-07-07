@@ -160,6 +160,7 @@ GoalfyData 独立于单个项目和对话，是可长期复用、跨平台访问
 - 反读表结构：`uds-cli inspect --table ...`
 - SQL 表名一律全限定：`uds_{dataset_id}.表名`
 - 禁止绕过 uds-cli 自行拼数据库连接
+- **禁止外键约束**：建表和改表都不得写 `FOREIGN KEY` / `REFERENCES`，服务端会从数据库层拦截（外键会破坏 full_replace 的原子换表并强制导入顺序）。表间关系用 `uds_relations_set` 登记逻辑关系（约束 4 的产出物本就包含）
 
 ### 约束 2 — 如实汇报
 
@@ -914,6 +915,7 @@ uds_init_project(mode="fork", from_deploy_id=<deploy_id>, task_id=<task_id>)
 | 配了定时却不自动更新 | 最常见原因：`cron_enabled=false`（未开启）。用 `uds_dataset_get` 核实后，经用户确认开启 |
 | 导入失败 duplicate key | upsert 模式下同一批次数据中存在重复主键。需在脚本中对候选主键 `drop_duplicates` 后再导入 |
 | 共享沙箱中某表定时失败但单独执行正常 | 同 schedule 的其他表脚本污染了共享沙箱环境（如 `os.chdir()`、修改 `os.environ`、未释放连接）。定位污染源脚本并修复，或为该表设 `exclusive_sandbox=true` 隔离 |
+| 建表报 `FOREIGN_KEY_NOT_ALLOWED` | 数据集 schema 不支持数据库外键（会破坏 full_replace 原子换表）。去掉 SQL 里的 `FOREIGN KEY` / `REFERENCES` 子句、用 `CREATE TABLE IF NOT EXISTS` 重建（避免重复建前面已成功的表），关系改用 `uds_relations_set` 登记逻辑关系 |
 | `uds-cli` 命令失败 | 先执行 `uds-cli <命令> --help` 确认参数。单条命令最多重试 1 次，重试前必须先分析错误并修正，禁止不改任何内容盲目重试 |
 | 工具或 uds-cli 返回 401/未认证（此前正常） | API Key 已被删除或轮换。最简单方式：引导用户到官网集成页重新复制接入文本发送给你（ https://goalfydata.ai/integrations ），按其中安装流程重新执行一遍。手动方式：引导用户到 https://goalfydata.ai/settings 创建新 Key → `uds-cli login` 重新登录 → 若 MCP 配置的环境变量中保存的仍是旧 Key 则一并更新 → 让用户完全重启会话（环境变量优先级高于登录配置，不更新会继续用旧 Key） |
 | SKILL 指引与工具实际行为不符（参数报错、流程不一致） | 插件里的本文档可能是旧版。按下方「5.1 SKILL 版本过旧的更新方法」处理 |

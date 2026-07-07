@@ -143,6 +143,7 @@ uds_table_manage(action="update", table_name=..., sample_file=<返回的 workspa
 - 含小数的数值列不用 BIGINT，用 DECIMAL（避免科学计数法导入失败）
 - upsert 模式**必须**提前检查候选主键组合有无重复行（PG 同一批次**不能** upsert 同一行两次，有重复需在脚本 `drop_duplicates`）
 - 数值列的实际范围决定 INTEGER vs BIGINT vs DECIMAL
+- DDL 中**不含** `FOREIGN KEY` / `REFERENCES`（数据集 schema 禁外键，服务端拦截；表间关系用 `uds_relations_set` 登记，不建物理外键）
 
 ---
 
