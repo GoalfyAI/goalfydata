@@ -10,7 +10,7 @@
     {
       "name": "goalfydata",
       "description": "GoalfyData — build, query, share, and deploy structured datasets via MCP",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "GoalfyAI"
       },
