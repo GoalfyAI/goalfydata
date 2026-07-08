@@ -251,7 +251,6 @@ API Key、数据库密码等敏感信息禁止写进脚本明文，必须通过 
 | `uds-cli --task-id <task_id> export --table name` | 导出数据 |
 | `uds-cli --task-id <task_id> connect --mode reader/writer --schema X` | 获取数据集连接串（临时凭证）。--schema 必填，不指定会报错。多个数据集用逗号分隔或重复 --schema：`--schema uds_a,uds_b` 或 `--schema uds_a --schema uds_b`。凭证按所选收窄：writer 下自有数据集可读写、被分享的只读、未选或无权的访问不到 |
 | `uds-cli --task-id <task_id> schemas` | 列出可访问的数据集 id |
-| `uds-cli task-create --name "任务名"` | 创建任务工单，返回 task_id（CLI 版的 uds_task_manager create） |
 | `uds-cli task-insert <task_id> --content "记录内容"` | 往工单追加信息记录（note/result/checkpoint） |
 | `uds-cli task-select [task_id]` | 不带参数列出工单列表；带 task_id 查看工单详情，加 `--tool-calls` 附操作日志 |
 
