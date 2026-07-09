@@ -1,12 +1,26 @@
 {
-  "version": "v20260709-430bb5",
-  "notes": "write mode task gating and skill version reporting",
-  "update_reason": "write mode task gating and skill version reporting",
-  "updated_at": "2026-07-09T00:00:00Z",
+  "version": "v20260709-ed2faf",
+  "notes": "Bilingual EN/zh split (English canonical), constraint restructure to 7, two write modes (Managed Refresh / Direct Edit), storage-slot pricing, app deploy preflight + rollback contract, tool tables verified against code",
+  "update_reason": "Bilingual EN/zh split (English canonical), constraint restructure to 7, two write modes (Managed Refresh / Direct Edit), storage-slot pricing, app deploy preflight + rollback contract, tool tables verified against code",
+  "updated_at": "2026-07-09T15:50:06.726692+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
+    "claude-code/skills/goalfydata/SKILL.zh-CN.md",
     "codex/skills/goalfydata/SKILL.md",
+    "codex/skills/goalfydata/SKILL.zh-CN.md",
     "manus/skill/SKILL.md",
-    "generic/SKILL.md"
-  ]
+    "manus/skill/SKILL.zh-CN.md",
+    "generic/SKILL.md",
+    "generic/SKILL.zh-CN.md"
+  ],
+  "checksums": {
+    "claude-code/skills/goalfydata/SKILL.md": "b1645390bc42d7df1c274ddf795b58cafe3e3cfe46220520efb580a9405c8330",
+    "claude-code/skills/goalfydata/SKILL.zh-CN.md": "c189f50fdee8437363bcc4f2da9ba912e6a57e5965d68a688bb75e698d28aa53",
+    "codex/skills/goalfydata/SKILL.md": "b1645390bc42d7df1c274ddf795b58cafe3e3cfe46220520efb580a9405c8330",
+    "codex/skills/goalfydata/SKILL.zh-CN.md": "c189f50fdee8437363bcc4f2da9ba912e6a57e5965d68a688bb75e698d28aa53",
+    "manus/skill/SKILL.md": "b1645390bc42d7df1c274ddf795b58cafe3e3cfe46220520efb580a9405c8330",
+    "manus/skill/SKILL.zh-CN.md": "c189f50fdee8437363bcc4f2da9ba912e6a57e5965d68a688bb75e698d28aa53",
+    "generic/SKILL.md": "b1645390bc42d7df1c274ddf795b58cafe3e3cfe46220520efb580a9405c8330",
+    "generic/SKILL.zh-CN.md": "c189f50fdee8437363bcc4f2da9ba912e6a57e5965d68a688bb75e698d28aa53"
+  }
 }
