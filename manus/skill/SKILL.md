@@ -1,6 +1,6 @@
 ---
 name: goalfydata
-description: 当用户需要对数据做深度分析（多轮 SQL 查询、聚合统计、趋势对比等），或需要将数据（Excel / CSV / API / 数据库）沉淀为可长期复用、跨平台访问的结构化资产时使用——典型场景包括：复杂或反复的数据分析、跨多个 Agent / 跨服务 / 跨电脑访问同一份数据、把数据分享给他人协作、基于数据构建 Dashboard 并部署和分享到公网。GoalfyData 独立于单个项目和对话，覆盖从建表、导入、查询分析、治理规则、权限分享、凭证管理、定时自动更新到 Dashboard 部署的完整数据集生命周期。
+description: 当用户需要对数据做深度分析（多轮 SQL 查询、聚合统计、趋势对比等），或需要将数据（Excel / CSV / API / 数据库）沉淀为可长期复用、跨平台访问的结构化资产时使用——典型场景包括：复杂或反复的数据分析、跨多个 Agent / 跨服务 / 跨电脑访问同一份数据、把数据分享给他人协作、基于数据构建 Dashboard 并部署和分享到公网。GoalfyData 独立于单个项目和对话，覆盖从建表、导入、查询分析、治理规则、权限分享、凭证管理、定时自动更新到 Dashboard 部署的完整数据集生命周期。 [skill-version: v20260709-430bb5]
 keywords:
   - 数据集
   - dataset
@@ -188,10 +188,12 @@ API Key、数据库密码等敏感信息禁止写进脚本明文，必须通过 
 
 ### 约束 6 — 任务工单（task_id）
 
-每次会话/任务开始时，必须先调 `uds_task_manager(action="create", task_name="任务名称")` 创建任务工单，获取 `task_id`。后续本次会话中所有操作都必须携带该 `task_id`，缺失会被服务端拦截。
+每次会话/任务开始时，必须先调 `uds_task_manager(action="create", task_name="任务名称", mode="read|write", skill_version="<description里的版本串>")` 创建任务工单，获取 `task_id`。后续本次会话中所有操作都必须携带该 `task_id`，缺失会被服务端拦截。
 
 - **MCP 工具**：每次调用必填 `task_id`（`uds_task_manager` 自身豁免）
 - **uds-cli 命令**：每条数据面命令加 `--task-id <task_id>`（与 MCP 用同一个），把执行 SQL / 导入等操作一并归入当前任务
+- **工单模式**：只读查询、列表、详情、分析用 `mode="read"`；任何建表、导入、规则、权限、分享、定时同步、应用部署等写操作用 `mode="write"`
+- **skill 版本**：`mode="write"` 时必须把本文件 description 末尾 `[skill-version: ...]` 中的版本串原样传给 `skill_version`；不要猜版本，不要改写格式
 - `op_summary`：必填，用业务语言描述本次操作的原因和下一步计划（100-200 字符），禁止提及工具名/函数名/技术参数
 - `agent_name`：选填，标识当前 Agent 身份（如 claude / codex / manus）
 
@@ -251,15 +253,13 @@ API Key、数据库密码等敏感信息禁止写进脚本明文，必须通过 
 | `uds-cli --task-id <task_id> export --table name` | 导出数据 |
 | `uds-cli --task-id <task_id> connect --mode reader/writer --schema X` | 获取数据集连接串（临时凭证）。--schema 必填，不指定会报错。多个数据集用逗号分隔或重复 --schema：`--schema uds_a,uds_b` 或 `--schema uds_a --schema uds_b`。凭证按所选收窄：writer 下自有数据集可读写、被分享的只读、未选或无权的访问不到 |
 | `uds-cli --task-id <task_id> schemas` | 列出可访问的数据集 id |
-| `uds-cli task-insert <task_id> --content "记录内容"` | 往工单追加信息记录（note/result/checkpoint） |
-| `uds-cli task-select [task_id]` | 不带参数列出工单列表；带 task_id 查看工单详情，加 `--tool-calls` 附操作日志 |
 
 `--task-id` 是全局参数，所有数据面命令都必须携带（约束 6）。具体参数以 `uds-cli <命令> --help` 为准。
 
 ### 3.3 核心调用链
 
 ```
-uds_task_manager(create, task_name) → 获取 task_id（后续所有调用必须携带）
+uds_task_manager(action="create", task_name="任务名称", mode="read|write", skill_version="<description里的版本串>") → 获取 task_id（后续所有调用必须携带）
   │
   ▼
 uds_dataset_manage(create, task_id) → 获取 dataset_id
@@ -311,7 +311,7 @@ Phase 3 — 同步验证与交付
 
 **Step 1.0 — 创建任务工单**
 
-`uds_task_manager(action="create", task_name="任务名称")` → 获取 `task_id`，后续本次会话所有 MCP 调用和 uds-cli 命令都必须携带（约束 6）。
+`uds_task_manager(action="create", task_name="任务名称", mode="read|write", skill_version="<description里的版本串>")` → 获取 `task_id`，后续本次会话所有 MCP 调用和 uds-cli 命令都必须携带（约束 6）。
 
 **Step 1.1 — 意图确认 + 初始化**
 

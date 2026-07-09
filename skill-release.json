@@ -1,0 +1,12 @@
+{
+  "version": "v20260709-430bb5",
+  "notes": "write mode task gating and skill version reporting",
+  "update_reason": "write mode task gating and skill version reporting",
+  "updated_at": "2026-07-09T00:00:00Z",
+  "files": [
+    "claude-code/skills/goalfydata/SKILL.md",
+    "codex/skills/goalfydata/SKILL.md",
+    "manus/skill/SKILL.md",
+    "generic/SKILL.md"
+  ]
+}
