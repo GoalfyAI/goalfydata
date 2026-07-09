@@ -1,245 +1,247 @@
-# GoalfyData 通用数据集构建指南
+# GoalfyData Universal Dataset Building Guide
 
-> 本文档是 SKILL.md 的补充参考，承载「业务访谈 / 表命名 / uds-cli 与 PG 语法 / 失败处理」的详尽规则。新建数据集和改结构时按本指南执行。
+> This document is a supplementary reference to SKILL.md, carrying the detailed rules for "business interview / table naming / uds-cli & PG syntax / failure handling". Follow this guide when creating datasets and changing table structures.
 
 ---
 
-## 1. 业务访谈
+## 1. Business Interview
 
-### 1.1 四维度矩阵
+### 1.1 Four-dimension Matrix
 
-按 4 维度组织，每维度覆盖完才进入下一维度。具体问题根据数据类型动态生成。
+Organize the interview along 4 dimensions; finish one dimension before moving to the next. Generate concrete questions dynamically from the data type.
 
-| 维度 | 目标 | 深入时机 |
+| Dimension | Goal | When to go deep |
 |------|------|----------|
-| 业务背景 | 这份数据是什么？记录哪个业务环节？时间范围？更新频率？来源？ | 所有数据类型必问 |
-| 业务口径 | 字段含义？主键？单位（金额/日期/时区）？空值语义？ | 含数字、日期、状态字段时深入 |
-| 业务规则 | 计算口径（GMV/ROI/UV）？状态枚举？约束条件？ | 含衍生字段、状态字段、关联字段时深入 |
-| 跨表关系 | 外键映射？完整性？是否合并为一个数据集？ | 多文件场景必问 |
+| Business background | What is this data? Which business step does it record? Time range? Update frequency? Source? | Always, for all data types |
+| Business definitions | Field meanings? Primary key? Units (amount/date/timezone)? Null semantics? | When numeric, date, or status fields are present |
+| Business rules | Calculation definitions (GMV/ROI/UV)? Status enums? Constraints? | When derived, status, or relation fields are present |
+| Cross-table relations | Relation-field mapping? Integrity? Merge into one dataset? | Always, for multi-file scenarios |
 
-### 1.2 节奏
+### 1.2 Pacing
 
-- 每次提问一组（不超过 5 个相关问题），**禁止**一次性提出 20 个问题
-- 每组答复后用业务语言复述确认（"所以您的 GMV 是扣退款不扣运费的净额，对吗？"）
-- 全部维度覆盖完才进入建表——浅尝辄止会导致后续方案反复推倒
-- 访谈中发现的业务口径实时调 `uds_rule_manage(action="create", task_id=<task_id>)` 落库，并一句话告知用户
+- Ask one group at a time (at most 5 related questions); asking 20 questions at once is **forbidden**
+- After each group, restate and confirm in business language ("So your GMV is net of refunds but not shipping, correct?")
+- Enter table creation only after all dimensions are covered — a shallow pass forces repeated rework later
+- Persist business definitions discovered mid-interview via `uds_rule_manage(action="create", task_id=<task_id>)` in real time, and tell the user in one sentence
 
-### 1.3 三条硬规则（带正反例）
+### 1.3 Three Hard Rules (with examples)
 
-**问题**必须**有数据依据** — 每个问题附带从数据中发现的具体信息，不凭空提问。
+**Questions must be grounded in the data** — every question carries concrete findings from the scan; no questions out of thin air.
 
-| 反例（无依据） | 正例（有依据） |
+| Bad (ungrounded) | Good (grounded) |
 |---|---|
-| "订单状态有哪些值？" | "我扫描了状态列，发现 3 个值：已完成 / 已取消 / 处理中。这是完整的状态吗？" |
+| "What order statuses exist?" | "I scanned the status column and found 3 values: completed / cancelled / processing. Is this the complete set?" |
 
-**先分析后提问，不反问用户不了解的信息** — 遇到用户可能不了解的信息，先基于数据样本自主推断，带推断结论向用户确认。
+**Analyze first, then ask; never quiz the user on things they may not know** — infer from the data sample first and confirm with your conclusion attached.
 
-| 反例（反问） | 正例（带结论确认） |
+| Bad (quizzing) | Good (conclusion-first) |
 |---|---|
-| "金额是什么单位？" | "根据数值范围（10-5000）和马来西亚站点，推断金额单位是马来西亚林吉特（MYR）。请确认？" |
+| "What currency is the amount in?" | "Based on the value range (10-5000) and the Malaysia site, I infer the amounts are in Malaysian Ringgit (MYR). Please confirm?" |
 
-**确认措辞**必须**详尽** — 把关键上下文写全（来源、时间范围、单位、口径），不只说"确认以上"。
+**Confirmation wording must be thorough** — spell out the key context (source, time range, units, definitions); never just say "please confirm the above".
 
-| 反例（模糊） | 正例（详尽） |
+| Bad (vague) | Good (thorough) |
 |---|---|
-| "以上信息是否正确？" | "请确认：来源=TikTok 马来西亚站点，时间范围=2025-01 至 2026-03，金额单位=MYR（含税），GMV 口径=扣退款不扣运费。是否正确？" |
+| "Is the above correct?" | "Please confirm: source = TikTok Malaysia site, time range = 2025-01 to 2026-03, amounts in MYR (tax included), GMV = net of refunds, shipping not deducted. Correct?" |
 
-### 1.4 自主决策 vs **必须**确认
+### 1.4 Autonomous vs Must-confirm
 
-- **可自主决策**：字段命名（snake_case 转换）、表名前缀生成、衍生列命名、清洗的技术实现
-- **必须暂停并询问用户确认**：业务口径、表结构方案、数据质量处理策略、更新模式、跨表关系、大数据量处理、开启定时任务
+- **May decide autonomously**: field naming (snake_case conversion), table-name prefix generation, derived-column naming, technical implementation of cleaning
+- **Must pause and ask the user**: business definitions, table-structure plans, data-quality handling strategy, update mode, cross-table relations, large-data-volume handling, enabling schedule-triggered GoalfyData Managed Refresh
 
-### 1.5 治理规则随时落库
+### 1.5 Persist Governance Rules Anytime
 
-治理规则（业务口径/约束/计算公式/清洗约定）全流程捕获，不集中到最后批量处理。判断标准："这条信息若未落库，未来查询会产生歧义或错误"。基于语义判断，不做关键词匹配。
+Capture governance rules (business definitions / constraints / formulas / cleaning conventions) throughout the flow; do not batch them at the end. The test: "if this is not persisted, future queries will be ambiguous or wrong". Judge semantically, not by keyword matching.
 
-`rule_type` 映射：`cleaning`（清洗）/ `validation`（校验）/ `computation`（计算口径）/ `constraint`（约束）。
+`rule_type` mapping: `cleaning` / `validation` / `computation` / `constraint`.
 
-落库即告知用户（"已记录：金额单位为分"），不做静默落库——规则影响未来所有查询，用户有知情权。
+Tell the user upon persisting ("Recorded: amounts are in cents") — no silent persistence; rules affect all future queries and the user has the right to know.
 
 ---
 
-## 2. 表命名规范
+## 2. Table Naming Rules
 
-**格式**：`<业务域前缀>_<表名>`
+**Format**: `<business-domain prefix>_<table name>`
 
-**前缀生成**（向用户确认时只展示业务名——使用与用户一致的语言，不展示 snake_case 前缀）：
+**Prefix generation** (when confirming with the user, show only the business name — in the user's language, not the snake_case prefix):
 
-1. 从业务背景提取 2-4 个关键词，按顺序：平台/来源 + 主体 + 时间粒度
-2. 每个关键词独立转 snake_case（小写英文字母、数字、下划线）
-3. 非英文词（如中文店铺名）用拼音首字母或音译简写；用户语言本身为英文时直接取英文关键词
-4. 关键词之间用 `_` 连接
-5. 前缀总长度 ≤ 30 字符，前缀 + 表名总长度 ≤ 63（PG 标识符上限）
+1. Extract 2-4 keywords from the business background, in order: platform/source + subject + time granularity
+2. Convert each keyword to snake_case independently (lowercase letters, digits, underscores)
+3. Non-English words (e.g. Chinese shop names) use pinyin initials or a transliterated short form; when the user's language is English, take the English keywords directly
+4. Join keywords with `_`
+5. Prefix ≤ 30 characters; prefix + table name ≤ 63 (PG identifier limit)
 
-**约束**：
+**Constraints**:
 
-- 同一数据集下所有表共享同一前缀
-- 只能小写字母、数字、下划线
-- **禁止**：裸表名（`orders`）、数据集 uid 前缀（`udsx7_orders`）、驼峰或大写（`Orders`、`TikTokOrders`）
+- All tables in one dataset share the same prefix
+- Lowercase letters, digits, and underscores only
+- **Forbidden**: bare table names (`orders`), dataset-uid prefixes (`udsx7_orders`), camelCase or uppercase (`Orders`, `TikTokOrders`)
 
 ---
 
-## 3. uds-cli 与 PG 语法
+## 3. uds-cli & PG Syntax
 
-### 3.1 子命令速查
+### 3.1 Subcommand Quick Reference
 
-| 命令 | 用途 |
+| Command | Purpose |
 |------|------|
-| `uds-cli --task-id <task_id> schemas` | 列出可见数据集（含 schema 名） |
-| `uds-cli --task-id <task_id> exec "<SQL>" --mode reader/writer` | 执行 SQL（查询 reader，DDL/DML writer），支持 `;` 分隔多条 |
-| `uds-cli --task-id <task_id> exec --file x.sql --mode writer` | 从文件执行多条 SQL |
-| `uds-cli --task-id <task_id> import <file> --table <name> --mode <mode>` | 导入数据，**只收 CSV/NDJSON**（xlsx 先 pandas 读真实值转 CSV），mode=append/full_replace/upsert，upsert 加 `--upsert-keys k1,k2` |
-| `uds-cli --task-id <task_id> inspect --table <name>` | 查看表结构（反读 target_columns 用） |
+| `uds-cli --task-id <task_id> schemas` | List visible datasets (with schema names) |
+| `uds-cli --task-id <task_id> exec "<SQL>" --mode reader/writer` | Execute SQL (reader for queries, writer for DDL/DML); supports multiple statements separated by `;` |
+| `uds-cli --task-id <task_id> exec --file x.sql --mode writer` | Execute multiple SQL statements from a file |
+| `uds-cli --task-id <task_id> import <file> --table <name> --mode <mode>` | Import data, **CSV/NDJSON only** (convert xlsx to CSV via pandas true-value reads first); mode=append/full_replace/upsert; upsert adds `--upsert-keys k1,k2` |
+| `uds-cli --task-id <task_id> inspect --table <name>` | View table structure (for reading back target_columns) |
 
-表名一律用全限定名 `uds_{dataset_id}.表名`。
+Always use fully-qualified table names `uds_{dataset_id}.table`.
 
-### 3.2 PG 语法陷阱（uds-cli 后端是 PostgreSQL，禁用 MySQL 语法）
+### 3.2 PG Syntax Pitfalls (the uds-cli backend is PostgreSQL; MySQL syntax is forbidden)
 
-- 列注释：`COMMENT ON COLUMN <table>.<col> IS '注释'`（独立语句）。**不能**用 MySQL 的 `... COMMENT '...'`
-- 自增主键：`BIGSERIAL` / `SERIAL`。不是 `AUTO_INCREMENT`
-- 改字段类型：`ALTER COLUMN <col> TYPE <type> USING <expr>`。不是 `MODIFY COLUMN`
-- 字符串用单引号，标识符不加引号或用双引号。禁反引号
-- 列别名：`AS col_name` 或 `AS "中文别名"`（双引号），**不能**用单引号
-- NULL 判断：`IS NULL` / `IS NOT NULL`
-- 类型转换：`::type` 或 `CAST(x AS type)`
-- 外键：**禁止** `FOREIGN KEY` / `REFERENCES`（数据集 schema 不支持，服务端拦截，报错 `FOREIGN_KEY_NOT_ALLOWED`）。表间关系改用 `uds_relations_set` 登记逻辑关系，不在 DDL 里建物理外键
+- Column comments: `COMMENT ON COLUMN <table>.<col> IS 'comment'` (a standalone statement). **Never** MySQL's `... COMMENT '...'`
+- Auto-increment keys: `BIGSERIAL` / `SERIAL`, not `AUTO_INCREMENT`
+- Changing a column type: `ALTER COLUMN <col> TYPE <type> USING <expr>`, not `MODIFY COLUMN`
+- Strings use single quotes; identifiers use no quotes or double quotes. Backticks are forbidden
+- Column aliases: `AS col_name` or `AS "alias"` (double quotes), **never** single quotes
+- NULL checks: `IS NULL` / `IS NOT NULL`
+- Type casts: `::type` or `CAST(x AS type)`
+- Foreign keys: `FOREIGN KEY` / `REFERENCES` are **forbidden** (unsupported in dataset schemas, enforced server-side with error `FOREIGN_KEY_NOT_ALLOWED`). Register table relations via `uds_relations_set` as logical relations instead of physical FKs in DDL
 
-### 3.3 建表 COMMENT 规范
+### 3.3 Table COMMENT Convention
 
-建表时每个字段补独立的 `COMMENT ON COLUMN uds_{dataset_id}.<table>.<col> IS '<原始列名/业务名> - <含义/单位/枚举>'`（业务名使用与用户一致的语言），原始列名即 display_name，便于其他 Agent 理解字段。
+When creating tables, add a standalone `COMMENT ON COLUMN uds_{dataset_id}.<table>.<col> IS '<original column name/business name> - <meaning/unit/enum>'` for every column (business name in the user's language). The original column name serves as the display_name so other Agents can understand the field.
 
 ---
 
-## 4. 失败处理
+## 4. Failure Handling
 
-### 4.1 失败决策树
+### 4.1 Failure Decision Tree
 
 ```
-uds-cli 命令失败
-├── 参数/用法错误 → 修正后重试（≤ 1 次）
-├── SQL 语法错误  → 修正后重试（≤ 1 次）
-├── 数据质量问题  → 暂停操作，由用户决策（约束 3）
-└── 其他错误      → 停止操作并如实汇报（约束 2）
+uds-cli command fails
+├── argument/usage error  → fix and retry (≤ 1 time)
+├── SQL syntax error      → fix and retry (≤ 1 time)
+├── data-quality problem  → pause; the user decides (Constraint 4)
+└── anything else         → stop and report honestly (Constraint 6)
 ```
 
-### 4.2 重试上限
+### 4.2 Retry Limit
 
-单条命令最多执行 2 次（首次 + 1 次修正重试）。超过后**必须**停止操作并按约束 2 汇报。
+A single command runs at most twice (first run + 1 corrected retry). Beyond that you **must** stop and report per Constraint 6.
 
-**禁止盲重试**：失败后**必须**先分析错误、定位根因、确认修正方案再重试，**禁止**不改任何东西重复执行：
+**No blind retries**: after a failure you **must** analyze the error, locate the root cause, and confirm the fix before retrying; repeating the command unchanged is **forbidden**:
 
-- 导入失败（duplicate key / type mismatch / 文件不存在）→ 定位根因（主键不唯一？类型不匹配？路径错？），修正后重试
-- 建表后导入失败需重建 → DROP + CREATE 前**必须**确认新 DDL 修正了失败原因
-- 脚本执行失败 → 读完整错误信息定位代码行，修正后重试
+- Import failures (duplicate key / type mismatch / file not found) → locate the root cause (non-unique key? type mismatch? wrong path?), fix, then retry
+- Rebuilding a table after a failed import → before DROP + CREATE, **must** confirm the new DDL fixes the failure cause
+- Script failures → read the full error, locate the code line, fix, then retry
 
-### 4.3 行数上限 ROW_LIMIT_EXCEEDED
+### 4.3 Storage Overrun STORAGE_QUOTA_EXCEEDED
 
-`uds-cli import` 写入前按单表上限（当前固定 20,000,000 行，暂不支持调整）做批校验，超限时整批 rollback 并返回 `ROW_LIMIT_EXCEEDED`。
+There is **no per-table row limit**. Storage uses dataset-slot accounting: each dataset includes 300MB by default, and a dataset is not blocked just for exceeding 300MB — larger datasets count as multiple dataset usages by capacity (e.g. a 900MB dataset counts as roughly 3 datasets).
 
-**禁止**盲目分批/截断重试——会导致数据被静默截断，违反约束 2。正确处置：暂停操作，由用户在以下三种方案中选择：
+Writes are only blocked when the plan's dataset usage is exhausted: the GoalfyData Managed Refresh pipeline returns `STORAGE_QUOTA_EXCEEDED`; Agent Direct Edit (`uds-cli import` / `exec`) may hit the PG-level `SCHEMA_BYTES_EXCEEDED` (per-dataset byte hard limit as the backstop).
 
-1. **改用 `full_replace` 模式** — 先 TRUNCATE 再写，写入后行数 = 新数据行数。前提：用户确认旧数据可丢；append/upsert 下**禁止**自作主张切换
-2. **清理旧数据** — 提供一段示例 `uds-cli --task-id <task_id> exec "DELETE FROM uds_{dataset_id}.<table> WHERE <条件>"`（按时间窗口/业务维度），用户确认条件后执行，**禁止**直接 TRUNCATE 不问
-3. **按维度拆表** — 单表上限 2000 万行暂不支持调整，按时间窗口或业务维度拆分为多张表
+Blind batching/truncated retries are **forbidden** — they silently truncate data and violate Constraint 6. Correct handling: pause and let the user choose among three options:
 
-**禁止**：收到 ROW_LIMIT_EXCEEDED 后悄悄丢部分行重试；把超限当作普通"导入失败"进行重试（重试也是同样失败）；未经确认即切换为 `full_replace`。
+1. **Switch to `full_replace`** — after the atomic table swap only the new data remains; storage usage = new data size. Precondition: the user confirms the old data can be discarded; switching on your own under append/upsert is **forbidden**
+2. **Clean up old data** — provide a sample `uds-cli --task-id <task_id> exec "DELETE FROM uds_{dataset_id}.<table> WHERE <condition>"` (by time window / business dimension); run only after the user confirms the condition. Running TRUNCATE without asking is **forbidden**
+3. **Upgrade the plan or buy an add-on pack** — check the current quota and available packs via `uds_billing_info` and guide the user to purchase on the GoalfyData website
+
+**Forbidden**: silently dropping rows and retrying after a storage overrun; treating the overrun as an ordinary "import failure" and blindly retrying (it fails the same way).
 
 ---
 
-## 5. 底表与中间表
+## 5. Base Tables and Intermediate Tables
 
-数据集里的表分两类，构建策略不同：
+Tables in a dataset fall into two kinds with different build strategies:
 
-**底表**：直接从用户文件建的表，一个数据文件对应一张底表（标准闭环自动建）。
+**Base tables**: built directly from user files, one data file per base table (created automatically by the standard loop).
 
-**中间表**（汇总表 / 宽表 / 维度表）：是否建、聚合什么维度、刷新策略，全是业务决策，**必须和用户确认**，不主动建。
+**Intermediate tables** (summary / wide / dimension tables): whether to build them, what dimensions to aggregate, and the refresh strategy are all business decisions — **must be confirmed with the user**; never build them proactively.
 
-| 场景 | 做法 |
+| Scenario | Action |
 |------|------|
-| 用户只传了原始数据文件（干净或类别 A） | 只建底表，不主动建中间表 |
-| 用户明确要汇总表 / 宽表 | 建底表 + 中间表（用户确认聚合维度和粒度后） |
-| 你发现底表间有明显汇总需求 | 主动向用户建议，同意后再建 |
-| 中间表数据来自 SQL 聚合（不是文件导入） | 中间表注册 `script` 源、入口 `fetch`，更新脚本用 `uds-cli --task-id <task_id> exec` 做 SQL 聚合（`INSERT INTO 中间表 SELECT ... FROM 底表 GROUP BY ...`），不读文件 |
+| The user only uploaded raw data files (clean or Category A) | Build base tables only; no proactive intermediate tables |
+| The user explicitly wants summary / wide tables | Build base + intermediate tables (after the user confirms dimensions and granularity) |
+| You spot an obvious aggregation need across base tables | Proactively suggest it; build only after agreement |
+| Intermediate table data comes from SQL aggregation (not file import) | Register the intermediate table with a `script` source, entry `fetch`; the update script uses `uds-cli --task-id <task_id> exec` for SQL aggregation (`INSERT INTO intermediate SELECT ... FROM base GROUP BY ...`), reading no files |
 
-中间表也是表，**同样要 `uds_table_manage` 注册元数据**（约束 4）；要定时刷新就配 `schedule`（见 `scheduled-sync-guide.md`）。
+Intermediate tables are tables too — **register metadata via `uds_table_manage` all the same** (Constraint 5); configure a `schedule` if they need scheduled refresh (see `scheduled-sync-guide.md`).
 
 ---
 
-## 6. 标准闭环详细步骤
+## 6. Standard Loop Detailed Steps
 
-对每个文件/数据源重复。**入口必须先读** `references/data-quality-guide.md` 执行数据质量检测（脏数据分类、机器信号 + 语义判断方法、建表前校验清单）：
+Repeat for every file/data source. **At the entry, first read** `references/data-quality-guide.md` and run the data quality check (dirty-data classification, machine signals + semantic judgment, pre-create checklist):
 
-- 干净或可自动修复（类别 A）→ 进入标准闭环
-- 无法自动修复（类别 B）→ 停止本表后续步骤，向用户说明数据质量问题并协商处理方案
+- Clean or auto-fixable (Category A) → enter the standard loop
+- Not auto-fixable (Category B) → stop this table's remaining steps, explain the data-quality problem, and negotiate a plan with the user
 
-**标准闭环**：
+**Standard loop**:
 
-| 步骤 | 动作 | 关键约束 |
+| Step | Action | Key constraint |
 |------|------|----------|
-| 1. 数据探查 | 分析行数、类型分布、空值、样本值 | 采样模式，不全量加载 |
-| 2. 建表方案确认 | 向用户展示字段业务含义，确认表结构 | 约束 3 |
-| 3. 建表 | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.表名 (...)"` | 字段 snake_case；建表前先读本文档第 2-3 节（命名规范 + PG 语法陷阱） |
-| 4. 注册元数据 | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | 约束 4 |
-| 5. 导入数据 | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.表名 --mode full_replace` | 只收 CSV/NDJSON；源文件是 xlsx 时先 pandas 读真实值转 CSV |
-| 6. 质量检查 | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.表名"` 检查行数、空值、重复 | upsert 需执行两次以验证幂等性 |
-| 7. 反读列定义 | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.表名` → 取 target_columns | 禁止凭空编造 |
-| 8. 确认更新模式 | 询问用户：append / full_replace / upsert？后续手动上传更新还是定时拉取？ | |
-| 9. 写更新脚本 | 按 SKILL.md 4.3 脚本规范写脚本（upload 源 `transform` / script 源 `fetch`），`uds-cli --task-id <task_id> upload 脚本.py --dataset ... --type script` → 获取 workspace_path | **必做**：脚本必须复刻本表建表时的全部清洗动作（步骤 1-5 中确认过的类型转换/列名规范化/衍生列）；非显而易见的清洗动作同步 `uds_rule_manage(create, rule_type="cleaning")` 落库（业务口径事实源）。跨会话修脚本用 `uds-cli download-script <script_file> --dataset ...` 获取下载 URL、curl 下载后修改 |
-| 10. 生成模板文件 | upload 源表必做：生成 xlsx 模板（规范见 data-quality-guide 4.2/4.3），`uds-cli upload 模板.xlsx --dataset ... --type sample` → 获取 workspace_path | 用户原始文件干净时可直接将其以 `--type sample` 上传登记为样例 |
-| 11. 完善配置 | `uds_table_manage(action="update", update_mode=..., target_columns=..., sources=[{type: upload, entry: transform}]或[{type: script, entry: fetch, schedule: ...}], script_file=..., sample_file=..., task_id=<task_id>)` | **强制脚本契约**：upload/script 源必须有 script_file；upload 源还必须有 sample_file，缺一注册被拒 |
+| 1. Data profiling | Analyze row count, type distribution, nulls, sample values | Sampling mode; no full loads |
+| 2. Confirm the table plan | Show the user each field's business meaning; confirm the structure | Constraint 4 |
+| 3. Create the table | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.name (...)"` | snake_case fields; read Sections 2-3 of this guide first (naming rules + PG pitfalls) |
+| 4. Register metadata | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | Constraint 5 |
+| 5. Import data | First `uds-cli --task-id <task_id> validate file.csv --table uds_{dataset_id}.name` to pre-check (column/type match, no write), then `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` | CSV/NDJSON only; xlsx sources get true-value pandas reads to CSV first |
+| 6. Quality check | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.name"` — rows, nulls, duplicates | upsert requires two runs to verify idempotency |
+| 7. Read back columns | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` → target_columns | Never invent them |
+| 8. Confirm the update mode | Ask the user: append / full_replace / upsert? Manual re-uploads or scheduled pulls afterwards? | |
+| 9. Write the update script | Per SKILL.md 4.3's entry conventions and scheduled-sync-guide.md's script spec (upload source `transform` / script source `fetch`), `uds-cli --task-id <task_id> upload script.py --dataset ... --type script` → workspace_path | **Required**: the script must replicate every cleaning action from building this table (type conversions/column normalization/derived columns confirmed in steps 1-5); persist every non-obvious cleaning action via `uds_rule_manage(create, rule_type="cleaning")` (governance rules are the source of truth for business definitions). For cross-session edits use `uds-cli download-script <script_file> --dataset ...` to get a download URL, curl it, then modify |
+| 10. Generate the template file | Required for upload-source tables: generate the xlsx template (spec in data-quality-guide 4.2/4.3), `uds-cli upload template.xlsx --dataset ... --type sample` → workspace_path | If the user's original file is clean, it may be uploaded and registered directly via `--type sample` |
+| 11. Finalize the config | `uds_table_manage(action="update", update_mode=..., target_columns=..., sources=[{type: upload, entry: transform}] or [{type: script, entry: fetch, schedule: ...}], script_file=..., sample_file=..., task_id=<task_id>)` | **Mandatory script contract**: upload/script sources must have script_file; upload sources also need sample_file; registration is rejected if either is missing |
 
-**upsert 幂等性验证**（update_mode=upsert 时必做）：
+**Upsert idempotency verification** (required when update_mode=upsert):
 
-步骤 5 首次导入成功后，用同样的数据再执行一次导入，然后检查：
-1. `SELECT COUNT(*)` — 行数应与首次一致（无重复行）
-2. `SELECT ... GROUP BY <upsert_keys> HAVING COUNT(*) > 1` — 应为空（主键无重复）
-3. 行数翻倍或主键重复 → 修复 `--upsert-keys` 配置后重新从步骤 5 开始
-
----
-
-## 7. 整体校验清单
-
-所有表构建完成后，做跨表级别的质量检查和业务验证：
-
-- **表存在性**：`uds-cli --task-id <task_id> tables --schema uds_{dataset_id}` 确认所有预期表已创建
-- **行数验证**：每张表 `SELECT COUNT(*)` 与导入时的 rows_inserted 比对
-- **关键列空值**：主键列、业务核心列不应有空值
-- **关联完整性**（多表场景）：外键引用的 ID 在关联表中存在
-- **业务逻辑合理性**：金额 >= 0、日期在合理范围内、枚举值在预期集合内
-- **业务查询验证**：写 2-3 条典型业务查询，向用户展示结果确认
-
-任何问题暂停操作，由用户决策（约束 3）。
+After step 5's first successful import, run the same import again, then check:
+1. `SELECT COUNT(*)` — should match the first run (no duplicate rows)
+2. `SELECT ... GROUP BY <upsert_keys> HAVING COUNT(*) > 1` — should be empty (no duplicate keys)
+3. Doubled rows or duplicate keys → fix `--upsert-keys` and restart from step 5
 
 ---
 
-## 8. 产出物沉淀步骤
+## 7. Overall Validation Checklist
 
-按顺序执行，任何一步失败都按约束 2 如实汇报：
+After all tables are built, run cross-table quality checks and business validation:
 
-1. **表间关系**：`uds_relations_set(action="replace", relations=[...], task_id=<task_id>)`
-2. **治理规则补录**：回顾访谈，补齐未落库的规则（正常应为空，已实时落库）
-3. **使用指南**：`uds_dataset_manage(action="update", tool_usage_guide="...", task_id=<task_id>)`（约束 4）。内容包含：数据集业务背景、核心表说明、关键业务口径、常用查询入口
-4. **权限策略**（可选）：询问用户是否需要分表/分列/分行的细粒度分享控制
-5. **自查清单**：每张表有 dataset_table 记录且 target_columns 非空？tool_usage_guide 有实质内容？关系/规则引用的 table_name 都存在？有不通过项按约束 2 汇报
+- **Table existence**: `uds-cli --task-id <task_id> tables --schema uds_{dataset_id}` — confirm all expected tables exist
+- **Row counts**: each table's `SELECT COUNT(*)` vs rows_inserted at import
+- **Key-column nulls**: primary keys and core business columns should have no nulls
+- **Relational integrity** (multi-table): IDs referenced by relation columns exist in the related table (logical-relation check; dataset schemas forbid physical FKs)
+- **Business-logic sanity**: amounts >= 0, dates in reasonable ranges, enums within the expected set
+- **Business query validation**: write 2-3 typical business queries and confirm the results with the user
+
+Pause on any problem; the user decides (Constraint 4).
 
 ---
 
-## 9. 修改表结构
+## 8. Deliverable Persistence Steps
 
-修改已有表结构（加字段、改类型、加索引、重命名等）后，必须同步相关元数据，否则同步任务、使用指南、权限策略会与实际表结构不一致。
+Execute in order; report any failure honestly per Constraint 6:
 
-前置：`uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.表名` 查看当前结构，与用户确认变更方案。
+1. **Table relations**: `uds_relations_set(action="replace", relations=[...], task_id=<task_id>)`
+2. **Governance-rule backfill**: review the interview and fill in unpersisted rules (normally none — they were persisted in real time)
+3. **Usage guide**: `uds_dataset_manage(action="update", tool_usage_guide="...", task_id=<task_id>)` (Constraint 5). Include: the dataset's business background, core-table descriptions, key business definitions, and common query entry points
+4. **Permission policies** (optional): ask whether the user needs fine-grained table/column/row-level sharing controls
+5. **Self-check list**: every table has a dataset_table record with non-empty target_columns? tool_usage_guide has real content? all table_names referenced by relations/rules exist? Report failures per Constraint 6
 
-操作：`uds-cli --task-id <task_id> exec --mode writer "ALTER TABLE ..."` 执行结构变更。
+---
 
-后续同步：
+## 9. Changing Table Structure
 
-| 变更类型 | 同步动作 |
+After changing an existing table's structure (adding columns, changing types, adding indexes, renaming, etc.), the related metadata must be synced — otherwise sync tasks, the usage guide, and permission policies drift from the actual structure.
+
+Before: `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` to view the current structure and confirm the change plan with the user.
+
+Apply: `uds-cli --task-id <task_id> exec --mode writer "ALTER TABLE ..."`.
+
+Follow-up sync:
+
+| Change | Sync action |
 |------|------|
-| target_columns 变了 | `uds_table_manage(update, target_columns=[...], task_id=<task_id>)` — 必须从 `uds-cli --task-id <task_id> inspect` 反读，不凭空编造 |
-| 表清单或字段含义变了 | `uds_dataset_manage(update, tool_usage_guide=..., task_id=<task_id>)` |
-| 新增关联字段 | `uds_relations_set(action="create", task_id=<task_id>)` 增量新增，或 replace 全量覆盖 |
-| 新增计算口径 | `uds_rule_manage(action="create", task_id=<task_id>)` |
-| 脚本逻辑受影响 | 修改脚本 → `uds-cli --task-id <task_id> upload --type script` 重新上传 → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
-| upload 表结构变了 | 重新生成模板文件 → `uds-cli upload --type sample` → `uds_table_manage(update, sample_file=..., task_id=<task_id>)` |
-| 删列/改列名且该表有权限策略 | `uds_policy_manage(action="update", task_id=<task_id>)` 更新 row_filters/column_rules 中引用的列，否则策略 View 失效 |
+| target_columns changed | `uds_table_manage(update, target_columns=[...], task_id=<task_id>)` — read back via `uds-cli --task-id <task_id> inspect`, never invent |
+| Table list or field meanings changed | `uds_dataset_manage(update, tool_usage_guide=..., task_id=<task_id>)` |
+| New relation field | `uds_relations_set(action="create", task_id=<task_id>)` incrementally, or replace wholesale |
+| New calculation definition | `uds_rule_manage(action="create", task_id=<task_id>)` |
+| Script logic affected | Modify the script → `uds-cli --task-id <task_id> upload --type script` re-upload → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
+| Upload-table structure changed | Regenerate the template → `uds-cli upload --type sample` → `uds_table_manage(update, sample_file=..., task_id=<task_id>)` |
+| Columns dropped/renamed on a table with policies | `uds_policy_manage(action="update", task_id=<task_id>)` to update columns referenced in row_filters/column_rules, or the policy View breaks |

@@ -15,6 +15,7 @@ VERSION="v$(date +%Y%m%d)-$(openssl rand -hex 3)"
 export VERSION NOTES
 
 python3 - <<'INNER_PY'
+import hashlib
 import json
 import os
 import re
@@ -25,11 +26,15 @@ version = os.environ["VERSION"]
 notes = os.environ["NOTES"]
 candidates = [
     Path("claude-code/skills/goalfydata/SKILL.md"),
+    Path("claude-code/skills/goalfydata/SKILL.zh-CN.md"),
     Path("codex/skills/goalfydata/SKILL.md"),
+    Path("codex/skills/goalfydata/SKILL.zh-CN.md"),
     Path("cursor/skills/goalfydata/SKILL.md"),
     Path("cursor/SKILL.md"),
     Path("manus/skill/SKILL.md"),
+    Path("manus/skill/SKILL.zh-CN.md"),
     Path("generic/SKILL.md"),
+    Path("generic/SKILL.zh-CN.md"),
 ]
 files = [p for p in candidates if p.exists()]
 if not files:
@@ -52,16 +57,18 @@ Path("skill-release.json").write_text(json.dumps({
     "update_reason": notes,
     "updated_at": datetime.now(timezone.utc).isoformat(),
     "files": [str(p) for p in files],
+    # 内容指纹：CI 据此发现"改了 SKILL 没重新发版"的漂移
+    "checksums": {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
 }, ensure_ascii=False, indent=2) + "\n")
 INNER_PY
 
-git add skill-release.json claude-code/skills/goalfydata/SKILL.md codex/skills/goalfydata/SKILL.md manus/skill/SKILL.md generic/SKILL.md
-if [ -f cursor/skills/goalfydata/SKILL.md ]; then
-  git add cursor/skills/goalfydata/SKILL.md
-fi
-if [ -f cursor/SKILL.md ]; then
-  git add cursor/SKILL.md
-fi
+git add skill-release.json
+python3 -c "import json; print('\n'.join(json.load(open('skill-release.json'))['files']))" | while read -r f; do
+  git add "$f"
+done
 
 git commit -m "chore(skill): release ${VERSION}" -m "${NOTES}"
+# 发版即打 tag：版本串 ↔ 提交点一一对应，GitHub 侧由 publish-skill-release.yml 生成 Release
+git tag -a "skill/${VERSION}" -m "${NOTES}"
 echo "released ${VERSION}"
+echo "push with: git push --follow-tags && git push --follow-tags git@github.com:GoalfyAI/goalfydata.git main"

@@ -1,0 +1,47 @@
+name: Publish Skill Release
+
+# skill/v* tag 推送时自动创建 GitHub Release：标题 = 版本串，正文 = skill-release.json 的发布说明。
+# 与 register-skill-release.yml 分工：register 负责服务端注册表，本 workflow 负责对外的发布记录。
+on:
+  push:
+    tags:
+      - 'skill/v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      # Release 由 goalfydata-bot 创建，避免挂在个人账号名下（同 build-platform-zips.yml）
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release from skill-release.json
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#skill/}"
+          JSON_VERSION="$(python3 -c "import json; print(json.load(open('skill-release.json'))['version'])")"
+          if [ "${VERSION}" != "${JSON_VERSION}" ]; then
+            echo "tag ${TAG} does not match skill-release.json version ${JSON_VERSION}" >&2
+            exit 1
+          fi
+          python3 -c "
+          import json
+          r = json.load(open('skill-release.json'))
+          notes = r.get('update_reason') or r.get('notes', '')
+          files = ''.join(f'- {f}\n' for f in r.get('files', []))
+          print(f'{notes}\n\nReleased at: {r.get(\"updated_at\", \"\")}\n\nFiles:\n{files}')
+          " > /tmp/release-notes.md
+          gh release create "${TAG}" \
+            --title "${VERSION}" \
+            --notes-file /tmp/release-notes.md \
+            --verify-tag

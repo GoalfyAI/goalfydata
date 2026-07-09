@@ -132,7 +132,7 @@ After all steps, report with this template:
 GoalfyData installation result:
 
 [Done]
-- uds-cli installed and logged in (version x.y.z, account xxx@example.com)
+- uds-cli installed and logged in (version = the actual `uds-cli version` output, e.g. abc1234-yyyymmdd; account = the login email)
 - Plugin goalfydata installed
 - API Key written to ~/.codex/.env
 

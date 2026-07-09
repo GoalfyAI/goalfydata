@@ -1,271 +1,271 @@
-# GoalfyData 通用数据集数据质量指南
+# GoalfyData Universal Dataset Data Quality Guide
 
-> 本文档是 SKILL.md 的补充参考，承载「脏数据判定 / 建表前校验 / 模板重传 / 幂等验证」。逐表构建的入口必做数据质量检测，按本指南分流。
-
----
-
-## 1. 脏数据分类：按处置能力分两类
-
-**类别 A — 可自动修复**（经用户确认后程序化修复）
-
-包括但不限于：多层表头展平、聚合行 drop、BOM/编码、列名规范化、日期/数值类型转换、占位符归一、重复行去重、upsert 去重。
-
-**类别 B — 无法自动修复**（转入模板重传分支，见第 4 节）
-
-数据布局失控、单 sheet 多表头区块、语义完全无法推断的结构——无法程序化修复，**必须**引导用户重传。
-
-类别 B 一旦判定：**立即停止本表后续所有步骤**（不进数据探查、不建表、不问更新模式），直接转模板重传分支。**禁止**"让用户选某种字段结构作为标准后继续在原脏数据上建表"——这等同绕过本约束。
+> This document is a supplementary reference to SKILL.md, covering "dirty-data classification / pre-create checks / template re-upload / idempotency verification". The per-table build entry point requires a data quality check; route the table according to this guide.
 
 ---
 
-## 2. 判定方法：机器信号 + 语义判断
+## 1. Dirty Data Classification: Two Categories by Fixability
 
-### 2.1 机器可检测信号（程序判定，确定性）
+**Category A — auto-fixable** (programmatic fixes after user confirmation)
 
-- 合并单元格非空（`openpyxl ws.merged_cells`）→ 疑似多层表头
-- 某行数值列 ≈ Σ 其他行（按维度 group by + sum 校验）→ 疑似聚合行
-- 某列数值列 ≈ Σ 其他列（同粒度）→ 疑似聚合维度列
-- 同列 dtype 不一致（数值混文本/日期混字串）→ 解析噪声
-- 整列解析失败（全部无法转目标类型）→ 硬失败
-- 主键列存在重复 → 需用户确认 upsert/去重
+Including but not limited to: flattening multi-level headers, dropping aggregate rows, BOM/encoding, column-name normalization, date/numeric type conversion, placeholder normalization, duplicate-row deduplication, upsert deduplication.
 
-### 2.2 语义判断信号（基于前 N 行内容理解，不靠词表）
+**Category B — not auto-fixable** (route to the template re-upload branch, see Section 4)
 
-- 某行是否为"对其他行的汇总/小计/累计"
-- 某列是否为其他列的聚合（结合 SUM 关系 + 列名含义联合判断）
-- 空值/占位符是否承载业务含义
-- 列名语义是否与数据内容一致
+Uncontrolled data layout, multiple header blocks in a single sheet, structure whose semantics cannot be inferred at all — these cannot be fixed programmatically; you **must** guide the user to re-upload.
 
-**禁止用硬编码关键词/具体值列表**（如 total/合计/汇总/N/A/货币符号等）做判定——关键词永远不全，且会误判业务字段（如 `total_amount` 订单总金额列本身是正常明细列）。
+Once Category B is determined: **immediately stop all subsequent steps for this table** (no data profiling, no table creation, no update-mode questions) and go straight to the template re-upload branch. It is **forbidden** to "let the user pick one field structure as the standard and keep building on the dirty data" — that is equivalent to bypassing this constraint.
 
 ---
 
-## 3. 类别 A 处置流程
+## 2. Detection Method: Machine Signals + Semantic Judgment
 
-核心原则：任何对数据的修改（清洗、丢弃、替换、展平、drop 聚合行等）都**必须**经用户知情 + 确认后执行。不存在"通用问题默认处理"的豁免——BOM、列名规范化、日期推断、货币符号、空值占位符均不例外。
+### 2.1 Machine-detectable signals (programmatic, deterministic)
 
-1. **描述问题**：用业务语言说明脏点（位置、影响行数、占比、样本值）
-2. **给出推荐**：列出候选处理方式，推荐方案排第一
-3. **等待确认**：用户选择后才执行，不允许跳过
-4. **执行修复**：按用户选择执行
-5. **报告结果**：通报"清洗前 X 行 → 清洗后 Y 行"
-6. **沉淀规则**：若该清洗对未来同源导入仍适用，调 `uds_rule_manage(action="create", rule_type="cleaning", task_id=<task_id>)` 落库，避免重复询问
+- Non-empty merged cells (`openpyxl ws.merged_cells`) → suspected multi-level header
+- Some row's numeric columns ≈ Σ of other rows (group by dimension + sum check) → suspected aggregate row
+- Some numeric column ≈ Σ of other columns (same granularity) → suspected aggregate dimension column
+- Inconsistent dtype within a column (numbers mixed with text/dates mixed with strings) → parsing noise
+- Entire column fails to parse (nothing converts to the target type) → hard failure
+- Duplicate values in the primary-key column → needs user confirmation for upsert/dedup
 
-多个脏点合并在一次提问里，每个脏点包含具体证据（影响行数、样本值、占比），**禁止**逐项分散提问。
+### 2.2 Semantic signals (understanding the first N rows, not keyword lists)
+
+- Whether a row is a "summary/subtotal/cumulative over other rows"
+- Whether a column is an aggregate of other columns (judge jointly from the SUM relation + column-name semantics)
+- Whether nulls/placeholders carry business meaning
+- Whether column-name semantics match the data content
+
+**Never use hardcoded keyword/value lists** (e.g. total/subtotal/summary/N/A/currency symbols) for detection — keyword lists are never complete and misjudge business fields (e.g. a `total_amount` order-total column is itself a normal detail column).
 
 ---
 
-## 4. 类别 B 模板重传分支
+## 3. Category A Handling Flow
 
-**目标**：通过模板化让用户按干净格式重传，而非直接建脏表。本分支只做模板生成和重传引导，**禁止**夹带业务访谈、更新模式、字段结构选择——这些等用户重传、新文件判定干净、进入标准闭环再处理。
+Core principle: any modification to the data (cleaning, dropping, replacing, flattening, dropping aggregate rows, etc.) **must** be executed only after the user is informed and confirms. There is no "default handling for common issues" exemption — BOM, column-name normalization, date inference, currency symbols, and null placeholders are no exceptions.
 
-### 4.1 步骤
+1. **Describe the problem**: explain the dirty spots in business language (location, affected row count, share, sample values)
+2. **Give a recommendation**: list candidate treatments with the recommended option first
+3. **Wait for confirmation**: execute only after the user chooses; skipping is not allowed
+4. **Apply the fix**: execute as the user chose
+5. **Report the result**: report "X rows before cleaning → Y rows after cleaning"
+6. **Persist the rule**: if the cleaning also applies to future imports from the same source, persist it via `uds_rule_manage(action="create", rule_type="cleaning", task_id=<task_id>)` to avoid asking again
 
-1. **识别报告**：用业务语言把检测到的脏点告知用户（哪几行是聚合行、哪几列是多层表头、哪些列是聚合维度**禁止**参与求和、为什么直接建表会产生错误，举一个具体分析错误的例子）。本步只表达，不重复检测。
-2. **确认是否接受模板**（这一步只问这一件事，不混入其他问题）：
-   - 采用干净模板重传（推荐）——生成一份格式规范的 xlsx，用户按此格式填充后重新上传
-   - 用户有顾虑/不想用模板 → 进入第 4 步沟通循环
-3. **生成并交付模板**（用户接受时）：在用户当前工作目录生成 `<table_name>_template.xlsx`（规范见 4.2）并告知文件路径与格式要点，同时按 4.3 以 `--type sample` 上传登记为该表的 sample_file。用户按格式填充后重新上传 → 新文件重新执行数据质量检测 → 判定干净 → 进入标准闭环。
-4. **沟通循环**（用户拒绝模板）：按拒绝原因调整方案，再回到第 2 步。常见顾虑应对：
+Merge multiple dirty spots into one round of questions, each with concrete evidence (affected rows, sample values, share). **Never** ask about them one by one in scattered messages.
 
-   | 用户顾虑 | 应对 |
+---
+
+## 4. Category B Template Re-upload Branch
+
+**Goal**: use a template so the user re-uploads in a clean format, instead of building a dirty table directly. This branch does template generation and re-upload guidance only — **never** mix in business interviews, update-mode questions, or field-structure choices; handle those after the user re-uploads, the new file is judged clean, and the standard loop begins.
+
+### 4.1 Steps
+
+1. **Identify and report**: tell the user the detected dirty spots in business language (which rows are aggregate rows, which columns are multi-level headers, which columns are aggregate dimensions that must **never** participate in sums, why building the table directly would produce wrong results — give one concrete example of a wrong analysis). This step only communicates; do not re-run detection.
+2. **Confirm template acceptance** (ask this one thing only; do not mix in other questions):
+   - Re-upload using a clean template (recommended) — generate a well-formatted xlsx for the user to fill in and re-upload
+   - The user has concerns / does not want the template → enter the communication loop in step 4
+3. **Generate and deliver the template** (when accepted): generate `<table_name>_template.xlsx` in the user's current working directory (spec in 4.2), tell them the file path and format key points, and register it as the table's sample_file via `--type sample` upload per 4.3. After the user fills it in and re-uploads → run the data quality check again on the new file → judged clean → enter the standard loop.
+4. **Communication loop** (user declines the template): adjust the approach per the reason, then return to step 2. Common concerns:
+
+   | User concern | Response |
    |---|---|
-   | "列太多填不完" | 精简到核心列，扩展列后续按需加；或拆多张表 |
-   | "数据量大频繁填麻烦" | 写转换脚本，用户上传原格式，脚本自动转模板格式入库 |
-   | "不知道哪些列该聚合" | 与用户逐列确认业务含义后重新确定模板 |
-   | "原文件就是标准" | 展示具体脏点证据（行号、内容、示例分析错误）让用户确认 |
-   | "模板不符合业务习惯" | 按用户习惯调整（只要满足单层表头/无聚合行即可） |
+   | "Too many columns to fill" | Trim to core columns and add extension columns later as needed; or split into multiple tables |
+   | "Large data volume, filling repeatedly is tedious" | Write a conversion script: the user uploads the original format and the script converts it to the template format for import |
+   | "Not sure which columns should aggregate" | Confirm the business meaning column by column with the user, then redefine the template |
+   | "The original file IS the standard" | Show concrete dirty-spot evidence (row numbers, content, an example wrong analysis) for the user to confirm |
+   | "The template doesn't match business habits" | Adapt to the user's habits (any layout works as long as it has a single-level header and no aggregate rows) |
 
-若充分沟通仍无共识：按约束 2 诚实汇报并终止流程，不建底表、不落数据集、不写任何 dataset_table 记录。
+If sufficient communication still yields no consensus: report honestly per Constraint 6 and terminate the flow — do not create base tables, do not persist the dataset, do not write any dataset_table records.
 
-### 4.2 模板文件规范
+### 4.2 Template File Spec
 
-| 项 | 规则 |
+| Item | Rule |
 |---|---|
-| 表头 | 第 1 行英文列名（snake_case，与 target_columns 一致），单层，不合并单元格 |
-| 示例数据 | 表头之后 2-3 行真实业务示例值，让用户看清每列数据大致长什么样即可——不对用户做格式要求（列的业务含义已在建表 COMMENT 与治理规则中，格式宽容由 transform 脚本负责） |
-| 无聚合行 | **禁止**出现对其他行的汇总/小计/累计行 |
-| 列数合理 | 只保留核心列，过多时拆多张表 |
+| Header | Row 1 English column names (snake_case, matching target_columns), single level, no merged cells |
+| Sample data | 2-3 rows of real business sample values after the header, just enough to show what each column roughly looks like — no format requirements on users (business meaning already lives in table COMMENTs and governance rules; format tolerance is the transform script's job) |
+| No aggregate rows | Summary/subtotal/cumulative rows over other rows are **forbidden** |
+| Reasonable column count | Keep core columns only; split into multiple tables when there are too many |
 
-### 4.2.1 模板生成骨架（openpyxl）
+### 4.2.1 Template Generation Skeleton (openpyxl)
 
-在本地生成（你是本地 agent，直接写本地文件再上传）。示例行是模板的核心价值——
-仅含表头的模板无法让用户理解每列该填什么，禁止只写表头。
+Generate locally (you are a local agent — write the local file directly, then upload). Sample rows are the template's core value —
+a header-only template cannot teach the user what each column should contain; writing only the header is forbidden.
 
-以下是**结构骨架，并非可直接套用的成品**：`COLUMNS` 的列名/示例值按本表的
-target_columns 和业务访谈结论填写，示例值使用真实业务值即可，无需做格式处理：
+The following is a **structural skeleton, not a ready-to-use product**: fill `COLUMNS` with the column names/sample values from this table's
+target_columns and the interview conclusions; sample values should be real business values, no format processing needed:
 
 ```python
 from openpyxl import Workbook
 
-# (列名, 示例值)：列名与 target_columns 严格一致；示例值为真实业务值
+# (column name, sample value): names strictly match target_columns; samples are real business values
 COLUMNS = [
-    ("<列名1>", "<真实业务示例值>"),
-    # ... 每列一行，覆盖 target_columns 全部列
+    ("<column1>", "<real business sample value>"),
+    # ... one line per column, covering all of target_columns
 ]
 
 wb = Workbook()
 ws = wb.active
 for col_idx, (name, _) in enumerate(COLUMNS, start=1):
     ws.cell(row=1, column=col_idx, value=name)
-for row_idx in range(2, 4):  # 2-3 行示例数据
+for row_idx in range(2, 4):  # 2-3 sample rows
     for col_idx, (_, example) in enumerate(COLUMNS, start=1):
         ws.cell(row=row_idx, column=col_idx, value=example)
 wb.save("<table_name>_template.xlsx")
 ```
 
-### 4.3 模板必须上传登记（强制脚本契约的一部分）
+### 4.3 The Template Must Be Uploaded and Registered (part of the mandatory script contract)
 
-模板不只给用户一次性下载——它是表配置的必填项 `sample_file`，网页端的"下载模板"按钮
-长期从这里取文件。生成后**必须**：
+The template is not just a one-off download for the user — it is the required table-config field `sample_file`, and the website's
+"download template" button serves the file from here long-term. After generating it you **must**:
 
 ```
 uds-cli --task-id <task_id> upload <table>_template.xlsx --dataset <dataset_id> --type sample
-uds_table_manage(action="update", table_name=..., sample_file=<返回的 workspace_path>, task_id=<task_id>)
+uds_table_manage(action="update", table_name=..., sample_file=<returned workspace_path>, task_id=<task_id>)
 ```
 
-- `--type sample` 不能省：落盘目录是 /workspace/goalfydata_sample_files/，表配置对
-  sample_file 有路径前缀校验，目录不符登记会被拒绝；
-- upload 源的表**没有 sample_file 无法完成注册**（与 script_file 同为必填）；
-- 用户原始文件本身干净时，可直接将其以 `--type sample` 上传登记为样例，无需另行生成模板；
-- 模板与 transform 脚本成对维护：表结构（target_columns）变更时两者都要重新生成并更新登记。
+- `--type sample` cannot be omitted: the landing directory is /workspace/goalfydata_sample_files/, and the table config
+  validates the sample_file path prefix; a mismatched directory is rejected at registration;
+- an upload-source table **cannot complete registration without a sample_file** (required, same as script_file);
+- when the user's original file is itself clean, you may upload and register it directly as the sample via `--type sample`, no separate template needed;
+- the template and the transform script are maintained as a pair: when the table structure (target_columns) changes, regenerate and re-register both.
 
 ---
 
-## 5. 建表前强制校验清单
+## 5. Mandatory Pre-create Checklist
 
-建表（标准闭环步骤 3）之前**必须**确认：
+Before creating the table (standard loop step 3), you **must** confirm:
 
-- 选定的主键唯一（无重复且无空值）；无单列满足则检查复合键唯一性
-- 每个时间语义的列，探查到的格式与 DDL 类型一致（DATE ≠ TIMESTAMP ≠ TIME）
-- VARCHAR 列长度 ≥ 实测最大长度 × 1.5（留余量，避免 `value too long`）
-- 有空值的列**不能**设 NOT NULL
-- 含小数的数值列不用 BIGINT，用 DECIMAL（避免科学计数法导入失败）
-- upsert 模式**必须**提前检查候选主键组合有无重复行（PG 同一批次**不能** upsert 同一行两次，有重复需在脚本 `drop_duplicates`）
-- 数值列的实际范围决定 INTEGER vs BIGINT vs DECIMAL
-- DDL 中**不含** `FOREIGN KEY` / `REFERENCES`（数据集 schema 禁外键，服务端拦截；表间关系用 `uds_relations_set` 登记，不建物理外键）
-
----
-
-## 6. upsert 幂等性验证
-
-`update_mode=upsert` 时必做。首次导入成功后，用同样的数据再导一次，然后检查：
-
-1. `SELECT COUNT(*) FROM uds_{dataset_id}.<table>` — 行数应与首次一致（无重复行）
-2. `SELECT COUNT(*) FROM uds_{dataset_id}.<table> GROUP BY <upsert_keys> HAVING COUNT(*) > 1` — 结果应为空（主键无重复）
-3. 若行数翻倍或主键重复 → 脚本 `drop_duplicates` 或 `--upsert-keys` 有问题，修复后重新导入
-
-`append` 模式不做幂等测试（天然增加行数）。`full_replace` 执行两次行数应一致（第二次替换第一次）。
+- The chosen primary key is unique (no duplicates, no nulls); if no single column qualifies, check composite-key uniqueness
+- For every time-semantic column, the profiled format matches the DDL type (DATE ≠ TIMESTAMP ≠ TIME)
+- VARCHAR length ≥ measured max length × 1.5 (headroom against `value too long`)
+- Columns containing nulls must **not** be NOT NULL
+- Numeric columns containing decimals use DECIMAL, not BIGINT (avoids scientific-notation import failures)
+- Upsert mode **must** pre-check the candidate key combination for duplicate rows (PG **cannot** upsert the same row twice in one batch; deduplicate in the script via `drop_duplicates`)
+- The actual numeric range decides INTEGER vs BIGINT vs DECIMAL
+- The DDL contains **no** `FOREIGN KEY` / `REFERENCES` (dataset schemas forbid foreign keys, enforced server-side; register table relations via `uds_relations_set` instead of physical FKs)
 
 ---
 
-## 7. 跨表整体校验
+## 6. Upsert Idempotency Verification
 
-所有表构建完成后，做跨表级别的质量检查和业务验证。任何问题暂停操作，由用户决策（约束 3：不替用户做业务决策）。
+Required when `update_mode=upsert`. After the first successful import, import the same data again, then check:
 
-### 7.1 表存在性
+1. `SELECT COUNT(*) FROM uds_{dataset_id}.<table>` — row count should match the first import (no duplicate rows)
+2. `SELECT COUNT(*) FROM uds_{dataset_id}.<table> GROUP BY <upsert_keys> HAVING COUNT(*) > 1` — should return nothing (no duplicate keys)
+3. If rows doubled or keys duplicated → the script's `drop_duplicates` or `--upsert-keys` is wrong; fix and re-import
 
-确认所有预期表已创建，没有遗漏：
+`append` mode skips the idempotency test (it naturally adds rows). `full_replace` run twice should yield the same row count (the second replaces the first).
+
+---
+
+## 7. Cross-table Overall Validation
+
+After all tables are built, run cross-table quality checks and business validation. Pause on any problem and let the user decide (Constraint 4: never make business decisions for the user).
+
+### 7.1 Table Existence
+
+Confirm all expected tables exist, none missing:
 
 ```bash
 uds-cli --task-id <task_id> tables --schema uds_{dataset_id}
 ```
 
-将输出的表列表与访谈确定的建表清单逐一比对。缺表则回溯排查原因（建表失败 / 漏建 / 表名拼写错误）。
+Compare the output table list against the build list agreed in the interview. For missing tables, trace the cause (creation failure / skipped / misspelled name).
 
-### 7.2 行数验证
+### 7.2 Row Count Validation
 
-每张表的实际行数应与导入时 `rows_inserted` 一致：
+Each table's actual row count should match `rows_inserted` from the import:
 
 ```sql
--- 逐表检查
+-- check table by table
 SELECT COUNT(*) FROM uds_{dataset_id}.orders;
 SELECT COUNT(*) FROM uds_{dataset_id}.order_items;
 SELECT COUNT(*) FROM uds_{dataset_id}.customers;
 ```
 
-与导入日志中的 `rows_inserted` 比对。若不一致，排查原因：
-- 行数偏少：可能导入时有解析失败的行（编码 / 类型不匹配）
-- 行数偏多：可能重复导入且未使用 `full_replace`
-- 行数为 0：导入命令可能静默失败，检查 task 日志
+Compare against `rows_inserted` in the import logs. If inconsistent, investigate:
+- Fewer rows: rows may have failed to parse during import (encoding / type mismatch)
+- More rows: possibly imported twice without `full_replace`
+- Zero rows: the import may have failed silently; check the task logs
 
-### 7.3 关键列空值
+### 7.3 Nulls in Key Columns
 
-主键列、业务核心列不应有空值：
+Primary-key and core business columns should have no nulls:
 
 ```sql
--- 主键列空值检查（应返回 0）
+-- primary-key null check (should return 0)
 SELECT COUNT(*) FROM uds_{dataset_id}.orders WHERE order_id IS NULL;
 SELECT COUNT(*) FROM uds_{dataset_id}.order_items WHERE item_id IS NULL;
 
--- 业务核心列空值检查
+-- core business column null check
 SELECT COUNT(*) FROM uds_{dataset_id}.orders WHERE customer_id IS NULL;
 SELECT COUNT(*) FROM uds_{dataset_id}.order_items WHERE order_id IS NULL;
 ```
 
-返回值应为 0。若非 0，需判断：
-- 主键列有空值 → 数据源问题，必须修复（回退到标准闭环清洗或模板重传）
-- 业务列有空值 → 与用户确认是否属于正常业务场景（如可选字段允许空值）
+Should return 0. If not, decide:
+- Nulls in the primary key → data-source problem, must be fixed (back to standard-loop cleaning or template re-upload)
+- Nulls in business columns → confirm with the user whether that is a normal business case (e.g. optional fields allow nulls)
 
-### 7.4 关联完整性（多表场景）
+### 7.4 Relational Integrity (multi-table)
 
-外键引用的 ID 在关联表中必须存在，否则说明数据不完整或关联关系配置错误：
+IDs referenced by relation columns must exist in the related table (logical-relation check — dataset schemas forbid physical foreign keys); otherwise the data is incomplete or the relation config is wrong:
 
 ```sql
--- 订单明细的 order_id 必须在订单主表中存在（应返回 0 行）
+-- order_items.order_id must exist in orders (should return 0 rows)
 SELECT a.order_id
 FROM uds_{dataset_id}.order_items a
 LEFT JOIN uds_{dataset_id}.orders b ON a.order_id = b.order_id
 WHERE b.order_id IS NULL;
 
--- 订单的 customer_id 必须在客户表中存在（应返回 0 行）
+-- orders.customer_id must exist in customers (should return 0 rows)
 SELECT a.customer_id
 FROM uds_{dataset_id}.orders a
 LEFT JOIN uds_{dataset_id}.customers b ON a.customer_id = b.customer_id
 WHERE b.customer_id IS NULL;
 ```
 
-若有孤立记录（返回非空结果），与用户确认：
-- 是否源数据缺失（部分关联数据未提供）→ 补传数据
-- 是否关联字段不对（列名 / 含义理解有误）→ 修正关系配置
+If orphan records exist (non-empty result), confirm with the user:
+- Missing source data (some related data not provided) → upload the missing part
+- Wrong relation field (column name / meaning misunderstood) → fix the relation config
 
-### 7.5 业务逻辑合理性
+### 7.5 Business-logic Sanity
 
-根据业务语义做基本的合理性校验：
+Basic sanity checks based on business semantics:
 
-**金额类字段**：
+**Amount fields**:
 
 ```sql
--- 金额不应为负数（特殊业务如退款除外，需与用户确认）
+-- amounts should not be negative (except special business like refunds; confirm with the user)
 SELECT COUNT(*) FROM uds_{dataset_id}.orders WHERE total_amount < 0;
 SELECT COUNT(*) FROM uds_{dataset_id}.order_items WHERE unit_price < 0;
 ```
 
-**日期类字段**：
+**Date fields**:
 
 ```sql
--- 检查日期范围是否在合理区间内
+-- check whether the date range is reasonable
 SELECT MIN(order_date), MAX(order_date) FROM uds_{dataset_id}.orders;
 ```
 
-验证最小 / 最大日期是否在预期范围内。若出现 `1970-01-01`、`2099-12-31` 等异常值，说明可能存在默认值污染或解析错误。
+Verify the min/max dates fall in the expected range. Values like `1970-01-01` or `2099-12-31` indicate default-value pollution or parsing errors.
 
-**枚举类字段**：
+**Enum fields**:
 
 ```sql
--- 检查枚举值是否在预期集合内
+-- check enum values against the expected set
 SELECT DISTINCT status FROM uds_{dataset_id}.orders;
 SELECT DISTINCT payment_method FROM uds_{dataset_id}.orders;
 ```
 
-将结果与业务预期的枚举值集合比对。出现未知值时与用户确认是新增的合法值还是脏数据。
+Compare the result with the business's expected enum set. On unknown values, confirm with the user whether it is a new legitimate value or dirty data.
 
-### 7.6 业务查询验证
+### 7.6 Business Query Validation
 
-写 2-3 条典型业务查询，向用户展示结果，确认数据能支撑实际业务分析：
+Write 2-3 typical business queries and show the results to the user to confirm the data supports real analysis:
 
 ```sql
--- 示例 1：按月统计订单量和总金额
+-- example 1: monthly order count and revenue
 SELECT
     DATE_TRUNC('month', order_date) AS month,
     COUNT(*) AS order_count,
@@ -274,7 +274,7 @@ FROM uds_{dataset_id}.orders
 GROUP BY DATE_TRUNC('month', order_date)
 ORDER BY month;
 
--- 示例 2：客户维度的订单汇总（验证多表关联正确性）
+-- example 2: per-customer order summary (verifies multi-table joins)
 SELECT
     c.customer_name,
     COUNT(o.order_id) AS order_count,
@@ -285,7 +285,7 @@ GROUP BY c.customer_name
 ORDER BY total_spent DESC
 LIMIT 10;
 
--- 示例 3：订单明细金额与订单总额交叉验证
+-- example 3: cross-check item amounts against order totals
 SELECT
     o.order_id,
     o.total_amount AS order_total,
@@ -297,4 +297,4 @@ HAVING ABS(o.total_amount - SUM(oi.unit_price * oi.quantity)) > 0.01
 LIMIT 10;
 ```
 
-将查询结果展示给用户，让用户确认数据是否符合业务预期。若用户发现异常（如某月数据缺失、金额不对），回溯排查并修复。
+Show the query results to the user for business confirmation. If the user spots anomalies (a missing month, wrong amounts), trace back and fix.

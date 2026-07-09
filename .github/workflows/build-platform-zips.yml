@@ -38,8 +38,8 @@ jobs:
 
       - name: Build ZIPs
         run: |
-          cd manus/skill && zip -r ../goalfydata-skill.zip SKILL.md references/ && cd ../..
-          cd generic && zip -r goalfydata-generic.zip .mcp.json SKILL.md references/ README.md README.zh-CN.md && cd ..
+          cd manus/skill && zip -r ../goalfydata-skill.zip SKILL.md SKILL.zh-CN.md references/ && cd ../..
+          cd generic && zip -r goalfydata-generic.zip .mcp.json SKILL.md SKILL.zh-CN.md references/ README.md README.zh-CN.md && cd ..
 
       - name: Commit and push ZIPs
         run: |

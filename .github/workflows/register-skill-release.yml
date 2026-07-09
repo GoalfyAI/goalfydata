@@ -21,6 +21,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 防"改 SKILL 忘跑 scripts/release-skill.sh"：SKILL 内容变了但版本串没换时，
+      # 注册的还是旧版本，服务端闸门无法区分新旧内容。此处强制两者一致，不一致直接红灯。
+      - name: Verify SKILL version strings match skill-release.json
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          release = json.load(open('skill-release.json', encoding='utf-8'))
+          version = release['version']
+          marker = re.compile(r"\[skill-version: (v[0-9]{8}-[0-9a-f]{6})\]")
+          errors = []
+          files = release.get('files') or []
+          checksums = release.get('checksums') or {}
+          if not files:
+              errors.append('skill-release.json has an empty files list')
+          if not checksums:
+              # 旧版 json（发 checksums 之前的存量），只做版本串比对
+              print('WARNING: no checksums in skill-release.json (legacy release); content drift cannot be detected')
+          for name in files:
+              path = Path(name)
+              if not path.exists():
+                  errors.append(f'{name}: listed in skill-release.json but missing')
+                  continue
+              m = marker.search(path.read_text(encoding='utf-8'))
+              if not m:
+                  errors.append(f'{name}: no [skill-version: ...] marker in description')
+              elif m.group(1) != version:
+                  errors.append(f'{name}: version {m.group(1)} != skill-release.json {version}')
+              if checksums:
+                  expected = checksums.get(name)
+                  actual = hashlib.sha256(path.read_bytes()).hexdigest()
+                  if not expected:
+                      errors.append(f'{name}: missing checksum entry in skill-release.json')
+                  elif actual != expected:
+                      errors.append(f'{name}: content changed since release {version} (sha256 mismatch)')
+          if errors:
+              print('SKILL version check failed — run scripts/release-skill.sh to cut a release:')
+              for e in errors:
+                  print(f'  - {e}')
+              sys.exit(1)
+          print(f'all SKILL files carry {version}')
+          PY
+
       - name: Register skill release in GoalfyHub environments
         env:
           TARGETS: ${{ secrets.SKILL_RELEASE_REGISTRY_TARGETS }}
