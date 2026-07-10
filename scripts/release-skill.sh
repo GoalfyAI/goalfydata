@@ -39,13 +39,13 @@ candidates = [
 files = [p for p in candidates if p.exists()]
 if not files:
     raise SystemExit("no SKILL.md files found")
-marker = re.compile(r"\s*\[skill-version: v[0-9]{8}-[0-9a-f]{6}\]")
+marker = re.compile(r"\s*\[skill-version: ?v[0-9]{8}-[0-9a-f]{6}\]")
 for path in files:
     lines = path.read_text().splitlines()
     for i, line in enumerate(lines):
         if line.startswith("description: "):
             line = marker.sub("", line)
-            lines[i] = f"{line} [skill-version: {version}]"
+            lines[i] = f"{line} [skill-version:{version}]"  # 冒号后不能有空格：YAML 无引号标量禁止 ": "
             break
     else:
         raise SystemExit(f"missing description line: {path}")

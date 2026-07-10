@@ -159,7 +159,7 @@ GoalfyData 独立于单个项目和对话，是可长期复用、跨平台访问
 - **MCP 工具**：每次调用必填 `task_id`（`uds_task_manager` 与 `uds_dataset_get` 豁免——工单管理和目录读取不需要工单）
 - **uds-cli 命令**：每条数据面命令加 `--task-id <task_id>`（与 MCP 用同一个），把执行 SQL / 导入等操作一并归入当前任务
 - **工单模式**：只读查询、列表、详情、分析用 `mode="read"`；任何建表、导入、规则、权限、分享、GoalfyData 托管刷新、应用部署等写操作用 `mode="write"`
-- **skill 版本**：`mode="write"` 时必须把本文件 description 末尾 `[skill-version: ...]` 中的版本串原样传给 `skill_version`；不要猜版本，不要改写格式
+- **skill 版本**：`mode="write"` 时必须把本文件 description 末尾 `[skill-version:...]` 中的版本串原样传给 `skill_version`；不要猜版本，不要改写格式
 - `op_summary`：必填，用业务语言描述本次操作的原因和下一步计划（100-200 字符），禁止提及工具名/函数名/技术参数
 - `agent_name`：选填，标识当前 Agent 身份（如 claude / codex / manus）
 

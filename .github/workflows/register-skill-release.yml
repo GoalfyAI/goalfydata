@@ -34,7 +34,7 @@ jobs:
 
           release = json.load(open('skill-release.json', encoding='utf-8'))
           version = release['version']
-          marker = re.compile(r"\[skill-version: (v[0-9]{8}-[0-9a-f]{6})\]")
+          marker = re.compile(r"\[skill-version: ?(v[0-9]{8}-[0-9a-f]{6})\]")
           errors = []
           files = release.get('files') or []
           checksums = release.get('checksums') or {}

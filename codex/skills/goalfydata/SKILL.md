@@ -154,7 +154,7 @@ At the start of every session/task, first call `uds_task_manager(action="create"
 - **MCP tools**: `task_id` required on every call (`uds_task_manager` and `uds_dataset_get` are exempt — ticket management and catalog reads need no ticket)
 - **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task
 - **Ticket mode**: read-only queries, listings, details, and analysis use `mode="read"`; any write operation — table creation, imports, rules, permissions, sharing, GoalfyData Managed Refresh, app deployment — uses `mode="write"`
-- **Skill version**: with `mode="write"` you must pass the version string from `[skill-version: ...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
+- **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
 
