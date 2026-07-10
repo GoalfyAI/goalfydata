@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "goalfydata",
-      "description": "Let Claude Code, Codex, or Manus build, query, and share datasets and deploy public dashboards via MCP — with managed refresh, fine-grained permissions, and one-link sharing, so results outlive the conversation.",
+      "description": "Build, query, and share datasets and deploy public dashboards from Claude Code via MCP — with managed refresh, fine-grained permissions, and one-link sharing, so results outlive the conversation.",
       "version": "1.0.2",
       "author": {
         "name": "GoalfyAI"
