@@ -47,6 +47,22 @@ for path in files:
         raise SystemExit(f"missing description line: {path}")
     path.write_text("\n".join(lines) + "\n")
 
+# skill 发版必须联动 bump 插件版本号：claude/codex 的 plugin update 只认
+# plugin.json 的版本，不看内容——不 bump 则已装用户永远拿不到新 SKILL（实测验证）。
+plugin_manifests = [
+    Path("claude-code/.claude-plugin/plugin.json"),
+    Path("codex/.codex-plugin/plugin.json"),
+    Path(".claude-plugin/marketplace.json"),
+    Path(".agents/plugins/marketplace.json"),
+]
+ver_re = re.compile(r'("version":\s*")(\d+)\.(\d+)\.(\d+)(")')
+def _bump(m):
+    return f"{m.group(1)}{m.group(2)}.{m.group(3)}.{int(m.group(4)) + 1}{m.group(5)}"
+for p in plugin_manifests:
+    if p.exists():
+        p.write_text(ver_re.sub(_bump, p.read_text(), count=1))
+        print(f"plugin version bumped: {p}")
+
 Path("skill-release.json").write_text(json.dumps({
     "version": version,
     "notes": notes,
@@ -59,6 +75,9 @@ Path("skill-release.json").write_text(json.dumps({
 INNER_PY
 
 git add skill-release.json
+for f in claude-code/.claude-plugin/plugin.json codex/.codex-plugin/plugin.json .claude-plugin/marketplace.json .agents/plugins/marketplace.json; do
+  [ -f "$f" ] && git add "$f"
+done
 python3 -c "import json; print('\n'.join(json.load(open('skill-release.json'))['files']))" | while read -r f; do
   git add "$f"
 done
