@@ -5,7 +5,7 @@ While executing this guide, you must follow these rules:
 1. Only run the commands listed here; only write to `~/.claude/settings.json` (merge-write) and the Claude Code plugin directory
 2. When mentioning obtaining or verifying the API Key to the user, include the settings link https://goalfydata.ai/settings
 3. The API Key must come from the user — never fabricate one or proceed with a placeholder
-4. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template word for word: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences
+4. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
 
 Every step starts with a check command: skip steps that are already done; re-running any step is safe.
 
