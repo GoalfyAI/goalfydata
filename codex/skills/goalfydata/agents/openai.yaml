@@ -1,10 +1,13 @@
 interface:
   display_name: GoalfyData
   brand_color: '#6366F1'
-  short_description: 当用户需要对数据做深度分析（多轮 SQL 查询、聚合统计、趋势对比等），或需要将数据（Excel / CSV / API
-    / 数据库）沉淀为可长期复用、跨平台访问的结构化资产时使用——典型场景包括：复杂或反复的数据分析、跨多个 Agent / 跨服务 / 跨电脑访问同一份数据、把数据分享给他人协作、基于数据构建
-    Dashboard 并部署和分享到公网。GoalfyData 独立于单个项目和对话，覆盖从建表、导入、查询分析、治理规则、权限分享、凭证管理、定时自动更新到
-    Dashboard 部署的完整数据集生命周期。
+  short_description: Use when the user needs deep data analysis (multi-round SQL queries, aggregation, trend comparison) or
+    wants to persist data (Excel / CSV / API / databases) as a long-lived, cross-platform structured asset — typical scenarios
+    include complex or repeated analysis, accessing the same data across multiple Agents / services / machines, sharing data
+    with collaborators, and building a Dashboard on the data with public deployment and sharing. GoalfyData is independent
+    of any single project or conversation and covers the full dataset lifecycle from table creation, import, query and analysis,
+    governance rules, permission sharing, credential management, and GoalfyData Managed Refresh (scheduled auto-update) to
+    Dashboard deployment.
 policy:
   allow_implicit_invocation: true
 dependencies:
