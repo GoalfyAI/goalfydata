@@ -1,8 +1,3 @@
-<p align="right">
-  English |
-  <a href="https://github.com/GoalfyAI/goalfydata-zh">简体中文</a>
-</p>
-
 <br>
 
 <p align="center">
