@@ -1,8 +1,8 @@
 {
-  "version": "v20260710-dbe7de",
-  "notes": "Path anchoring for sub-guide references: relative-to-SKILL.md note, install-path shape, and search-first guidance against the duplicated goalfydata levels",
-  "update_reason": "Path anchoring for sub-guide references: relative-to-SKILL.md note, install-path shape, and search-first guidance against the duplicated goalfydata levels",
-  "updated_at": "2026-07-10T08:49:00.585794+00:00",
+  "version": "v20260710-85dc97",
+  "notes": "Platform-neutral path anchoring: universal sibling/search-by-filename guidance, plugin path shape scoped to Claude Code/Codex",
+  "update_reason": "Platform-neutral path anchoring: universal sibling/search-by-filename guidance, plugin path shape scoped to Claude Code/Codex",
+  "updated_at": "2026-07-10T08:56:23.132188+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "claude-code/skills/goalfydata/SKILL.zh-CN.md",
@@ -14,13 +14,13 @@
     "generic/SKILL.zh-CN.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "51b1bf8f4ea1e60870afb0a01b411fc8bc3929afaabe042be7bab1615c7dfc4c",
-    "claude-code/skills/goalfydata/SKILL.zh-CN.md": "bbba28393c8144fe12bd9c7bd8e2e628fa0d66206fdaecd2b2c75fa6c2703a6c",
-    "codex/skills/goalfydata/SKILL.md": "51b1bf8f4ea1e60870afb0a01b411fc8bc3929afaabe042be7bab1615c7dfc4c",
-    "codex/skills/goalfydata/SKILL.zh-CN.md": "bbba28393c8144fe12bd9c7bd8e2e628fa0d66206fdaecd2b2c75fa6c2703a6c",
-    "manus/skill/SKILL.md": "51b1bf8f4ea1e60870afb0a01b411fc8bc3929afaabe042be7bab1615c7dfc4c",
-    "manus/skill/SKILL.zh-CN.md": "bbba28393c8144fe12bd9c7bd8e2e628fa0d66206fdaecd2b2c75fa6c2703a6c",
-    "generic/SKILL.md": "51b1bf8f4ea1e60870afb0a01b411fc8bc3929afaabe042be7bab1615c7dfc4c",
-    "generic/SKILL.zh-CN.md": "bbba28393c8144fe12bd9c7bd8e2e628fa0d66206fdaecd2b2c75fa6c2703a6c"
+    "claude-code/skills/goalfydata/SKILL.md": "8ad36f9036b81e62a32522d34d03051d9532d57646c96a1674e5200ae277b8b0",
+    "claude-code/skills/goalfydata/SKILL.zh-CN.md": "0913df2d4e7474627f81ccec04288fe4bbbea3cab964aad002338f2a0b8b8c10",
+    "codex/skills/goalfydata/SKILL.md": "8ad36f9036b81e62a32522d34d03051d9532d57646c96a1674e5200ae277b8b0",
+    "codex/skills/goalfydata/SKILL.zh-CN.md": "0913df2d4e7474627f81ccec04288fe4bbbea3cab964aad002338f2a0b8b8c10",
+    "manus/skill/SKILL.md": "8ad36f9036b81e62a32522d34d03051d9532d57646c96a1674e5200ae277b8b0",
+    "manus/skill/SKILL.zh-CN.md": "0913df2d4e7474627f81ccec04288fe4bbbea3cab964aad002338f2a0b8b8c10",
+    "generic/SKILL.md": "8ad36f9036b81e62a32522d34d03051d9532d57646c96a1674e5200ae277b8b0",
+    "generic/SKILL.zh-CN.md": "0913df2d4e7474627f81ccec04288fe4bbbea3cab964aad002338f2a0b8b8c10"
   }
 }
