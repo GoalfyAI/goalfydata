@@ -1,26 +1,18 @@
 {
-  "version": "v20260710-5cce90",
-  "notes": "Action-required templates render in the user's conversation language; structure stays locked",
-  "update_reason": "Action-required templates render in the user's conversation language; structure stays locked",
-  "updated_at": "2026-07-10T09:25:24.422131+00:00",
+  "version": "v20260710-ce59dd",
+  "notes": "English-only repository: Chinese docs moved to the goalfydata-zh mirror",
+  "update_reason": "English-only repository: Chinese docs moved to the goalfydata-zh mirror",
+  "updated_at": "2026-07-10T11:04:45.254090+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
-    "claude-code/skills/goalfydata/SKILL.zh-CN.md",
     "codex/skills/goalfydata/SKILL.md",
-    "codex/skills/goalfydata/SKILL.zh-CN.md",
     "manus/skill/SKILL.md",
-    "manus/skill/SKILL.zh-CN.md",
-    "generic/SKILL.md",
-    "generic/SKILL.zh-CN.md"
+    "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "e39912140c8ce1c00b83960382769f91dffbb322d14a53fc045dd57a3014dd1d",
-    "claude-code/skills/goalfydata/SKILL.zh-CN.md": "5dc3ea832b5f3703590c1b4cce56470d724e5a843ae3b0cdfa9ca9e7233d49e7",
-    "codex/skills/goalfydata/SKILL.md": "e39912140c8ce1c00b83960382769f91dffbb322d14a53fc045dd57a3014dd1d",
-    "codex/skills/goalfydata/SKILL.zh-CN.md": "5dc3ea832b5f3703590c1b4cce56470d724e5a843ae3b0cdfa9ca9e7233d49e7",
-    "manus/skill/SKILL.md": "e39912140c8ce1c00b83960382769f91dffbb322d14a53fc045dd57a3014dd1d",
-    "manus/skill/SKILL.zh-CN.md": "5dc3ea832b5f3703590c1b4cce56470d724e5a843ae3b0cdfa9ca9e7233d49e7",
-    "generic/SKILL.md": "e39912140c8ce1c00b83960382769f91dffbb322d14a53fc045dd57a3014dd1d",
-    "generic/SKILL.zh-CN.md": "5dc3ea832b5f3703590c1b4cce56470d724e5a843ae3b0cdfa9ca9e7233d49e7"
+    "claude-code/skills/goalfydata/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a",
+    "codex/skills/goalfydata/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a",
+    "manus/skill/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a",
+    "generic/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a"
   }
 }
