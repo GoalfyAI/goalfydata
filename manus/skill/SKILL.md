@@ -78,7 +78,7 @@ Data-plane operations (executing SQL, importing data, viewing table structure) g
 
 **Getting an API Key**: create one on the GoalfyData "Settings → API Key" page: https://goalfydata.ai/settings . The plaintext is shown only once at creation; store it safely.
 
-**When no API Key is held, or tools return unauthenticated**, output the template below to the user verbatim (as body text, keeping the H1 heading and bold), and never invent or use a placeholder API Key:
+**When no API Key is held, or tools return unauthenticated**, output the template below to the user in the user's conversation language (translate the text when the user is not conversing in English; keep it as body text with the H1 heading and bold intact), and never invent or use a placeholder API Key:
 
 ```markdown
 # Action required: provide your GoalfyData API Key
@@ -727,7 +727,7 @@ uds_init_project(mode="fork", from_deploy_id=<deploy_id>, task_id=<task_id>)
 
 ## 5. Common Issues
 
-For any step in the table requiring the user's own action (visiting the website, updating a plugin, restarting the app or session), present it with the bold H1 "Action required" format (style per the API Key template in Prerequisites) — never as a plain sentence.
+For any step in the table requiring the user's own action (visiting the website, updating a plugin, restarting the app or session), present it with the bold H1 "Action required" format (style per the API Key template in Prerequisites), written in the user's conversation language — never as a plain sentence.
 
 | Issue | Cause and handling |
 |------|-----------|
@@ -748,7 +748,7 @@ For any step in the table requiring the user's own action (visiting the website,
 
 Signals (any one suggests this document is stale): tool parameter-validation errors that contradict this document, flows that mismatch actual tool behavior, or server responses indicating an outdated version.
 
-Confirm the user's platform first, then update accordingly. Present any step the user must do themselves in the bold H1 "Action required" format.
+Confirm the user's platform first, then update accordingly. Present any step the user must do themselves in the bold H1 "Action required" format, in the user's conversation language.
 
 **Step 0 (all platforms except Manus): update uds-cli**
 
