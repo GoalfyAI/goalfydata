@@ -14,6 +14,12 @@ claude plugin update goalfydata@goalfydata
 cd goalfydata && git pull && claude plugin marketplace update goalfydata
 ```
 
+Fallback — if the update reports the marketplace is not a Git marketplace, or the reinstalled skill still carries no / an old `[skill-version:...]` marker: the marketplace was originally added from a local directory and keeps serving its stale cache. Rebind it to the official repository, then rerun the update:
+
+```bash
+claude plugin marketplace add GoalfyAI/goalfydata
+```
+
 ## Step 2: Update uds-cli
 
 ```bash
@@ -22,13 +28,13 @@ cd goalfydata && git pull && claude plugin marketplace update goalfydata
 
 Both `already on the latest version` and `update succeeded: <old> → <new>` are normal.
 
-## Step 3: Read the new version marker and retry
+## Step 3: Read the new version marker and retry (in this session — do NOT ask the user to restart yet)
 
 The version gate only checks the version string, so you can unblock in the current session. Locate the updated skill file — search for `skills/goalfydata/SKILL.md` rather than reconstructing the path from memory (the install path repeats "goalfydata" at several consecutive levels with a version directory in between, e.g. `.../plugins/cache/goalfydata/goalfydata/<version>/skills/goalfydata/SKILL.md`) — and read `[skill-version:...]` from its description. If the search hits multiple copies (older version directories, marketplace copies), use the one under the highest version directory or the most recently modified one. Retry the failed `uds_task_manager` create with that value, passed verbatim.
 
 ## Step 4: Restart so the new skill fully loads
 
-The retry above unblocks task creation, but the skill content loaded in your context is still the old version. Output the template below in the user's conversation language (translate it when the user is not conversing in English; keep it as body text with the H1 heading and bold intact — never inside a code block or blockquote):
+Only after Step 3's retry has succeeded: the retry unblocks task creation, but the skill content loaded in your context is still the old version. Output the template below in the user's conversation language (translate it when the user is not conversing in English; keep it as body text with the H1 heading and bold intact — never inside a code block or blockquote):
 
 # ACTION REQUIRED: Restart to take effect
 
