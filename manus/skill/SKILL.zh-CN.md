@@ -37,7 +37,7 @@ keywords:
 > - `references/scheduled-sync-guide.zh-CN.md` — 脚本规范与 fetch/transform 标准模板、模板文件规范、沙箱规约、外部数据源脚本模板（MySQL 分块、API 分页）、多表协同、故障排查
 > - `references/app-deploy-guide.zh-CN.md` — 数据应用模板结构、开发规范、版本管理细节
 >
-> 以上路径均相对于本文件（SKILL.md）所在目录，而非你的工作目录。需要读取子文档或重新打开本文件时，以平台加载技能时提供的路径为准；找不到时注意：插件安装路径中 goalfydata 会连续出现多层（市场名/插件名/技能名同名，中间还夹版本号目录，形如 `.../plugins/cache/goalfydata/goalfydata/<版本>/skills/goalfydata/SKILL.md`），禁止凭记忆拼路径段——直接按 `skills/goalfydata/SKILL.md` 搜索定位，再从该目录读取 `references/`。
+> 以上路径均相对于本文件（SKILL.md）所在目录，而非你的工作目录——`references/` 与本文件永远同级。需要读取子文档或重新打开本文件时，以平台加载技能时提供的路径为准；找不到就按文件名搜索（如 `SKILL.md`、`dataset-building-guide*`），禁止凭记忆拼路径段。若以插件形式安装（Claude Code / Codex），注意安装路径中 goalfydata 会连续出现多层且夹版本号目录（形如 `.../plugins/cache/goalfydata/goalfydata/<版本>/skills/goalfydata/`）。
 
 ## 前置条件
 

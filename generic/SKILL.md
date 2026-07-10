@@ -32,7 +32,7 @@ Persist the user's business data as a structured dataset asset that is **indepen
 > - `references/scheduled-sync-guide.md` — script spec and fetch/transform standard templates, template-file spec, sandbox rules, external data-source templates (MySQL chunked, API paged), multi-table coordination, troubleshooting
 > - `references/app-deploy-guide.md` — app template structure, development conventions, version management details
 >
-> The paths above are relative to the directory containing this SKILL.md, not to your working directory. When reading a sub-guide or reopening this file, use the path the platform provided when loading the skill. If you cannot find it, note that the install path repeats "goalfydata" at several consecutive levels (marketplace, plugin, and skill share the name, with a version directory in between — e.g. `.../plugins/cache/goalfydata/goalfydata/<version>/skills/goalfydata/SKILL.md`). Never reconstruct path segments from memory — search for `skills/goalfydata/SKILL.md` directly, then read `references/` from that directory.
+> The paths above are relative to the directory containing this SKILL.md, not to your working directory — `references/` always sits next to this file. When reading a sub-guide or reopening this file, use the path the platform provided when loading the skill; if you cannot find it, search by filename (e.g. `SKILL.md`, `dataset-building-guide*`) instead of reconstructing path segments from memory. When installed as a plugin (Claude Code / Codex), note that the install path repeats "goalfydata" at several consecutive levels with a version directory in between (e.g. `.../plugins/cache/goalfydata/goalfydata/<version>/skills/goalfydata/`).
 
 ## Prerequisites
 
