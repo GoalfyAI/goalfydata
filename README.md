@@ -1,6 +1,6 @@
 <p align="right">
-  <a href="./README.md">English</a> |
-  <a href="./README.zh-CN.md">简体中文</a>
+  English |
+  <a href="https://github.com/GoalfyAI/goalfydata-zh">简体中文</a>
 </p>
 
 <br>

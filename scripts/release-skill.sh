@@ -26,15 +26,11 @@ version = os.environ["VERSION"]
 notes = os.environ["NOTES"]
 candidates = [
     Path("claude-code/skills/goalfydata/SKILL.md"),
-    Path("claude-code/skills/goalfydata/SKILL.zh-CN.md"),
     Path("codex/skills/goalfydata/SKILL.md"),
-    Path("codex/skills/goalfydata/SKILL.zh-CN.md"),
     Path("cursor/skills/goalfydata/SKILL.md"),
     Path("cursor/SKILL.md"),
     Path("manus/skill/SKILL.md"),
-    Path("manus/skill/SKILL.zh-CN.md"),
     Path("generic/SKILL.md"),
-    Path("generic/SKILL.zh-CN.md"),
 ]
 files = [p for p in candidates if p.exists()]
 if not files:
