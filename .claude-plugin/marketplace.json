@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "goalfydata",
-  "description": "GoalfyData plugin for AI coding agents — build, run, update, and share datasets & dashboards",
+  "description": "Turn your agent's data output into living, shareable assets — GoalfyData hosts the datasets and dashboards your agents build, and handles refresh, permissions, and sharing for your whole team.",
   "owner": {
     "name": "GoalfyAI",
     "email": "goalfydata@goalfyai.com"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "goalfydata",
-      "description": "GoalfyData — build, query, share, and deploy structured datasets via MCP",
+      "description": "Let Claude Code, Codex, or Manus build, query, and share datasets and deploy public dashboards via MCP — with managed refresh, fine-grained permissions, and one-link sharing, so results outlive the conversation.",
       "version": "1.0.2",
       "author": {
         "name": "GoalfyAI"
