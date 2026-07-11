@@ -42,6 +42,10 @@ The source package downloaded via `uds_init_project(mode="template", task_id=<ta
 
 When the user asks to "redeploy after changes" or "see the result", default to an online release: package → `uds_app_deploy(app_id=...)` to publish a new version (URL unchanged) → hand the `app_url` to the user for verification. The template's `run-dev.sh` is only for local preview explicitly requested by the user; a local preview does not count as delivery. When resuming development in a new session, first locate the `app_id` via `uds_app_list`; if there is no local source, retrieve it with `uds_init_project(mode="fork", from_deploy_id=...)`. Iterating on the same app requires passing `app_id` — otherwise a brand-new app with a new URL is created.
 
+### Data Placement (Every Version)
+
+App code must read business data live from the bound dataset — on the first build and on every iteration alike. When a change adds or modifies business data, write it into the dataset first (`uds-cli exec --mode writer ...` / `uds-cli import ...`), then read it through backend APIs. Never bake business data into frontend mock arrays, static JSON, or backend constants: hardcoded data goes stale, breaks dataset updates and sharing, and is invisible to other agents. Keep in code only UI copy, design tokens, route names, feature flags, client-only view state, and test fixtures.
+
 ### Database Connection
 
 - Development: `uds-cli --task-id <task_id> connect --mode reader --schema uds_{dataset_id} | head -3 > backend/.env` (credentials valid for 1h)
@@ -157,6 +161,8 @@ The complete flow from project initialization to confirming the app is online:
 uds_init_project(mode="fork", from_deploy_id=<deploy_id>, task_id=<task_id>)
 → download the source package + inherit the dataset bound to the original app → modify locally → follow steps 4-8 above to self-check, package, and deploy as a NEW app
 ```
+
+Data Placement (section 2) applies to fork development too: new or changed business data goes into the inherited dataset, not into the code.
 
 ---
 
