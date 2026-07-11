@@ -1,8 +1,8 @@
 {
-  "version": "v20260710-ce59dd",
-  "notes": "English-only repository: Chinese docs moved to the goalfydata-zh mirror",
-  "update_reason": "English-only repository: Chinese docs moved to the goalfydata-zh mirror",
-  "updated_at": "2026-07-10T11:04:45.254090+00:00",
+  "version": "v20260711-3f56b3",
+  "notes": "Data placement rule: business data lives in the bound dataset on every version; never hardcode it into app code",
+  "update_reason": "Data placement rule: business data lives in the bound dataset on every version; never hardcode it into app code",
+  "updated_at": "2026-07-11T10:55:59.887965+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a",
-    "codex/skills/goalfydata/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a",
-    "manus/skill/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a",
-    "generic/SKILL.md": "ce197b6f7fc7ef4beb940182584ab4c12e9f6836e8ae9fe72b301af2f158a10a"
+    "claude-code/skills/goalfydata/SKILL.md": "9487346607510d6342471f6faaf33163193a6a233bdd0f92322865b4fa3e5c26",
+    "codex/skills/goalfydata/SKILL.md": "9487346607510d6342471f6faaf33163193a6a233bdd0f92322865b4fa3e5c26",
+    "manus/skill/SKILL.md": "9487346607510d6342471f6faaf33163193a6a233bdd0f92322865b4fa3e5c26",
+    "generic/SKILL.md": "9487346607510d6342471f6faaf33163193a6a233bdd0f92322865b4fa3e5c26"
   }
 }
