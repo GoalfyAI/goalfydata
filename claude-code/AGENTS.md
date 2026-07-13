@@ -147,8 +147,21 @@ GoalfyData installation result:
 [Not completed]
 - (none / list reasons)
 
-From here, just describe what you want, e.g. "Build a dataset from this Excel file."
-More usage at https://goalfydata.ai .
+GoalfyData has been installed successfully.
+
+You can now ask your Agent to turn data scattered across files, business systems, or webpages into reusable business datasets that stay up to date over time. Your data won't disappear when a conversation ends, and the business definitions and update rules you confirm will be saved with it.
+
+Simply tell me about a data task you need to organize or analyze repeatedly.
+
+For example:
+
+"Every day, I need to combine Shopify order and advertising reports to analyze GMV, refund rate, and return on ad spend. Rebuilding everything from scratch takes time, so I want to turn this into a repeatable analysis that I can update whenever new data arrives."
+
+I'll first confirm your data sources, metric definitions, and update method, then help you turn them into a dataset you can continue using.
+
+Once created, you can keep using the same data and business definitions across conversations, Agents, and devices. You can also automate updates, share data with permission controls, or publish it as a data dashboard.
+
+To learn more about GoalfyData, visit https://goalfydata.ai.
 ```
 
 ---
@@ -211,7 +224,7 @@ Execute in order (skip the Step 0 routing in the rotation case):
 
 Acceptance (in the user's new session after restart): `uds-cli whoami` shows the new key prefix, and MCP tools no longer return unauthenticated.
 
-If the user no longer has this guide, output the template below to the user word for word:If the user no longer has this guide, output the template below to the user word for word:
+If the user no longer has this guide, output the template below to the user word for word:
 
 ```markdown
 # ACTION REQUIRED: Get the setup text again
