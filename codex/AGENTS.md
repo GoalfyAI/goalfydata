@@ -141,7 +141,11 @@ GoalfyData installation result:
 
 [Not completed]
 - (none / list reasons)
+```
 
+Then, only if every step is done and [Not completed] is empty, append the onboarding message below to the report:
+
+```
 GoalfyData has been installed successfully.
 
 You can now ask your Agent to turn data scattered across files, business systems, or webpages into reusable business datasets that stay up to date over time. Your data won't disappear when a conversation ends, and the business definitions and update rules you confirm will be saved with it.
@@ -158,6 +162,8 @@ Once created, you can keep using the same data and business definitions across c
 
 To learn more about GoalfyData, visit https://goalfydata.ai.
 ```
+
+If anything is under [Not completed], do NOT output the onboarding message. Instead, state plainly what failed and why, give the fix or the exact step to re-run, and continue helping the user until the installation succeeds.
 
 ---
 
