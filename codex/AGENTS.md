@@ -3,9 +3,10 @@
 While executing this guide, you must follow these rules:
 
 1. Only run the commands listed here; only write to `~/.codex/.env` (line-level update) and the Codex plugin directory
-2. When mentioning obtaining or verifying the API Key to the user, include the settings link https://goalfydata.ai/settings
-3. The API Key must come from the user — never fabricate one or proceed with a placeholder
-4. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
+2. For first-time setup, send the user to https://goalfydata.ai/connect/skill; https://goalfydata.ai/settings is only the manual alternative for creating or managing a Key
+3. The API Key must be the exact `gfk_` value sent by the user or returned in the setup message — never fabricate, rewrite, or substitute a placeholder
+4. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
+5. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
 
 Every step starts with a check command: skip steps that are already done; re-running any step is safe.
 
@@ -24,22 +25,22 @@ grep GOALFY_UDS_API_KEY "$HOME/.codex/.env"          # MCP-side key configured?
 codex plugin list | grep goalfydata                   # plugin installed?
 ```
 
-- All four pass → the user has a complete installation: **switch to the Update flow directly**, asking the user for nothing
+- All four pass → the user has a complete installation: **continue with Update**, asking the user for nothing
 - Some pass → run only the steps for the failing items; when whoami passes, skip Steps 1 and 3 (the key is already saved locally — do not ask for it again)
 - None pass → full installation from Step 1
 
 ### Step 1: Confirm the API Key
 
-Output the template below to the user word for word, and continue only after receiving the key:
+Output the template below to the user word for word (rendering any available `gf_ref` with the exact install code), and continue only after receiving the complete setup message or an exact API Key:
 
 ```markdown
-# ACTION REQUIRED: Provide your GoalfyData API Key
+# ACTION REQUIRED: Connect GoalfyData
 
-**Do you already have a GoalfyData API Key (shaped like `gfk_xxx`)? If so, send it to me directly.**
+**Open https://goalfydata.ai/connect/skill and verify your email address.**
 
-**If not, create one in GoalfyData: https://goalfydata.ai/settings ("Settings → API Key"; the plaintext is shown only once at creation — store it safely). No account yet? Open https://goalfydata.ai to sign up.**
+**When verification is complete, copy the full setup message shown on the page and send it back to me. I will use its exact values to continue.**
 
-Send me the API Key once created, and I will finish the remaining steps.
+**Alternatively, you can create or manage an API Key manually at https://goalfydata.ai/settings and send me the exact key.**
 ```
 
 ### Step 2: Install uds-cli
@@ -82,7 +83,9 @@ Check: `"$HOME/.goalfy/bin/uds-cli" whoami` — exit code 0 means already logged
 "$HOME/.goalfy/bin/uds-cli" login --api-key <user-provided-key> --api-url https://api.goalfydata.ai
 ```
 
-Success: output `Login succeeded` and `API Key: gfk_xxx...`.
+Replace `<user-provided-key>` with the exact API Key received from the user — never execute the command with an example value or placeholder. If an exact install code was supplied, also pass it with `--install-code <code>`; otherwise omit that argument.
+
+Success: report the real `Login succeeded` output and the masked API Key value printed by uds-cli.
 
 On failure: `unknown flag: --api-key` means an outdated CLI — run `"$HOME/.goalfy/bin/uds-cli" self-update` and retry; `API Key validation failed` means an invalid key — return to Step 1.
 
@@ -110,6 +113,8 @@ grep -v "^GOALFY_UDS_API_KEY=" "$HOME/.codex/.env" > "$HOME/.codex/.env.tmp" || 
 echo "GOALFY_UDS_API_KEY=<user-provided-key>" >> "$HOME/.codex/.env.tmp"
 mv "$HOME/.codex/.env.tmp" "$HOME/.codex/.env"
 ```
+
+Replace `<user-provided-key>` with the exact API Key received from the user — never write an example value or placeholder. Preserve every unrelated line and verify the stored value before continuing.
 
 ### Step 6: Restart and verify
 
@@ -245,4 +250,4 @@ If the user no longer has this guide, output the template below to the user word
 | MCP not connected | Check `GOALFY_UDS_API_KEY` in `~/.codex/.env`, then ask the user to fully restart Codex (you cannot restart on the user's behalf) |
 | Tools return unauthenticated | Key missing or invalid; return to Installation Step 1 |
 | Exported in terminal but Desktop cannot connect | The Desktop app does not read terminal environment variables; the key must be in `~/.codex/.env` (Installation Step 5) |
-| login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Re-run the Installation flow per "Rotating the API Key" and have the user restart |
+| login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Follow "Rotating the API Key" and have the user restart |

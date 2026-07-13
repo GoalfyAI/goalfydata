@@ -583,22 +583,47 @@ Troubleshooting steps:
 
 ## 10. Failure Notifications (optional)
 
-GoalfyData Managed Refresh can fail while unattended. Configure alert channels via `uds_notify_config`:
+GoalfyData Managed Refresh can fail while unattended. Before changing notification channels, load the account's current configuration:
 
 ```
 uds_notify_config(
-    action="create",
-    dataset_id="dataset_id",
-    channel="dingtalk",
-    config={...},
-    notify_on=["failed"],
-    task_id=<task_id>
+    action="get",
+    task_id=<task_id>,
+    op_summary="Review the account notification channels before changing scheduled dataset failure alerts."
 )
 ```
 
-Supported channels: webhook / dingtalk / feishu / telegram / whatsapp / email.
+If the user only wants to disable a channel, preserve the binding and pause delivery:
 
-Once configured, GoalfyData Managed Refresh failures push to the channel automatically.
+```
+uds_notify_config(
+    action="set_enabled",
+    channel="dingtalk",
+    enabled=false,
+    task_id=<task_id>,
+    op_summary="Pause DingTalk delivery while preserving its credentials and notification event preferences."
+)
+```
+
+To bind Webhook, Slack, Telegram, Feishu, DingTalk, WhatsApp, or another non-email channel, call Hub directly:
+
+```
+uds_notify_config(
+    action="bind",
+    channel="dingtalk",
+    config={"url": "https://oapi.dingtalk.com/robot/send?access_token=...", "secret": "..."},
+    notify_on=["datasetUpdateFailed"],
+    task_id=<task_id>,
+    op_summary="Bind DingTalk to receive scheduled dataset update failures and verify the channel configuration."
+)
+```
+
+To bind or rebind email, call `action="bind", channel="email"` and give the returned
+`https://goalfydata.ai/settings/notifications/email` URL to the user. The page shows the previous email and lets the user enter a new one and complete six-digit verification; the Agent must not request the verification code.
+
+Supported channels: webhook / slack / dingtalk / feishu / telegram / whatsapp / email. If the user needs a visual guide, provide the existing settings page at `https://goalfydata.ai/settings`.
+
+Once configured, the `datasetUpdateFailed` event is delivered automatically to enabled channels subscribed to that event.
 
 ---
 

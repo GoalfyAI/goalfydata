@@ -54,7 +54,7 @@ The GoalfyData MCP Server provides 20 tools (15 dataset management-plane tools +
 }
 ```
 
-- `${GOALFY_UDS_API_KEY}` is the GoalfyData API Key (gfk_xxx); without it every tool returns unauthenticated
+- `${GOALFY_UDS_API_KEY}` is the user's exact GoalfyData API Key (with the `gfk_` prefix); without it every tool returns unauthenticated
 
 **Required CLI**: `uds-cli` (must be installed before first use; one install works globally)
 
@@ -70,24 +70,28 @@ Data-plane operations (executing SQL, importing data, viewing table structure) g
   "$HOME/.goalfy/bin/uds-cli" login --api-key gfk_xxx --api-url https://api.goalfydata.ai
   ```
 
+  After the user sends the setup message, log in with the exact API Key from that message and `--api-url https://api.goalfydata.ai`. If the copied installation instructions also contain an install code, include that exact value with `--install-code`; otherwise omit the argument.
+
   The installer puts uds-cli into `~/.goalfy/bin/` and writes the shell rc files; when PATH is not yet effective in the current session, call it by absolute path — no source needed.
 
   Update: `uds-cli self-update` (if login reports `unknown flag: --api-key`, the local binary is old — run self-update first, then log in)
 
-**Authentication**: the user needs a GoalfyData API Key (gfk_xxx), authenticated via API Key (Bearer scheme). The MCP tools (request header `Authorization: Bearer gfk_xxx`) and uds-cli (`uds-cli login --api-key gfk_xxx --api-url <GoalfyData API URL>`) share the same API Key. `--api-url` is required with no default; after a successful login it is saved to `~/.goalfy/config.json` and later commands use it automatically.
+**Authentication**: the user needs a GoalfyData API Key (gfk_xxx), authenticated via API Key (Bearer scheme). The MCP tools (request header `Authorization: Bearer gfk_xxx`) and uds-cli (`uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai`) share the same exact API Key. `--api-url` is required with no default — always use `https://api.goalfydata.ai`; after a successful login it is saved to `~/.goalfy/config.json` and later commands use it automatically.
 
-**Getting an API Key**: create one on the GoalfyData "Settings → API Key" page: https://goalfydata.ai/settings . The plaintext is shown only once at creation; store it safely.
+**Getting an API Key**: send the user to https://goalfydata.ai/connect/skill for first-time setup. After email verification, the page creates an API Key and provides a complete setup message containing the real values the Agent must use. As an alternative, the user may create or manage an API Key manually at https://goalfydata.ai/settings . The plaintext is shown only once at creation; store it safely.
 
-**When no API Key is held, or tools return unauthenticated**, output the template below to the user in the user's conversation language (translate the text when the user is not conversing in English; keep it as body text with the H1 heading and bold intact), and never invent or use a placeholder API Key:
+**Install-code attribution**: only use an install code already present in the copied instructions or setup message and matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`. Preserve it exactly: append it as `gf_ref` to GoalfyData website URLs while preserving existing query parameters, and pass the same value to `uds-cli login` with `--install-code`. Do not add it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no install code was provided, omit it. Never generate, infer, rewrite, or use an install code as a credential.
+
+**When no API Key is held, or tools return unauthenticated**, output the template below to the user in the user's conversation language (translate the text when the user is not conversing in English; keep it as body text with the H1 heading and bold intact). Before outputting, append any available exact install code to the page URL as `gf_ref`. Never invent or use a placeholder API Key:
 
 ```markdown
-# Action required: provide your GoalfyData API Key
+# Action required: connect GoalfyData
 
-**Please create an API Key on GoalfyData: https://goalfydata.ai/settings ("Settings → API Key", shaped like `gfk_xxx`; the plaintext is shown only once at creation — store it safely.)**
+**Open https://goalfydata.ai/connect/skill and verify your email address.**
 
-**If you do not have a GoalfyData account yet, register at https://goalfydata.ai.**
+**When verification is complete, copy the full setup message shown on the page and send it back to me. I will use its exact values to continue.**
 
-Once created, send me the API Key and I will continue.
+**Alternatively, you can create or manage an API Key manually at https://goalfydata.ai/settings and send me the exact key.**
 ```
 
 ---
@@ -159,6 +163,9 @@ At the start of every session/task, first call `uds_task_manager(action="create"
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
+- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets
+- **Report datasets truthfully**: include only datasets actually modified in this round. Every dataset must carry its own `result_summary` in business language (100-200 characters) describing exactly what changed; this text is shown directly in the notification. For a read-only round, pass `datasets=[]` (or omit `--dataset` in CLI)
+- **Never complete Managed Refresh**: GoalfyData Managed Refresh is already notified by the sandbox callback. Do not call `complete` for any manual, scheduled, or website-upload refresh, or owners and share recipients receive duplicate notifications
 
 Reuse the same `task_id` within one session; do not create a new ticket per call. Persist milestone conclusions via `uds_task_manager(action="insert")`; review a ticket and its operation log via `uds_task_manager(action="get")`.
 
@@ -222,13 +229,13 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds_sync_logs` | View GoalfyData Managed Refresh execution logs |
 | `uds_credential_store` | Encrypted data-source credential storage |
 | `uds_schema_init` | Initialize the PG schema (only when pg_schema_ready=false) |
-| `uds_notify_config` | Account-level notification channels (dataset updates, app publishing, sharing, billing, security, etc.) |
+| `uds_notify_config` | Read current notification-channel settings; bind, enable, disable, or disconnect channels; email bind/rebind uses a verification page |
 | `uds_init_project` | Initialize an app project (template = new / fork = secondary development) |
 | `uds_app_deploy` | Deploy an app (two steps: get the upload URL → deploy) |
 | `uds_app_status` | App status/URL/version |
 | `uds_app_manage` | App lifecycle (online/offline/rollback/delete/delete_version) |
 | `uds_app_list` | List deployed apps |
-| `uds_task_manager` | Task tickets (create for a task_id / insert to append records / list / get details and operation log) |
+| `uds_task_manager` | Task tickets (create for a task_id / insert to append records / complete to close an operation round and notify / list / get details and operation log) |
 | `uds_billing_info` | Subscription plan, monthly usage, per-dimension quotas (data updates, storage, deployed apps), and available add-on packs |
 
 ### 3.2 CLI Tools (data plane)
@@ -247,6 +254,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds-cli --task-id <task_id> schemas` | List accessible dataset ids |
 | `uds-cli --task-id <task_id> tables` | List accessible tables (schema, row count, column count); filter with `--schema` |
 | `uds-cli task-insert <task_id> --content "note"` | Append an info record to a ticket (note/result/checkpoint) |
+| `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"` | Complete an operation round and notify dataset owners/share recipients; repeat `--dataset` for multiple datasets, or omit it for a read-only round |
 
 `--task-id` is a global parameter required on every data-plane command (Constraint 1). For exact arguments consult `uds-cli <command> --help`.
 
@@ -277,6 +285,10 @@ Optional · develop a data app:
   uds_init_project(template, task_id) → download template → develop locally → package
   uds_app_deploy(filename, task_id) → upload → uds_app_deploy(package_key, task_id) → app_url
   uds_app_status(deploy_id, task_id) confirm online
+  │
+  ▼ close the operation round (except GoalfyData Managed Refresh):
+  MCP: uds_task_manager(action="complete", task_id, datasets=[{dataset_id, result_summary}, ...])
+  CLI only: uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"
 ```
 
 ---
@@ -483,6 +495,8 @@ Follow-up sync:
 GoalfyData Managed Refresh has three trigger paths: manual agent trigger (this section's flow), cron scheduled trigger (configuration in 4.3), and the user uploading via "replace data" on the website. Whatever the trigger, each run consumes one data-update credit and the GoalfyData sandbox executes the table's registered update script.
 
 All syncs (upload/script) run asynchronously. The flow is always: trigger → get group_id → poll status. The script spec, standard templates, and cross-session maintenance needed for troubleshooting and script edits are in `references/scheduled-sync-guide.md`.
+
+**Never call `uds_task_manager(action="complete")` or `uds-cli task-complete` for GoalfyData Managed Refresh.** Its sandbox callback already notifies the dataset owner and share recipients. After polling reaches a terminal state, report the result directly; completing the ticket again creates duplicate notifications.
 
 **upload (manual file import):**
 
@@ -741,7 +755,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | A table fails on schedule in a shared sandbox but runs fine alone | Another script on the same schedule polluted the shared sandbox (`os.chdir()`, `os.environ` edits, unreleased connections). Locate and fix the polluter, or isolate the table with `exclusive_sandbox=true` |
 | Table creation reports `FOREIGN_KEY_NOT_ALLOWED` | Dataset schemas do not support database foreign keys (they break full_replace's atomic swap). Remove the `FOREIGN KEY` / `REFERENCES` clauses, rebuild with `CREATE TABLE IF NOT EXISTS` (avoiding re-creating tables that already succeeded), and register the relations via `uds_relations_set` |
 | A `uds-cli` command fails | First run `uds-cli <command> --help` to verify arguments. At most 1 retry per command, and only after analyzing and fixing the error — blind identical retries are forbidden |
-| Tools or uds-cli return 401/unauthenticated (previously fine) | The API Key was deleted or rotated. Simplest: guide the user to re-copy the integration text from the website and send it to you ( https://goalfydata.ai/integrations ), then rerun its install flow. Manual: guide the user to https://goalfydata.ai/settings to create a new Key → `uds-cli login` again → if the MCP config's environment variable still holds the old Key, update it too → have the user fully restart the session (environment variables outrank the login config; without the update the old Key keeps being used) |
+| Tools or uds-cli return 401/unauthenticated (previously fine) | The API Key was deleted or rotated. Send the user to https://goalfydata.ai/connect/skill for a new setup message; https://goalfydata.ai/settings is the manual alternative. Log in again with the exact new Key, update the MCP configuration if it still stores the old Key, and have the user fully restart the session because environment variables outrank the saved login configuration. |
 | SKILL guidance conflicts with actual tool behavior (parameter errors, flow mismatch) | The bundled copy of this document may be outdated. Follow "5.1 Updating an outdated SKILL" below |
 
 ### 5.1 Updating an Outdated SKILL
