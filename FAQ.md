@@ -2,47 +2,64 @@
 
 ### 1. What is GoalfyData?
 
-GoalfyData provides governed datasets for AI agents. It helps you persist business data, field definitions, table relationships, metric definitions, processing rules, and usage guidelines — so different agents don't need to re-understand the data every time, and can continuously query, update, and reuse it.
+GoalfyData is a governed data layer for AI agents. It stores data together with field definitions, relationships, metrics, rules, permissions, and usage guidance, so different agents can query, update, and reuse it consistently.
 
 ### 2. Is GoalfyData a database?
 
-Not a traditional database, and not a replacement for MySQL, Excel, Airtable, or spreadsheets. GoalfyData is more like a data context layer for agents — helping them understand where data lives, what fields mean, how tables relate, how metrics should be calculated, and which data can be safely accessed.
+No. GoalfyData does not replace databases or spreadsheets such as MySQL, Excel, Airtable, or Feishu Sheets. It adds a governed context layer that helps agents understand where data is stored, what fields mean, how tables are related, how metrics are calculated, and what data they are allowed to access.
 
-### 3. How is GoalfyData different from spreadsheets, databases, or BI dashboards?
+### 3. How is GoalfyData different from spreadsheets, databases, and BI dashboards?
 
-Spreadsheets and databases mainly store data. BI dashboards mainly display results. GoalfyData focuses on enabling agents to continuously understand and use data — including data structure, primary keys, table relationships, metric definitions, update methods, governance rules, and Agent Skills.
+Spreadsheets and databases store data, while BI dashboards present results. GoalfyData adds the structure, definitions, relationships, update rules, permissions, and usage guidance that agents need to use the data consistently. This turns data into an asset that agents can query, update, and reuse.
 
-So it's not just about displaying results — it's about turning data into assets that agents can call, update, and reuse.
+### 4. Which agents can I use GoalfyData with?
 
-### 4. Which agents does GoalfyData work with?
+GoalfyData currently provides setup guides for Codex, Claude Code, Manus, and MCP/CLI workflows. Connected agents can query datasets, update data, generate reports, and build dashboards or apps without requiring you to upload the same files and explain the same rules again.
 
-Currently focused on ChatGPT, Codex, Claude Code, Manus, and MCP / CLI agent workflows. You can let agents query datasets, update data, generate reports, or build dashboards / apps from datasets — without repeatedly uploading files and explaining data rules.
+### 5. What is stored in a dataset?
 
-### 5. What's stored in a dataset?
+A GoalfyData dataset can include tables, field definitions, primary keys, table relationships, field mappings, metric definitions, processing rules, update methods, usage guidance, permissions, and sharing settings. This helps agents understand both the data and how it should be used.
 
-GoalfyData stores more than just table data, including:
+### 6. What is a GoalfyData Managed Refresh?
 
-- Data tables, field definitions, and primary keys
-- Table relationships and field mappings
-- Metric definitions and processing rules
-- Data update methods: full replace, append, upsert, and scheduled sync
-- Agent Skills and recommended usage patterns
-- Permission policies and sharing authorizations
+A Managed Refresh is an automated job run by GoalfyData to update a dataset in an isolated environment. The time required depends on the data size, source complexity, and refresh logic.
 
-This way, when agents access data, they don't just read it — they understand how it should be used.
+### 7. What does not count as a Managed Refresh?
 
-### 6. What does "data updates" mean in pricing?
+Agent edits, standard dataset queries, MCP writes, and app reads do not count as Managed Refreshes unless they start a GoalfyData-managed refresh job.
 
-"Data updates" refers to the number of tasks available for dataset updates within each 30-day period. This includes dataset updates, sync tasks, script runs, and agent-triggered data refreshes. Different plans offer different data update quotas, storage limits, and active app limits.
+### 8. What does "live apps" mean?
 
-### 7. What does "active apps" mean?
+A published app is an app that is currently live and accessible to users. Drafts, apps still being built, and unpublished apps do not count toward your published app limit.
 
-Active apps refers to the number of applications currently in online status, including dashboards or lightweight apps built from datasets. Apps that are in draft, building, or offline status don't count toward the active app limit.
+### 9. How are plan quotas and add-on packs calculated?
 
-### 8. How do plan quotas and add-on packs work?
+Plan quotas reset every 30 days. Add-on quotas are valid for 30 days from purchase and expire if unused. We use your plan quota first, followed by the matching add-on quota.
 
-Plan quotas reset automatically every 30 days. Add-on pack quotas are valid for 30 days from purchase date and expire without auto-renewal. The system uses plan quotas first; once depleted, it consumes the corresponding add-on pack quota.
+### 10. How many datasets can I create on each plan?
 
-### 9. Is my data secure?
+The Free plan includes 3 datasets, Starter includes 20, and Pro includes 100. Dataset usage is counted in 300 MB blocks.
 
-GoalfyData does not publicly expose your private data by default. You can control access to datasets, apps, and agents through permission policies and sharing authorizations. Only authorized members, apps, links, or agents can access the corresponding data — private workspace data is never publicly displayed.
+### 11. What does one dataset include?
+
+Each dataset includes up to 300 MB. Larger datasets use additional dataset quota in 300 MB blocks.
+
+### 12. What happens if my dataset is larger than 300MB?
+
+You can create a dataset larger than 300 MB, but it will use more than one unit of your dataset quota. For example, a 900 MB dataset uses 3 dataset units.
+
+### 13. Do datasets shared with me count toward my limit?
+
+Viewing a sharing invitation does not affect your limit. After you accept the invitation and add the dataset to your workspace, it counts toward your dataset quota.
+
+### 14. What happens when I reach my plan limit?
+
+You can upgrade your plan or buy an add-on for datasets, Managed Refreshes, or published apps. Reaching a limit does not delete your existing datasets or apps.
+
+### 15. Can Free users buy add-on packs on their own?
+
+No. Add-ons are available only on Starter and Pro. If you are on the Free plan, upgrade before purchasing additional datasets, Managed Refreshes, or published apps.
+
+### 16. Is my data safe?
+
+Your private workspace data is not public by default. You can control access to datasets, apps, and agents through permissions and sharing settings. Only the members, apps, links, and agents you authorize can access the corresponding data.
