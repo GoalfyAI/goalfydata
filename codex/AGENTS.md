@@ -212,7 +212,7 @@ Run this section when the user wants to rotate the API Key (or the old key has b
 
 Execute in order (skip the Step 0 routing in the rotation case):
 
-1. Direct the user to create a new key: run Installation Step 1 (output the key-request template)
+1. Direct the user to get a new key: run Installation Step 1 (output the Connect GoalfyData template)
 2. Log in again with the new key: run Installation Step 3, **never skipped just because whoami passes** (the old key may not be deleted yet)
 3. Update the MCP-side storage: run Installation Step 5, **unconditionally — never skipped because its check passes**. `~/.codex/.env` still holds the old key; without this update, MCP and new sessions keep using the old key after restart (whether login printed `WARNING: environment variable ...` only reflects the current session environment and must not be used as a reason to skip)
 4. Consistency check: confirm both `~/.goalfy/config.json` and `~/.codex/.env` now hold the new key (compare the first characters after gfk_)
