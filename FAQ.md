@@ -28,9 +28,9 @@ A Managed Refresh is an automated job run by GoalfyData to update a dataset in a
 
 Agent edits, standard dataset queries, MCP writes, and app reads do not count as Managed Refreshes unless they start a GoalfyData-managed refresh job.
 
-### 8. What does "live apps" mean?
+### 8. What does "apps" mean?
 
-A published app is an app that is currently live and accessible to users. Drafts, apps still being built, and unpublished apps do not count toward your published app limit.
+Apps is the total number of apps you own, including dashboards and lightweight apps built from your datasets. Online, offline, and failed apps all count — only deleting an app frees a slot.
 
 ### 9. How are plan quotas and add-on packs calculated?
 

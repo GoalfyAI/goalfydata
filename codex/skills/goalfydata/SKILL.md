@@ -29,7 +29,7 @@ Persist the user's business data as a structured dataset asset that is **indepen
 > This document is the main guide with the complete execution flows. The sub-guides below provide supplementary reference:
 > - `references/dataset-building-guide.md` — business interview matrix, table naming rules, PG syntax pitfalls, pre-create checklist
 > - `references/data-quality-guide.md` — dirty-data classification and detection methods
-> - `references/scheduled-sync-guide.md` — script spec and fetch/transform standard templates, template-file spec, sandbox rules, external data-source templates (MySQL chunked, API paged), multi-table coordination, troubleshooting
+> - `references/scheduled-sync-guide.md` — script spec and fetch standard template, sandbox rules, external data-source templates (MySQL chunked, API paged), multi-table coordination, troubleshooting
 > - `references/app-deploy-guide.md` — app template structure, development conventions, version management details
 >
 > The paths above are relative to the directory containing this SKILL.md, not to your working directory — `references/` always sits next to this file. When reading a sub-guide or reopening this file, use the path the platform provided when loading the skill; if you cannot find it, search by filename (e.g. `SKILL.md`, `dataset-building-guide*`) instead of reconstructing path segments from memory. When installed as a plugin (Claude Code / Codex), note that the install path repeats "goalfydata" at several consecutive levels with a version directory in between (e.g. `.../plugins/cache/goalfydata/goalfydata/<version>/skills/goalfydata/`).
@@ -54,7 +54,7 @@ The GoalfyData MCP Server provides 20 tools (15 dataset management-plane tools +
 }
 ```
 
-- `${GOALFY_UDS_API_KEY}` is the GoalfyData API Key (gfk_xxx); without it every tool returns unauthenticated
+- `${GOALFY_UDS_API_KEY}` is the user's exact GoalfyData API Key (with the `gfk_` prefix); without it every tool returns unauthenticated
 
 **Required CLI**: `uds-cli` (must be installed before first use; one install works globally)
 
@@ -70,24 +70,28 @@ Data-plane operations (executing SQL, importing data, viewing table structure) g
   "$HOME/.goalfy/bin/uds-cli" login --api-key gfk_xxx --api-url https://api.goalfydata.ai
   ```
 
+  After the user sends the setup message, log in with the exact API Key from that message and `--api-url https://api.goalfydata.ai`. If the copied installation instructions also contain an install code, include that exact value with `--install-code`; otherwise omit the argument.
+
   The installer puts uds-cli into `~/.goalfy/bin/` and writes the shell rc files; when PATH is not yet effective in the current session, call it by absolute path — no source needed.
 
   Update: `uds-cli self-update` (if login reports `unknown flag: --api-key`, the local binary is old — run self-update first, then log in)
 
-**Authentication**: the user needs a GoalfyData API Key (gfk_xxx), authenticated via API Key (Bearer scheme). The MCP tools (request header `Authorization: Bearer gfk_xxx`) and uds-cli (`uds-cli login --api-key gfk_xxx --api-url <GoalfyData API URL>`) share the same API Key. `--api-url` is required with no default; after a successful login it is saved to `~/.goalfy/config.json` and later commands use it automatically.
+**Authentication**: the user needs a GoalfyData API Key (gfk_xxx), authenticated via API Key (Bearer scheme). The MCP tools (request header `Authorization: Bearer gfk_xxx`) and uds-cli (`uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai`) share the same exact API Key. `--api-url` is required with no default — always use `https://api.goalfydata.ai`; after a successful login it is saved to `~/.goalfy/config.json` and later commands use it automatically.
 
-**Getting an API Key**: create one on the GoalfyData "Settings → API Key" page: https://goalfydata.ai/settings . The plaintext is shown only once at creation; store it safely.
+**Getting an API Key**: send the user to https://goalfydata.ai/connect/skill for first-time setup. After email verification, the page creates an API Key and provides a complete setup message containing the real values the Agent must use. As an alternative, the user may create or manage an API Key manually at https://goalfydata.ai/settings . The plaintext is shown only once at creation; store it safely.
 
-**When no API Key is held, or tools return unauthenticated**, output the template below to the user in the user's conversation language (translate the text when the user is not conversing in English; keep it as body text with the H1 heading and bold intact), and never invent or use a placeholder API Key:
+**Install-code attribution**: only use an install code already present in the copied instructions or setup message and matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`. Preserve it exactly: append it as `gf_ref` to GoalfyData website URLs while preserving existing query parameters, and pass the same value to `uds-cli login` with `--install-code`. Do not add it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no install code was provided, omit it. Never generate, infer, rewrite, or use an install code as a credential.
+
+**When no API Key is held, or tools return unauthenticated**, output the template below to the user in the user's conversation language (translate the text when the user is not conversing in English; keep it as body text with the H1 heading and bold intact). Before outputting, append any available exact install code to the page URL as `gf_ref`. Never invent or use a placeholder API Key:
 
 ```markdown
-# Action required: provide your GoalfyData API Key
+# Action required: connect GoalfyData
 
-**Please create an API Key on GoalfyData: https://goalfydata.ai/settings ("Settings → API Key", shaped like `gfk_xxx`; the plaintext is shown only once at creation — store it safely.)**
+**Open https://goalfydata.ai/connect/skill and verify your email address.**
 
-**If you do not have a GoalfyData account yet, register at https://goalfydata.ai.**
+**When verification is complete, copy the full setup message shown on the page and send it back to me. I will use its exact values to continue.**
 
-Once created, send me the API Key and I will continue.
+**Alternatively, you can create or manage an API Key manually at https://goalfydata.ai/settings and send me the exact key.**
 ```
 
 ---
@@ -140,10 +144,10 @@ Writing data into GoalfyData happens in one of two modes with different executio
 
 | | GoalfyData Managed Refresh | Agent Direct Edit |
 |---|---|---|
-| Execution | GoalfyData starts a sandbox and runs one dataset refresh flow (update script fetch/transform → import) | The agent edits the dataset directly via uds-cli, without starting the GoalfyData sandbox managed refresh |
-| Trigger | Manual (`uds_sync_task` action=run), cron schedule, or the user uploading on the GoalfyData website | The agent runs `uds-cli exec` / `import` in-session |
+| Execution | GoalfyData starts a sandbox and runs one dataset refresh flow (update script fetch → import) | The agent edits the dataset directly via uds-cli, without starting the GoalfyData sandbox managed refresh |
+| Trigger | Manual (`uds_sync_task` action=run) or cron schedule | The agent runs `uds-cli exec` / `import` in-session |
 | Billing | Each run consumes one data-update credit | No data-update credits consumed |
-| Fits | Post-delivery continuous updates, unattended automation, user self-service data replacement | Build-phase table creation and loading, in-session fixes and adjustments |
+| Fits | Post-delivery continuous updates, unattended automation | Build-phase table creation and loading, in-session fixes and adjustments |
 
 Guidance: use Direct Edit during the build phase; configure GoalfyData Managed Refresh when data must keep updating after the session ends (see 4.3). Before configuring it for the user, state that it consumes data-update credits.
 
@@ -159,6 +163,9 @@ At the start of every session/task, first call `uds_task_manager(action="create"
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
+- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets
+- **Report datasets truthfully**: include only datasets actually modified in this round. Every dataset must carry its own `result_summary` in business language (100-200 characters) describing exactly what changed; this text is shown directly in the notification. For a read-only round, pass `datasets=[]` (or omit `--dataset` in CLI)
+- **Never complete Managed Refresh**: GoalfyData Managed Refresh is already notified by the sandbox callback. Do not call `complete` for any manual or scheduled refresh, or owners and share recipients receive duplicate notifications
 
 Reuse the same `task_id` within one session; do not create a new ticket per call. Persist milestone conclusions via `uds_task_manager(action="insert")`; review a ticket and its operation log via `uds_task_manager(action="get")`.
 
@@ -222,23 +229,22 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds_sync_logs` | View GoalfyData Managed Refresh execution logs |
 | `uds_credential_store` | Encrypted data-source credential storage |
 | `uds_schema_init` | Initialize the PG schema (only when pg_schema_ready=false) |
-| `uds_notify_config` | Account-level notification channels (dataset updates, app publishing, sharing, billing, security, etc.) |
+| `uds_notify_config` | Read current notification-channel settings; bind, enable, disable, or disconnect channels; email bind/rebind uses a verification page |
 | `uds_init_project` | Initialize an app project (template = new / fork = secondary development) |
 | `uds_app_deploy` | Deploy an app (two steps: get the upload URL → deploy) |
 | `uds_app_status` | App status/URL/version |
 | `uds_app_manage` | App lifecycle (online/offline/rollback/delete/delete_version) |
 | `uds_app_list` | List deployed apps |
-| `uds_task_manager` | Task tickets (create for a task_id / insert to append records / list / get details and operation log) |
-| `uds_billing_info` | Subscription plan, monthly usage, per-dimension quotas (data updates, storage, deployed apps), and available add-on packs |
+| `uds_task_manager` | Task tickets (create for a task_id / insert to append records / complete to close an operation round and notify / list / get details and operation log) |
+| `uds_billing_info` | Subscription plan, monthly usage, per-dimension quotas (data updates, storage, apps — online, offline and failed apps all count; only deleting frees a slot), and available add-on packs |
 
 ### 3.2 CLI Tools (data plane)
 
 | Command | Purpose |
 |------|------|
 | `uds-cli --task-id <task_id> exec "SQL" --mode reader/writer` | Execute SQL (reader for queries, writer for DDL/DML) |
-| `uds-cli --task-id <task_id> validate file.csv --table name` | Pre-import check: whether file columns/types match the target table; writes nothing |
 | `uds-cli --task-id <task_id> import file.csv --table name --mode append/full_replace/upsert` | Import data. **CSV and JSON only** (`.csv` UTF-8 with a header row; `.json/.jsonl/.ndjson` NDJSON or an object array — keys are column names, nested values serialize to JSON text into jsonb). **xlsx/xls rejected** — Excel display text is ambiguous; read true values with pandas and convert to CSV first (`read_excel` → `to_csv`) |
-| `uds-cli --task-id <task_id> upload <file> --dataset <dataset_id> [--type data\|script\|sample]` | Upload a file to dataset storage. `--type data` (default) data files → `/workspace/uploads/` (cleaned after import); `--type script` update scripts (.py) → `/workspace/goalfydata_dataset_scripts/`; `--type sample` sample templates (.xlsx/.csv) → `/workspace/goalfydata_sample_files/`. Scripts/templates must use the matching type — the wrong directory fails the table-config check |
+| `uds-cli --task-id <task_id> upload <file> --dataset <dataset_id> --type script` | Upload a GoalfyData Managed Refresh update script (.py) to dataset storage → `/workspace/goalfydata_dataset_scripts/`. Only the `script` type is supported |
 | `uds-cli --task-id <task_id> download-script <script_file path> --dataset <dataset_id>` | Returns a short-lived download URL for a registered update script (script directory only; the path comes from `uds_table_manage(list)`; download via `curl -o local "<URL>"` and edit; MCP equivalent: `uds_table_manage(get_script)`) |
 | `uds-cli --task-id <task_id> describe --dataset <dataset_id>` | Read-only aggregate of the dataset's semantics: description, usage guide, table configs, governance rules, relations (the semantics channel when no MCP is installed; read before querying to understand business definitions) |
 | `uds-cli --task-id <task_id> inspect --table name` | View table structure |
@@ -247,6 +253,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds-cli --task-id <task_id> schemas` | List accessible dataset ids |
 | `uds-cli --task-id <task_id> tables` | List accessible tables (schema, row count, column count); filter with `--schema` |
 | `uds-cli task-insert <task_id> --content "note"` | Append an info record to a ticket (note/result/checkpoint) |
+| `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"` | Complete an operation round and notify dataset owners/share recipients; repeat `--dataset` for multiple datasets, or omit it for a read-only round |
 
 `--task-id` is a global parameter required on every data-plane command (Constraint 1). For exact arguments consult `uds-cli <command> --help`.
 
@@ -261,12 +268,10 @@ uds_dataset_manage(create, task_id) → dataset_id
   ▼ per table:
   uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE ..."    create table
   uds_table_manage(create, table_name, task_id)                         register metadata
-  uds-cli --task-id <task_id> validate file --table ...                pre-import check (no write)
   uds-cli --task-id <task_id> import --table ... --mode ...            import data
   uds-cli --task-id <task_id> inspect --table ...                      read back target_columns
-  write update script → uds-cli upload script.py --type script         transform/fetch script (required for upload/script sources)
-  generate template → uds-cli upload template.xlsx --type sample       required for upload sources
-  uds_table_manage(update, target_columns, sources, script_file, sample_file, task_id)  finalize config
+  write update script → uds-cli upload script.py --type script         fetch script (required for script sources)
+  uds_table_manage(update, target_columns, sources, script_file, task_id)  finalize config
   │
   ▼ after all tables:
   uds_relations_set(replace, task_id)                table relations
@@ -277,6 +282,10 @@ Optional · develop a data app:
   uds_init_project(template, task_id) → download template → develop locally → package
   uds_app_deploy(filename, task_id) → upload → uds_app_deploy(package_key, task_id) → app_url
   uds_app_status(deploy_id, task_id) confirm online
+  │
+  ▼ close the operation round (except GoalfyData Managed Refresh):
+  MCP: uds_task_manager(action="complete", task_id, datasets=[{dataset_id, result_summary}, ...])
+  CLI only: uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"
 ```
 
 ---
@@ -331,13 +340,12 @@ Repeat for every file/source. **At the entry, read** `references/data-quality-gu
 | 2. Confirm the table plan | Show field business meanings; confirm the structure | Constraint 4 |
 | 3. Create the table | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.name (...)"` | snake_case fields; first read `references/dataset-building-guide.md` Sections 2-3 (naming + PG pitfalls) |
 | 4. Register metadata | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | Constraint 5 |
-| 5. Import data | First `uds-cli --task-id <task_id> validate file.csv --table uds_{dataset_id}.name` (column/type check, no write), then `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` | CSV/NDJSON only; for xlsx sources, read true values with pandas and convert to CSV (profiling already uses pandas) |
+| 5. Import data | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` (`inspect --table` first when unsure whether columns/types match) | CSV/NDJSON only; for xlsx sources, read true values with pandas and convert to CSV (profiling already uses pandas) |
 | 6. Quality check | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.name"` — rows, nulls, duplicates | upsert runs twice to verify idempotency |
 | 7. Read back columns | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` → target_columns | Never invent them |
-| 8. Confirm the update mode | Ask the user: append / full_replace / upsert? Manual re-uploads or scheduled pulls later? | |
-| 9. Write the update script | Per 4.3's entry conventions and the script spec in `references/scheduled-sync-guide.md` (upload source `transform` / script source `fetch`), `uds-cli --task-id <task_id> upload script.py --dataset ... --type script` → workspace_path | **Required**: the script replicates every cleaning action from building this table (type conversions/column normalization/derived columns confirmed in steps 1-5); persist each non-obvious cleaning action via `uds_rule_manage(create, rule_type="cleaning")` — governance rules are the source of truth for business definitions, consumed by every query path and future maintenance (see scheduled-sync-guide, cross-session maintenance) |
-| 10. Generate the template | Required for upload-source tables: generate the xlsx template (row 1 snake_case headers matching target_columns; 2-3 rows of real business samples; no aggregate rows), `uds-cli upload template.xlsx --dataset ... --type sample` → workspace_path | The template is the website's "download template" reference — it only needs to show the columns and roughly what the data looks like; format tolerance is the transform script's job, no format demands on users |
-| 11. Finalize the config | `uds_table_manage(action="update", update_mode=..., target_columns=..., sources=[{type: upload, entry: transform}] or [{type: script, entry: fetch, schedule: ...}], script_file=..., sample_file=..., task_id=<task_id>)` | upload/script sources must have script_file; upload sources also need sample_file — registration is rejected if either is missing |
+| 8. Confirm the update mode | Ask the user: append / full_replace / upsert? Scheduled pulls later? | |
+| 9. Write the update script (only for tables that will use GoalfyData Managed Refresh; skip 9-10 otherwise) | Per 4.3's entry conventions and the script spec in `references/scheduled-sync-guide.md` (script source `fetch`), `uds-cli --task-id <task_id> upload script.py --dataset ... --type script` → workspace_path | **Required**: the script replicates every cleaning action from building this table (type conversions/column normalization/derived columns confirmed in steps 1-5); persist each non-obvious cleaning action via `uds_rule_manage(create, rule_type="cleaning")` — governance rules are the source of truth for business definitions, consumed by every query path and future maintenance (see scheduled-sync-guide, cross-session maintenance) |
+| 10. Finalize the config | `uds_table_manage(action="update", update_mode=..., target_columns=..., task_id=<task_id>)`; for GoalfyData Managed Refresh tables additionally pass `sources=[{type: script, entry: fetch, schedule: ...}]` and `script_file` | script sources must have script_file — registration is rejected if it is missing |
 
 **Upsert idempotency verification** (required when update_mode=upsert):
 
@@ -371,20 +379,11 @@ In order; report any failure per Constraint 6:
 
 #### Phase 3 — Sync Verification and Delivery
 
-Phase 2 verified data correctness through direct `uds-cli import`. Phase 3 runs `uds_sync_task` through the full async pipeline (upload → sandbox execution → callback → atomic write) to verify the production path. **Every table configured for GoalfyData Managed Refresh must run Phase 3, or the refresh may be configured yet unable to run.**
+Phase 2 verified data correctness through direct `uds-cli import`. Phase 3 runs `uds_sync_task` through the full async pipeline (trigger → sandbox execution → callback → atomic write) to verify the production path. **Every table configured for GoalfyData Managed Refresh must run Phase 3, or the refresh may be configured yet unable to run.**
 
 **Step 3.1 — Trigger sync tasks per table**
 
 For every table with sources configured, trigger by source type:
-
-**Upload-source tables** (verifies the full "user upload → transform cleaning → import" path; script and template registered in Step 2.1):
-```
-uds-cli --task-id <task_id> upload data.csv --dataset dataset_id → workspace_path (--type defaults to data)
-uds_sync_task(action="run", dataset_id=..., source_type="upload", file_paths=[workspace_path], table_name=..., import_mode=..., task_id=<task_id>)
-→ returns group_id → poll uds_sync_task(action="status", dataset_id=..., group_id=..., task_id=<task_id>) until a terminal state
-```
-
-Also verify one "user-perspective" input: fill 2-3 rows into the registered template, save with Excel defaults, and run the pipeline once — confirming the transform script handles what real users upload.
 
 **Script-source tables** (verifies the script execution path; the script was registered in Step 2.1 — re-upload + update only if changed):
 ```
@@ -399,7 +398,6 @@ Suggested polling intervals: < 10k rows wait 30s; 10k-100k wait 60s; above 100k 
 | Status | Handling |
 |------|------|
 | `success` | The table passes; next one |
-| `failed` + `USER_FILE` | File format problem → explain to the user, help adjust the file, re-trigger |
 | `failed` + `SCRIPT` | Script error → check `uds_sync_logs` → fix the script → re-upload via `--type script` and update the registration, then trigger |
 | `failed` + `INFRA` | System error → inform the user; suggest retrying later |
 
@@ -443,17 +441,14 @@ Data updates come in two modes (see 1.4):
 - **Agent Direct Edit** (4.2.1): the agent edits the dataset directly via uds-cli. No GoalfyData sandbox managed refresh is started; no data-update credits consumed
 - **GoalfyData Managed Refresh** (4.2.2): GoalfyData starts a sandbox and runs the table's registered update script for one dataset refresh. Each run consumes one data-update credit
 
-The user uploading a file via "replace data" on the GoalfyData website is also GoalfyData Managed Refresh, provided the table has a registered transform script and template (see 4.1 Step 2.1 steps 9-11).
-
 #### 4.2.1 Agent Direct Edit
 
 No GoalfyData sandbox managed refresh, no data-update credits — for in-session data fixes, supplementary imports, and structure changes.
 
 ```
-1. Pre-check: uds-cli --task-id <task_id> validate file --table uds_{dataset_id}.name   (column/type match, no write)
-2. Import:    uds-cli --task-id <task_id> import file --table uds_{dataset_id}.name --mode append/full_replace/upsert
-   (small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
-3. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
+1. Import:    uds-cli --task-id <task_id> import file --table uds_{dataset_id}.name --mode append/full_replace/upsert
+   (check columns first via uds-cli inspect --table when unsure; small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
+2. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
 ```
 
 **Changing table structure:**
@@ -473,30 +468,17 @@ Follow-up sync:
 | New relation field | `uds_relations_set(action="create", task_id=<task_id>)` incrementally, or replace wholesale |
 | New calculation definition | `uds_rule_manage(action="create", task_id=<task_id>)` |
 | Script logic affected | Modify the script → `uds-cli upload --type script` re-upload → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
-| Upload-table structure changed | Regenerate the template → `uds-cli upload --type sample` → `uds_table_manage(update, sample_file=..., task_id=<task_id>)`, or the downloaded template drifts from the new structure |
 | Columns dropped/renamed on a table with policies | `uds_policy_manage(action="update", task_id=<task_id>)` to update the columns referenced in row_filters/column_rules, or the policy View breaks |
 
 ---
 
 #### 4.2.2 GoalfyData Managed Refresh
 
-GoalfyData Managed Refresh has three trigger paths: manual agent trigger (this section's flow), cron scheduled trigger (configuration in 4.3), and the user uploading via "replace data" on the website. Whatever the trigger, each run consumes one data-update credit and the GoalfyData sandbox executes the table's registered update script.
+GoalfyData Managed Refresh has two trigger paths: manual agent trigger (this section's flow) and cron scheduled trigger (configuration in 4.3). Whatever the trigger, each run consumes one data-update credit and the GoalfyData sandbox executes the table's registered update script.
 
-All syncs (upload/script) run asynchronously. The flow is always: trigger → get group_id → poll status. The script spec, standard templates, and cross-session maintenance needed for troubleshooting and script edits are in `references/scheduled-sync-guide.md`.
+All syncs run asynchronously. The flow is always: trigger → get group_id → poll status. The script spec, standard templates, and cross-session maintenance needed for troubleshooting and script edits are in `references/scheduled-sync-guide.md`.
 
-**upload (manual file import):**
-
-```
-1. uds-cli --task-id <task_id> upload orders.csv --dataset dataset_id → workspace_path
-2. uds_sync_task(action="run", dataset_id=..., source_type="upload",
-                 file_paths=[workspace_path], table_name=..., import_mode=..., task_id=<task_id>)
-   → returns group_id
-3. poll uds_sync_task(action="status", dataset_id=..., group_id=..., task_id=<task_id>) until success/failed
-```
-
-- For multiple files, upload each and pass all workspace_paths in file_paths for one trigger
-- **Upload tables must have a transform script** (`uds_table_manage` registration of `script_file` + `sources=[{type: upload, entry: transform}]` + `sample_file`); triggering without one is rejected (`SCRIPT_NOT_CONFIGURED`)
-- Table not yet configured (website "replace data" greyed out, or the trigger reports `SCRIPT_NOT_CONFIGURED`) → complete 4.1 Step 2.1 steps 9-11 (script, template, registration), then retry
+**Never call `uds_task_manager(action="complete")` or `uds-cli task-complete` for GoalfyData Managed Refresh.** Its sandbox callback already notifies the dataset owner and share recipients. After polling reaches a terminal state, report the result directly; completing the ticket again creates duplicate notifications.
 
 **script (automatic external pulls):**
 
@@ -521,13 +503,12 @@ First compare the latest error's `started_at` with the table config's last updat
 
 | Case | Handling |
 |------|------|
-| **error_code=USER_FILE** | File format mismatch. Show the diff against target_columns; the user fixes the file and re-uploads |
 | **error_code=SCRIPT** | Script error. Check `error_message` and `log_url` → fix the script → `uds-cli upload --type script` re-upload → `uds_table_manage(update, script_file=..., task_id=<task_id>)` → `uds_sync_task(action="run", dataset_id=..., task_id=<task_id>)` re-trigger |
-| **error_code=SCRIPT_NOT_CONFIGURED** | No update script registered (registration incomplete). Complete 4.1 Step 2.1 steps 9-11: write the transform script + generate the template → `uds-cli upload --type script` / `--type sample` → `uds_table_manage(update, script_file=..., sample_file=..., sources=[{type: upload, entry: transform}])`; the website's "replace data" recovers automatically |
+| **error_code=SCRIPT_NOT_CONFIGURED** | No update script registered (registration incomplete). Complete 4.1 Step 2.1 steps 9-10: write the fetch script → `uds-cli upload --type script` → `uds_table_manage(update, script_file=..., sources=[{type: script, entry: fetch, schedule: ...}])`, then retry |
 | **error_code=INFRA** | System error. Inform the user; suggest retrying later |
 | **Task stuck in running** | The script crashed without returning. The zombie sweep marks it failed after 70 minutes. Read the full log via `log_url` |
 | **error_code=STORAGE_QUOTA_EXCEEDED** | Dataset storage exceeds the plan's available amount. Billing model: each dataset includes 300MB by default; larger datasets are not blocked outright but count as multiple dataset usages by capacity (e.g. 900MB ≈ 3 datasets); this error means the plan's dataset usage is exhausted. Explain and offer options: clean up old data / check quota via `uds_billing_info` then upgrade or buy an add-on pack. Truncating data on your own is forbidden |
-| **error_code=GROUP_ABORTED** | An earlier file in a multi-file upload failed and the rest were aborted. Fix the failed file, then re-trigger the whole group |
+| **error_code=GROUP_ABORTED** | An earlier item in the sync group failed and the rest were aborted. Fix the failure, then re-trigger the whole group |
 
 **Post-fix retry flow:**
 
@@ -561,22 +542,13 @@ def fetch(table_name: str, update_mode: str, target_columns: list, **kwargs) -> 
     """GoalfyData Managed Refresh entry, triggered by the platform scheduler on cron."""
 ```
 
-**upload source (user file imports) — entry `transform`**:
-
-```python
-def transform(file_path: str, filename: str, table_name: str, update_mode: str, target_columns: list, **kwargs) -> dict:
-    """File-upload entry, triggered when the user uploads on the frontend."""
-```
-
 **Parameters injected automatically by GoalfyData**:
 
-| Parameter | fetch (script) | transform (upload) | Meaning |
-|------|:-:|:-:|------|
-| `table_name` | Y | Y | Fully-qualified target table (e.g. uds_{dataset_id}.orders) |
-| `update_mode` | Y | Y | append / full_replace / upsert |
-| `target_columns` | Y | Y | Target column definitions (list[dict]) |
-| `file_path` | - | Y | Sandbox absolute path of the uploaded file |
-| `filename` | - | Y | The user's original filename |
+| Parameter | fetch (script) | Meaning |
+|------|:-:|------|
+| `table_name` | Y | Fully-qualified target table (e.g. uds_{dataset_id}.orders) |
+| `update_mode` | Y | append / full_replace / upsert |
+| `target_columns` | Y | Target column definitions (list[dict]) |
 
 Credentials are injected via environment variables (`os.environ['CREDENTIAL_NAME']`), never via function parameters.
 
@@ -584,7 +556,7 @@ Credentials are injected via environment variables (`os.environ['CREDENTIAL_NAME
 - Success: `{"success": True, "rows_inserted": N}`
 - Failure: `{"success": False, "error_code": "SCRIPT", "error": "...", "rows_inserted": 0}`
 
-**Before writing or modifying any update script, read** `references/scheduled-sync-guide.md` — the single source of truth for the script spec, fetch/transform standard templates, template-file spec, cross-session maintenance, and sandbox rules.
+**Before writing or modifying any update script, read** `references/scheduled-sync-guide.md` — the single source of truth for the script spec, the fetch standard template, cross-session maintenance, and sandbox rules.
 
 #### Configuration Flow
 
@@ -741,7 +713,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | A table fails on schedule in a shared sandbox but runs fine alone | Another script on the same schedule polluted the shared sandbox (`os.chdir()`, `os.environ` edits, unreleased connections). Locate and fix the polluter, or isolate the table with `exclusive_sandbox=true` |
 | Table creation reports `FOREIGN_KEY_NOT_ALLOWED` | Dataset schemas do not support database foreign keys (they break full_replace's atomic swap). Remove the `FOREIGN KEY` / `REFERENCES` clauses, rebuild with `CREATE TABLE IF NOT EXISTS` (avoiding re-creating tables that already succeeded), and register the relations via `uds_relations_set` |
 | A `uds-cli` command fails | First run `uds-cli <command> --help` to verify arguments. At most 1 retry per command, and only after analyzing and fixing the error — blind identical retries are forbidden |
-| Tools or uds-cli return 401/unauthenticated (previously fine) | The API Key was deleted or rotated. Simplest: guide the user to re-copy the integration text from the website and send it to you ( https://goalfydata.ai/integrations ), then rerun its install flow. Manual: guide the user to https://goalfydata.ai/settings to create a new Key → `uds-cli login` again → if the MCP config's environment variable still holds the old Key, update it too → have the user fully restart the session (environment variables outrank the login config; without the update the old Key keeps being used) |
+| Tools or uds-cli return 401/unauthenticated (previously fine) | The API Key was deleted or rotated. Send the user to https://goalfydata.ai/connect/skill for a new setup message; https://goalfydata.ai/settings is the manual alternative. Log in again with the exact new Key, update the MCP configuration if it still stores the old Key, and have the user fully restart the session because environment variables outrank the saved login configuration. |
 | SKILL guidance conflicts with actual tool behavior (parameter errors, flow mismatch) | The bundled copy of this document may be outdated. Follow "5.1 Updating an outdated SKILL" below |
 
 ### 5.1 Updating an Outdated SKILL

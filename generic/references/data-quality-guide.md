@@ -65,13 +65,13 @@ Merge multiple dirty spots into one round of questions, each with concrete evide
 2. **Confirm template acceptance** (ask this one thing only; do not mix in other questions):
    - Re-upload using a clean template (recommended) — generate a well-formatted xlsx for the user to fill in and re-upload
    - The user has concerns / does not want the template → enter the communication loop in step 4
-3. **Generate and deliver the template** (when accepted): generate `<table_name>_template.xlsx` in the user's current working directory (spec in 4.2), tell them the file path and format key points, and register it as the table's sample_file via `--type sample` upload per 4.3. After the user fills it in and re-uploads → run the data quality check again on the new file → judged clean → enter the standard loop.
+3. **Generate and deliver the template** (when accepted): generate `<table_name>_template.xlsx` in the user's current working directory (spec in 4.2), and tell them the file path and format key points. After the user fills it in and re-provides the file → run the data quality check again on the new file → judged clean → enter the standard loop.
 4. **Communication loop** (user declines the template): adjust the approach per the reason, then return to step 2. Common concerns:
 
    | User concern | Response |
    |---|---|
    | "Too many columns to fill" | Trim to core columns and add extension columns later as needed; or split into multiple tables |
-   | "Large data volume, filling repeatedly is tedious" | Write a conversion script: the user uploads the original format and the script converts it to the template format for import |
+   | "Large data volume, filling repeatedly is tedious" | Write conversion logic: the user provides the original format and you convert it locally to the template format before import |
    | "Not sure which columns should aggregate" | Confirm the business meaning column by column with the user, then redefine the template |
    | "The original file IS the standard" | Show concrete dirty-spot evidence (row numbers, content, an example wrong analysis) for the user to confirm |
    | "The template doesn't match business habits" | Adapt to the user's habits (any layout works as long as it has a single-level header and no aggregate rows) |
@@ -83,13 +83,13 @@ If sufficient communication still yields no consensus: report honestly per Const
 | Item | Rule |
 |---|---|
 | Header | Row 1 English column names (snake_case, matching target_columns), single level, no merged cells |
-| Sample data | 2-3 rows of real business sample values after the header, just enough to show what each column roughly looks like — no format requirements on users (business meaning already lives in table COMMENTs and governance rules; format tolerance is the transform script's job) |
+| Sample data | 2-3 rows of real business sample values after the header, just enough to show what each column roughly looks like — no format requirements on users (business meaning already lives in table COMMENTs and governance rules) |
 | No aggregate rows | Summary/subtotal/cumulative rows over other rows are **forbidden** |
 | Reasonable column count | Keep core columns only; split into multiple tables when there are too many |
 
 ### 4.2.1 Template Generation Skeleton (openpyxl)
 
-Generate locally (you are a local agent — write the local file directly, then upload). Sample rows are the template's core value —
+Generate locally (you are a local agent — write the local file directly). Sample rows are the template's core value —
 a header-only template cannot teach the user what each column should contain; writing only the header is forbidden.
 
 The following is a **structural skeleton, not a ready-to-use product**: fill `COLUMNS` with the column names/sample values from this table's
@@ -113,24 +113,6 @@ for row_idx in range(2, 4):  # 2-3 sample rows
         ws.cell(row=row_idx, column=col_idx, value=example)
 wb.save("<table_name>_template.xlsx")
 ```
-
-### 4.3 The Template Must Be Uploaded and Registered (part of the mandatory script contract)
-
-The template is not just a one-off download for the user — it is the required table-config field `sample_file`, and the website's
-"download template" button serves the file from here long-term. After generating it you **must**:
-
-```
-uds-cli --task-id <task_id> upload <table>_template.xlsx --dataset <dataset_id> --type sample
-uds_table_manage(action="update", table_name=..., sample_file=<returned workspace_path>, task_id=<task_id>)
-```
-
-- `--type sample` cannot be omitted: the landing directory is /workspace/goalfydata_sample_files/, and the table config
-  validates the sample_file path prefix; a mismatched directory is rejected at registration;
-- an upload-source table **cannot complete registration without a sample_file** (required, same as script_file);
-- when the user's original file is itself clean, you may upload and register it directly as the sample via `--type sample`, no separate template needed;
-- the template and the transform script are maintained as a pair: when the table structure (target_columns) changes, regenerate and re-register both.
-
----
 
 ## 5. Mandatory Pre-create Checklist
 
