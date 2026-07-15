@@ -211,7 +211,7 @@ Output the template below to the user word for word:
 
 Run this section when the user wants to rotate the API Key (or the old key has been deleted/invalidated). Understand the key's activation model first — otherwise the rotation silently fails:
 
-- The key lives in two places: `~/.goalfy/config.json` (written by login, read by uds-cli) and `%USERPROFILE%\.codex\.env` (used for the MCP request header, and also injected into the agent's session environment)
+- The key lives in two places: `%USERPROFILE%\.goalfy\config.json` (written by login, read by uds-cli) and `%USERPROFILE%\.codex\.env` (used for the MCP request header, and also injected into the agent's session environment)
 - Precedence: environment variables override the config — if `%USERPROFILE%\.codex\.env` is not updated, the stale environment value overrides the newly saved key
 - Activation timing: the config takes effect immediately; `%USERPROFILE%\.codex\.env` and the session environment only take effect **after a full restart**
 
@@ -220,7 +220,7 @@ Execute in order (skip the Step 0 routing in the rotation case):
 1. Direct the user to get a new key: run Installation Step 1 (output the Connect GoalfyData template)
 2. Log in again with the new key: run Installation Step 3, **never skipped just because whoami passes** (the old key may not be deleted yet)
 3. Update the MCP-side storage: run Installation Step 5, **unconditionally — never skipped because its check passes**. `%USERPROFILE%\.codex\.env` still holds the old key; without this update, MCP and new sessions keep using the old key after restart (whether login printed `WARNING: environment variable ...` only reflects the current session environment and must not be used as a reason to skip)
-4. Consistency check: confirm both `~/.goalfy/config.json` and `%USERPROFILE%\.codex\.env` now hold the new key (compare the first characters after gfk_)
+4. Consistency check: confirm both `%USERPROFILE%\.goalfy\config.json` and `%USERPROFILE%\.codex\.env` now hold the new key (compare the first characters after gfk_)
 5. Output the template below to the user word for word:
 
 ```markdown
