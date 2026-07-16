@@ -250,7 +250,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds-cli --task-id <task_id> inspect --table name` | View table structure |
 | `uds-cli --task-id <task_id> export --table name` | Export data |
 | `uds-cli --task-id <task_id> connect --mode reader/writer --schema X` | Dataset connection string (temporary credentials). --schema is required. Multiple datasets via comma or repeats: `--schema uds_a,uds_b` or `--schema uds_a --schema uds_b`. Credentials narrow to the selection: under writer, own datasets are read-write, shared ones read-only, unselected/unauthorized ones inaccessible |
-| `uds-cli schemas` | List all datasets under the account: created / shared / pending acceptance (STATUS=pending rows are metadata-only and not queryable). No `--task-id` needed (catalog read) |
+| `uds-cli schemas` | List all datasets under the account: created / shared with you / shared-but-not-accepted. STATUS=pending rows are shared but not accepted yet — metadata only, NOT queryable. No `--task-id` needed (catalog read) |
 | `uds-cli --task-id <task_id> tables` | List accessible tables (schema, row count, column count); filter with `--schema` |
 | `uds-cli task-insert <task_id> --content "note"` | Append an info record to a ticket (note/result/checkpoint) |
 | `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"` | Complete an operation round and notify dataset owners/share recipients; repeat `--dataset` for multiple datasets, or omit it for a read-only round |
