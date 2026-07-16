@@ -117,7 +117,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 - Create tables and import data (CSV/Excel/API/scripts)
 - Analyze on datasets (multi-round SQL, aggregation, trend comparison, extraction and export)
 - Define table relations and governance rules (persisting business definitions)
-- Share datasets (one code per recipient / multi-recipient app links)
+- Share datasets through recipient email invitations; share apps through managed links
 - Configure fine-grained permission policies (table/column/row level)
 - Configure GoalfyData Managed Refresh (cron scheduled trigger + update script, run in the platform sandbox)
 - Manage data-source credentials (encrypted storage of API keys / database passwords)
@@ -158,7 +158,7 @@ Guidance: use Direct Edit during the build phase; configure GoalfyData Managed R
 At the start of every session/task, first call `uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`. Every subsequent operation in this session must carry it; missing task_ids are intercepted server-side.
 
 - **MCP tools**: `task_id` required on every call (`uds_task_manager` and `uds_dataset_get` are exempt — ticket management and catalog reads need no ticket)
-- **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task
+- **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task. Exception: `uds-cli schemas` is a catalog read (same as `uds_dataset_get`) and needs no task_id
 - **Ticket mode**: read-only queries, listings, details, and analysis use `mode="read"`; any write operation — table creation, imports, rules, permissions, sharing, GoalfyData Managed Refresh, app deployment — uses `mode="write"`
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
@@ -218,7 +218,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | Tool | Purpose |
 |------|------|
 | `uds_dataset_manage` | Create/update/delete datasets |
-| `uds_dataset_get` | Dataset details or list (task_id exempt; callable before creating a ticket) |
+| `uds_dataset_get` | Dataset details or list (task_id exempt; callable before creating a ticket). Shared items with `accept_status='pending'` are addressed to the user's email but not accepted yet: metadata only, NOT queryable until accepted |
 | `uds_query` | Read-only SQL queries |
 | `uds_table_manage` | Register/manage table metadata; configure GoalfyData Managed Refresh (cron plan and switch) |
 | `uds_relations_set` | Manage table relations |
@@ -250,7 +250,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds-cli --task-id <task_id> inspect --table name` | View table structure |
 | `uds-cli --task-id <task_id> export --table name` | Export data |
 | `uds-cli --task-id <task_id> connect --mode reader/writer --schema X` | Dataset connection string (temporary credentials). --schema is required. Multiple datasets via comma or repeats: `--schema uds_a,uds_b` or `--schema uds_a --schema uds_b`. Credentials narrow to the selection: under writer, own datasets are read-write, shared ones read-only, unselected/unauthorized ones inaccessible |
-| `uds-cli --task-id <task_id> schemas` | List accessible dataset ids |
+| `uds-cli schemas` | List all datasets under the account: created / shared / pending acceptance (STATUS=pending rows are metadata-only and not queryable). No `--task-id` needed (catalog read) |
 | `uds-cli --task-id <task_id> tables` | List accessible tables (schema, row count, column count); filter with `--schema` |
 | `uds-cli task-insert <task_id> --content "note"` | Append an info record to a ticket (note/result/checkpoint) |
 | `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"` | Complete an operation round and notify dataset owners/share recipients; repeat `--dataset` for multiple datasets, or omit it for a read-only round |
@@ -586,17 +586,41 @@ Credentials are injected via environment variables (`os.environ['CREDENTIAL_NAME
 
 ### 4.4 Sharing Datasets
 
-#### Dataset Sharing (one code per recipient)
+#### Dataset Sharing (email invitation per recipient)
 
 Precise per-person control, individually revocable:
 
 ```
-uds_share(resource="dataset", action="create", task_id=<task_id>) → share code (gfs_ prefix) → send to the recipient → they redeem → read-only access
+uds_share(resource="dataset", action="create", recipient_email="person@example.com", task_id=<task_id>) → invitation email sent → recipient opens the email link → read-only access
 ```
 
-- Sharing with N people = N create calls (each code independently revocable)
+- `recipient_email` is required. Never create a dataset share without an email address
+- Never request, display, copy, or send a standalone dataset share code or short link. The invitation link is delivered only by email
+- Sharing with N people = N create calls (each invitation is independently managed by its returned `share_id`)
 - Optionally attach a `policy_id` for fine-grained permissions (specific tables/columns/rows only)
-- Revoking (action="revoke") reclaims the PG permissions immediately
+- Listing returns `share_id`; revoking uses `uds_share(resource="dataset", action="revoke", share_id=..., task_id=<task_id>)` and reclaims PG permissions immediately
+
+#### Pending email invitations — accept / reject (recipient side)
+
+Shares addressed to the user's email appear in `uds_dataset_get` (or `uds-cli schemas`) as shared items with
+`accept_status='pending'` until accepted: **metadata only, the dataset cannot be queried yet**. Translate this
+state for the user (e.g. "you have 30 datasets, but the 2 you want to analyze are still pending acceptance —
+shall I accept them? Note: accepting counts toward your dataset quota"). Never request, display, or expose a
+share code or the invitation link — acceptance goes through this tool or the recipient's own invitation email.
+
+```
+uds_share(resource="dataset", action="accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # accept
+uds_share(resource="dataset", action="reject", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # reject
+```
+
+- **Explicit user consent is mandatory** (`user_confirmed=true`): never accept or reject on your own initiative.
+  Before asking, show which datasets are involved; for accept state the quota impact; for reject state that it
+  is permanent and the sharer is not notified
+- Batch-friendly: results come back per dataset (succeeded/skipped with reason); one failure
+  (e.g. quota_insufficient) does not affect the others
+- Reject is **final**: the pending invitation for that dataset is voided, it cannot be undone, and the sharer is
+  NOT notified — getting access again requires the owner to share anew
+- The recipient can equally accept by opening the invitation email; both paths land on the same state
 
 #### Fine-grained Permission Policies
 
@@ -706,7 +730,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | `uds-cli exec` reports permission denied | Table name not fully qualified. Correct: `SELECT * FROM uds_{dataset_id}.table` |
 | `uds-cli exec` reports SQL syntax errors | The backend is PostgreSQL; MySQL syntax is forbidden. Common: `SERIAL` not `AUTO_INCREMENT`; standalone `COMMENT ON COLUMN` not `AFTER ... COMMENT`; single quotes for strings, double quotes (not backticks) for identifiers; `ALTER COLUMN ... TYPE` not `MODIFY COLUMN` |
 | Sync task stuck in running | The script crashed without returning. The zombie sweep marks it failed after 70 minutes. Read the full log via `log_url` from `uds_sync_logs` |
-| Recipient cannot see data after sharing | (1) share code not redeemed (2) a policy_id restricts visibility (3) the base table has no data |
+| Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(action="accept", user_confirmed=true)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |
 | Data vanished during full_replace | It did not. full_replace goes through a temp table + atomic RENAME; on failure the production table is untouched |
 | Schedule configured but not auto-updating | Most common cause: `cron_enabled=false` (not enabled). Verify via `uds_dataset_get`, then enable after user confirmation |
 | Import fails with duplicate key | Upsert with duplicate keys within one batch. Deduplicate the candidate keys via `drop_duplicates` in the script before importing |
