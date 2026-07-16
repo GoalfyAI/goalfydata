@@ -1,8 +1,8 @@
 {
-  "version": "v20260714-04b378",
-  "notes": "Explicit ticket completion with dataset update notifications; connect/skill first-time setup with install-code attribution; manual data upload, template, and validate flows retired (Managed Refresh is script-source only)",
-  "update_reason": "Explicit ticket completion with dataset update notifications; connect/skill first-time setup with install-code attribution; manual data upload, template, and validate flows retired (Managed Refresh is script-source only)",
-  "updated_at": "2026-07-14T13:45:49.911174+00:00",
+  "version": "v20260716-d5a338",
+  "notes": "Dataset sharing switched to email invitations with recipient-side pending accept/reject (datasets and apps); validate pre-import check restored; uds-cli schemas/describe exempted from task_id as catalog reads; task ticket created before the first ticketed operation",
+  "update_reason": "Dataset sharing switched to email invitations with recipient-side pending accept/reject (datasets and apps); validate pre-import check restored; uds-cli schemas/describe exempted from task_id as catalog reads; task ticket created before the first ticketed operation",
+  "updated_at": "2026-07-16T15:35:41.534004+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "b2b2818b2d31984589115ed726e4d424b37466a665535a50e127070211120a81",
-    "codex/skills/goalfydata/SKILL.md": "b2b2818b2d31984589115ed726e4d424b37466a665535a50e127070211120a81",
-    "manus/skill/SKILL.md": "b2b2818b2d31984589115ed726e4d424b37466a665535a50e127070211120a81",
-    "generic/SKILL.md": "b2b2818b2d31984589115ed726e4d424b37466a665535a50e127070211120a81"
+    "claude-code/skills/goalfydata/SKILL.md": "aa13d31c0f06ce3789e72ef5774fd4bfcc2eeaca21e1458c386a7425fab9054b",
+    "codex/skills/goalfydata/SKILL.md": "aa13d31c0f06ce3789e72ef5774fd4bfcc2eeaca21e1458c386a7425fab9054b",
+    "manus/skill/SKILL.md": "aa13d31c0f06ce3789e72ef5774fd4bfcc2eeaca21e1458c386a7425fab9054b",
+    "generic/SKILL.md": "aa13d31c0f06ce3789e72ef5774fd4bfcc2eeaca21e1458c386a7425fab9054b"
   }
 }
