@@ -244,6 +244,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 |------|------|
 | `uds-cli --task-id <task_id> exec "SQL" --mode reader/writer` | Execute SQL (reader for queries, writer for DDL/DML) |
 | `uds-cli --task-id <task_id> import file.csv --table name --mode append/full_replace/upsert` | Import data. **CSV and JSON only** (`.csv` UTF-8 with a header row; `.json/.jsonl/.ndjson` NDJSON or an object array — keys are column names, nested values serialize to JSON text into jsonb). **xlsx/xls rejected** — Excel display text is ambiguous; read true values with pandas and convert to CSV first (`read_excel` → `to_csv`) |
+| `uds-cli --task-id <task_id> validate file.csv --table name` | Pre-import check: whether file columns/types match the target table; writes nothing |
 | `uds-cli --task-id <task_id> upload <file> --dataset <dataset_id> --type script` | Upload a GoalfyData Managed Refresh update script (.py) to dataset storage → `/workspace/goalfydata_dataset_scripts/`. Only the `script` type is supported |
 | `uds-cli --task-id <task_id> download-script <script_file path> --dataset <dataset_id>` | Returns a short-lived download URL for a registered update script (script directory only; the path comes from `uds_table_manage(list)`; download via `curl -o local "<URL>"` and edit; MCP equivalent: `uds_table_manage(get_script)`) |
 | `uds-cli --task-id <task_id> describe --dataset <dataset_id>` | Read-only aggregate of the dataset's semantics: description, usage guide, table configs, governance rules, relations (the semantics channel when no MCP is installed; read before querying to understand business definitions) |
@@ -268,6 +269,7 @@ uds_dataset_manage(create, task_id) → dataset_id
   ▼ per table:
   uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE ..."    create table
   uds_table_manage(create, table_name, task_id)                         register metadata
+  uds-cli --task-id <task_id> validate file --table ...                pre-import check (no write)
   uds-cli --task-id <task_id> import --table ... --mode ...            import data
   uds-cli --task-id <task_id> inspect --table ...                      read back target_columns
   write update script → uds-cli upload script.py --type script         fetch script (required for script sources)
@@ -340,7 +342,7 @@ Repeat for every file/source. **At the entry, read** `references/data-quality-gu
 | 2. Confirm the table plan | Show field business meanings; confirm the structure | Constraint 4 |
 | 3. Create the table | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.name (...)"` | snake_case fields; first read `references/dataset-building-guide.md` Sections 2-3 (naming + PG pitfalls) |
 | 4. Register metadata | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | Constraint 5 |
-| 5. Import data | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` (`inspect --table` first when unsure whether columns/types match) | CSV/NDJSON only; for xlsx sources, read true values with pandas and convert to CSV (profiling already uses pandas) |
+| 5. Import data | First `uds-cli --task-id <task_id> validate file.csv --table uds_{dataset_id}.name` (column/type check, no write), then `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` | CSV/NDJSON only; for xlsx sources, read true values with pandas and convert to CSV (profiling already uses pandas) |
 | 6. Quality check | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.name"` — rows, nulls, duplicates | upsert runs twice to verify idempotency |
 | 7. Read back columns | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` → target_columns | Never invent them |
 | 8. Confirm the update mode | Ask the user: append / full_replace / upsert? Scheduled pulls later? | |
@@ -446,9 +448,10 @@ Data updates come in two modes (see 1.4):
 No GoalfyData sandbox managed refresh, no data-update credits — for in-session data fixes, supplementary imports, and structure changes.
 
 ```
-1. Import:    uds-cli --task-id <task_id> import file --table uds_{dataset_id}.name --mode append/full_replace/upsert
-   (check columns first via uds-cli inspect --table when unsure; small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
-2. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
+1. Pre-check: uds-cli --task-id <task_id> validate file --table uds_{dataset_id}.name   (column/type match, no write)
+2. Import:    uds-cli --task-id <task_id> import file --table uds_{dataset_id}.name --mode append/full_replace/upsert
+   (small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
+3. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
 ```
 
 **Changing table structure:**
