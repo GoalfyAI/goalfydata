@@ -155,7 +155,7 @@ Guidance: use Direct Edit during the build phase; configure GoalfyData Managed R
 
 ### Constraint 1 — Task Ticket (task_id)
 
-Before the first operation that requires a ticket, call `uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`; every subsequent operation in this session must carry the same id (missing task_ids are intercepted server-side). Pure catalog reads (`uds_dataset_get` / `uds-cli schemas`) are exempt — a session that only does these needs no ticket.
+Before the first operation that requires a ticket, call `uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`; every subsequent operation in this session must carry the same id (missing task_ids are intercepted server-side). Pure catalog reads (`uds_dataset_get` / `uds-cli schemas`) are exempt — a session that performs only these calls needs no ticket.
 
 - **MCP tools**: `task_id` required on every call (`uds_task_manager` and `uds_dataset_get` are exempt — ticket management and catalog reads need no ticket)
 - **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task. Exception: `uds-cli schemas` is a catalog read (same as `uds_dataset_get`) and needs no task_id
