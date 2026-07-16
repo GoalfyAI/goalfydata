@@ -163,7 +163,7 @@ Before the first operation that requires a ticket, call `uds_task_manager(action
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
-- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets
+- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets. The completion response may include a notice of shared datasets/apps still pending acceptance — relay it to the user
 - **Report datasets truthfully**: include only datasets actually modified in this round. Every dataset must carry its own `result_summary` in business language (100-200 characters) describing exactly what changed; this text is shown directly in the notification. For a read-only round, pass `datasets=[]` (or omit `--dataset` in CLI)
 - **Never complete Managed Refresh**: GoalfyData Managed Refresh is already notified by the sandbox callback. Do not call `complete` for any manual or scheduled refresh, or owners and share recipients receive duplicate notifications
 
@@ -234,7 +234,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds_app_deploy` | Deploy an app (two steps: get the upload URL → deploy) |
 | `uds_app_status` | App status/URL/version |
 | `uds_app_manage` | App lifecycle (online/offline/rollback/delete/delete_version) |
-| `uds_app_list` | List deployed apps |
+| `uds_app_list` | List deployed apps. Shared apps with `accept_status='pending'` are not accepted yet (returned with `pending_apps` / `pending_hint`); they become usable only after acceptance |
 | `uds_task_manager` | Task tickets (create for a task_id / insert to append records / complete to close an operation round and notify / list / get details and operation log) |
 | `uds_billing_info` | Subscription plan, monthly usage, per-dimension quotas (data updates, storage, apps — online, offline and failed apps all count; only deleting frees a slot), and available add-on packs |
 
@@ -619,11 +619,17 @@ uds_share(resource="dataset", action="reject", dataset_ids=[...], user_confirmed
 - **Explicit user consent is mandatory** (`user_confirmed=true`): never accept or reject on your own initiative.
   Before asking, show which datasets are involved; for accept state the quota impact; for reject state that it
   is permanent and the sharer is not notified
-- Batch-friendly: results come back per dataset (succeeded/skipped with reason); one failure
+- Batch-friendly: results are returned per dataset (succeeded/skipped with reason); one failure
   (e.g. quota_insufficient) does not affect the others
 - Reject is **final**: the pending invitation for that dataset is voided, it cannot be undone, and the sharer is
   NOT notified — getting access again requires the owner to share anew
 - The recipient can equally accept by opening the invitation email; both paths land on the same state
+
+Pending shared **apps** follow the same recipient-side flow: `uds_app_list` returns them with
+`accept_status='pending'` (plus `pending_app_count` / `pending_apps` / `pending_hint`). Accept with
+`uds_share(resource="app", action="accept", app_ids=[...], user_confirmed=true)` — obtain the app IDs from
+`uds_app_list` `pending_apps`; results are returned per app, and the same explicit-consent rule applies.
+Apps have **no reject action**: the user either accepts or leaves the invitation pending.
 
 #### Fine-grained Permission Policies
 
