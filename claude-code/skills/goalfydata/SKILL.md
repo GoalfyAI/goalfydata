@@ -127,7 +127,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 
 | User state | Handling |
 |---|---|
-| Explicitly wants a dataset | Enter the build flow directly |
+| Explicitly wants a dataset | Check for same-name or similar datasets first (Constraint 8); enter the build flow once the target is settled |
 | Full spec already given (fields, source, update mode) | Skip the interview and execute |
 | Uploaded a file without stating a goal | Ask first whether to persist it as a dataset |
 | "Analyze my data" + uploaded files | Confirm data size first; for multiple files or larger volumes suggest building a dataset before analysis, and only fall back to local processing after the user explicitly declines |
@@ -160,6 +160,7 @@ Before the first operation that requires a ticket, call `uds_task_manager(action
 - **MCP tools**: `task_id` required on every call (`uds_task_manager` and `uds_dataset_get` are exempt — ticket management and catalog reads need no ticket)
 - **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task. Exception: `uds-cli schemas` and `uds-cli describe` are catalog/metadata reads (same as `uds_dataset_get`) and need no task_id
 - **Ticket mode**: read-only queries, listings, details, and analysis use `mode="read"`; any write operation — table creation, imports, rules, permissions, sharing, GoalfyData Managed Refresh, app deployment — uses `mode="write"`
+- **Write target confirmation**: before creating a `mode="write"` ticket that will create or modify datasets, use the ticket-exempt catalog reads to resolve every existing dataset's exact `dataset_id` and `dataset_name`, show the user those identities and the planned changes, and obtain explicit consent. Then create the ticket with `target_datasets=[{"dataset_id":"...","dataset_name":"..."}]` and the strict JSON boolean `user_confirmed=true`. For a proposed dataset that does not exist yet, include its exact proposed `dataset_name` and omit `dataset_id`. If the write does not target a dataset, omit `target_datasets` or pass an empty list. Never infer consent from the original request or pass the string `"true"`
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
@@ -208,6 +209,12 @@ Right after creating each table, call `uds_table_manage(action="create", task_id
 A share or publish the user explicitly requested and that has completed is the final state. Unless the user asks again, never revoke the share, lower app visibility, or redeploy / create an app copy in the name of "risk mitigation" or "safety remediation".
 
 App visibility is adjusted only via `uds_share` on the existing `deploy_id` (public / specified / revoke): after revoking, the app is naturally owner-only and stays online. Under no circumstances redeploy or create a new app to change visibility.
+
+### Constraint 8 — Dataset Target Confirmation
+
+- **Check for duplicates before creating**: before proposing a new dataset, list the account's datasets via the ticket-exempt catalog reads (`uds_dataset_get` / `uds-cli schemas`). If any existing dataset has the same name, a shared business-domain prefix, or a clearly overlapping description, do not decide unilaterally: present the candidates (name, dataset_id, description, table count) and let the user choose between operating on an existing dataset and creating a new one. Create directly only when no similar dataset exists.
+- **Resolve name ambiguity explicitly**: when the dataset name provided by the user matches multiple candidates, list them and let the user choose; selecting the closest match unilaterally is forbidden. The chosen identities are exactly what `target_datasets` declares on the write ticket (Constraint 1).
+- Consent is given once at write-ticket creation via `target_datasets` / `user_confirmed`; operations within the ticket's declared targets require no repeated confirmation.
 
 ---
 
@@ -261,7 +268,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 ### 3.3 Core Call Chain
 
 ```
-uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>") → task_id (carried by every later call)
+uds_task_manager(action="create", task_name="task name", mode="read|write", target_datasets=[...], user_confirmed=true, skill_version="<version string from the description>") → task_id (target_datasets/user_confirmed are required only for writes that target datasets; task_id is carried by every later call)
   │
   ▼
 uds_dataset_manage(create, task_id) → dataset_id
@@ -298,16 +305,15 @@ Optional · develop a data app:
 
 #### Phase 1 — Requirements
 
-**Step 1.0 — Create the task ticket**
+**Step 1.0 — Confirm the target and create the task ticket**
 
-`uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` → `task_id`, carried by every MCP call and uds-cli command in this session (Constraint 1).
+Check for duplicates first per Constraint 8: list existing datasets via the ticket-exempt catalog reads; when same-name or similar candidates exist, have the user choose between reusing an existing dataset and creating a new one. Then show the user the proposed dataset name and the planned build/import changes. After the user explicitly agrees, call `uds_task_manager(action="create", task_name="task name", mode="write", target_datasets=[{"dataset_name":"<exact proposed name>"}], user_confirmed=true, skill_version="<version string from the description>")` → `task_id`, carried by every MCP call and uds-cli command in this session (Constraint 1). The dataset does not exist yet, so do not invent a `dataset_id`.
 
-**Step 1.1 — Intent confirmation + initialization**
+**Step 1.1 — Initialization**
 
-1. Confirm the user wants a dataset (Constraint 4). Skip the interview when the full spec is already given
-2. Identify the data source: file uploads / API / existing data
-3. Get a first look: scan file metadata or an API sample; record the structural profile (columns, rows, candidate keys, time columns, numeric columns, source type)
-4. Create the dataset: `uds_dataset_manage(action="create", name="...", task_id=<task_id>)` → `dataset_id` and `pg_schema`; governance rules found during the interview can persist in real time from here
+1. Identify the data source: file uploads / API / existing data
+2. Get a first look: scan file metadata or an API sample; record the structural profile (columns, rows, candidate keys, time columns, numeric columns, source type)
+3. Create the dataset: `uds_dataset_manage(action="create", name="...", task_id=<task_id>)` → `dataset_id` and `pg_schema`; governance rules found during the interview can persist in real time from here
 
 **Step 1.2 — Business interview**
 
@@ -438,7 +444,7 @@ Dataset build results:
 
 ### 4.2 Updating an Existing Dataset's Data
 
-Data updates come in two modes (see 1.4):
+Data updates come in two modes (see 1.4). Before mutating an existing dataset, resolve and confirm the target per Constraint 8, and declare it in the write ticket's `target_datasets` (Constraint 1).
 
 - **Agent Direct Edit** (4.2.1): the agent edits the dataset directly via uds-cli. No GoalfyData sandbox managed refresh is started; no data-update credits consumed
 - **GoalfyData Managed Refresh** (4.2.2): GoalfyData starts a sandbox and runs the table's registered update script for one dataset refresh. Each run consumes one data-update credit
