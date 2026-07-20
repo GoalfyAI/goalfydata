@@ -1,8 +1,8 @@
 {
-  "version": "v20260717-ccea2e",
-  "notes": "Write tickets targeting datasets now require target_datasets and user_confirmed=true after showing the user the exact targets and planned changes; duplicate check before creating datasets with user choice between reuse and new; Starter plan renamed to Standard",
-  "update_reason": "Write tickets targeting datasets now require target_datasets and user_confirmed=true after showing the user the exact targets and planned changes; duplicate check before creating datasets with user choice between reuse and new; Starter plan renamed to Standard",
-  "updated_at": "2026-07-17T14:26:45.673850+00:00",
+  "version": "v20260720-cc7286",
+  "notes": "Share tool migrated to resource-scoped operations (dataset_create/dataset_accept/app_create/...); app link expiry can now be updated via app_update (omitted keeps, 0 clears, positive restarts the countdown); link visibility is fixed at creation - revoke and recreate the link to change it",
+  "update_reason": "Share tool migrated to resource-scoped operations (dataset_create/dataset_accept/app_create/...); app link expiry can now be updated via app_update (omitted keeps, 0 clears, positive restarts the countdown); link visibility is fixed at creation - revoke and recreate the link to change it",
+  "updated_at": "2026-07-20T10:40:11.294024+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "df3522a1f66d670df21561d560ba20a6f410bb8ff27aae8b01bef0dc0bd16e4e",
-    "codex/skills/goalfydata/SKILL.md": "df3522a1f66d670df21561d560ba20a6f410bb8ff27aae8b01bef0dc0bd16e4e",
-    "manus/skill/SKILL.md": "df3522a1f66d670df21561d560ba20a6f410bb8ff27aae8b01bef0dc0bd16e4e",
-    "generic/SKILL.md": "df3522a1f66d670df21561d560ba20a6f410bb8ff27aae8b01bef0dc0bd16e4e"
+    "claude-code/skills/goalfydata/SKILL.md": "1fbaf8325c52145e11fcd640dc442523408dee4b4740792062750c514193d7a8",
+    "codex/skills/goalfydata/SKILL.md": "1fbaf8325c52145e11fcd640dc442523408dee4b4740792062750c514193d7a8",
+    "manus/skill/SKILL.md": "1fbaf8325c52145e11fcd640dc442523408dee4b4740792062750c514193d7a8",
+    "generic/SKILL.md": "1fbaf8325c52145e11fcd640dc442523408dee4b4740792062750c514193d7a8"
   }
 }

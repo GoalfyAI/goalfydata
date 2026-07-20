@@ -10,7 +10,7 @@
     {
       "name": "goalfydata",
       "description": "Build, query, and share datasets and deploy public dashboards from Claude Code via MCP — with managed refresh, fine-grained permissions, and one-link sharing, so results outlive the conversation.",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "author": {
         "name": "GoalfyAI"
       },
