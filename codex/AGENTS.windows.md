@@ -3,11 +3,12 @@
 While executing this guide, you must follow these rules:
 
 1. Only run the commands listed here; only write to `%USERPROFILE%\.codex\.env` (line-level update) and the Codex plugin directory
-2. For first-time setup, send the user to https://goalfydata.ai/connect/skill; https://goalfydata.ai/settings is only the manual alternative for creating or managing a Key
-3. The API Key must be the exact `gfk_` value sent by the user or returned in the setup message — never fabricate, rewrite, or substitute a placeholder
-4. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
-5. Run all commands in PowerShell
+2. Run every command in PowerShell
+3. For first-time setup, send the user to https://goalfydata.ai/connect/skill; https://goalfydata.ai/settings is only the manual alternative for creating or managing a Key
+4. The API Key must be the exact `gfk_` value sent by the user or returned in the setup message — never fabricate, rewrite, or substitute a placeholder
+5. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
 6. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
+7. Do not declare success until the plugin is enabled, Codex has been restarted, the GoalfyData MCP tools (20, such as `uds_query` and `uds_dataset_manage`) are loaded, and a read-only MCP request succeeds
 
 Every step starts with a check command: skip steps that are already done; re-running any step is safe.
 
@@ -15,20 +16,49 @@ Every step starts with a check command: skip steps that are already done; re-run
 
 ## Installation
 
-### Step 0: Detect the current state (install vs update)
+### Step 0: Resolve Codex CLI and detect the current state
 
-The following are all check commands — no user interaction. Route by the result:
+Codex Desktop on Windows may expose a WindowsApps `codex.exe` that can be discovered but returns `Access is denied` when the agent starts it. Resolve a working CLI before running any plugin command.
 
 ```powershell
-Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"          # CLI installed?
-& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami           # logged in? ($LASTEXITCODE 0 = yes)
-Select-String GOALFY_UDS_API_KEY "$env:USERPROFILE\.codex\.env" # MCP-side key configured?
-codex plugin list | Select-String goalfydata                     # plugin installed?
+Get-Command codex -All -ErrorAction SilentlyContinue | Select-Object CommandType, Source, Path
+$codexCli = 'codex'
+& $codexCli plugin list
+```
+
+If the command succeeds, keep `$codexCli = 'codex'`. If it returns `Program 'codex.exe' failed to run: Access is denied`, use the user-directory app-server copy:
+
+```powershell
+$appServerCli = "$env:USERPROFILE\.codex\plugins\.plugin-appserver\codex.exe"
+Test-Path $appServerCli
+& $appServerCli plugin list
+$codexCli = $appServerCli
+```
+
+Only set `$codexCli = $appServerCli` when that check succeeds. Use `& $codexCli` for every plugin command below. Do not request administrator access merely because the WindowsApps copy is blocked.
+
+If neither candidate runs, output the template below to the user word for word:
+
+```markdown
+# ACTION REQUIRED: Repair Codex Desktop
+
+**Neither the WindowsApps Codex CLI nor the user-directory Codex CLI can run. Repair or reinstall Codex Desktop, then reopen this task and continue.**
+```
+
+After resolving `$codexCli`, run all state checks:
+
+```powershell
+Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"                                              # CLI installed?
+& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami                                               # logged in? (exit code 0 = yes)
+Select-String '^GOALFY_UDS_API_KEY=' "$env:USERPROFILE\.codex\.env" -ErrorAction SilentlyContinue # MCP-side key configured?
+& $codexCli plugin list | Select-String '^goalfydata@goalfydata\s+installed, enabled'             # plugin installed?
 ```
 
 - All four pass → the user has a complete installation: **continue with Update**, asking the user for nothing
-- Some pass → run only the steps for the failing items; when whoami passes, skip Steps 1 and 3 (the key is already saved locally — do not ask for it again)
-- None pass → full installation from Step 1
+- Some pass → run only the steps for failing items; when `whoami` passes, skip Steps 1 and 3 (the key is already saved locally — do not ask for it again)
+- None pass → perform the full installation from Step 1
+
+Use the anchored plugin expression exactly. A broad search for `goalfydata` can falsely match the Windows username `goalfydata_test` in unrelated plugin paths.
 
 ### Step 1: Confirm the API Key
 
@@ -46,7 +76,13 @@ Output the template below to the user word for word (rendering any available `gf
 
 ### Step 2: Install uds-cli
 
-Check: `Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"` — True means installed. When already installed, **do not skip directly** — update to the latest version first, then proceed to Step 3:
+Check:
+
+```powershell
+Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"
+```
+
+When already installed, **do not skip directly** — update to the latest version first, then proceed to Step 3:
 
 ```powershell
 & "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" self-update --api-url https://api.goalfydata.ai
@@ -54,7 +90,7 @@ Check: `Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"` — True means ins
 
 Both `already on the latest version` and `update succeeded: <old> → <new>` are normal.
 
-If not installed, install it:
+If not installed:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://cdn.goalfydata.ai/dataset-uds/install.ps1 | iex"
@@ -62,7 +98,7 @@ powershell -ExecutionPolicy Bypass -c "irm https://cdn.goalfydata.ai/dataset-uds
 
 Success: output `uds-cli <version> installed to <path>\.goalfy\bin\uds-cli.exe`.
 
-The install script writes `.goalfy\bin` into the user-level PATH (registry) and injects it into the current session. Verify the persistence took effect:
+The install script writes `.goalfy\bin` into the user-level PATH (registry). Verify the persistence took effect:
 
 ```powershell
 [Environment]::GetEnvironmentVariable("Path", "User") -like "*\.goalfy\bin*"
@@ -76,11 +112,19 @@ True means persisted. If False, you **must** write it — otherwise the user's f
 
 Re-run the check above after writing; this step is complete only when it returns True. If it is still False, report it honestly — do not skip.
 
-If the `uds-cli` command is not visible in the current session, call it by absolute path `& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"` from then on — do not reinstall.
+If the `uds-cli` command is not visible in the current session, call it by absolute path `& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"` from then on — do not reinstall (the current session may not pick up a freshly written user-level PATH; command not visible does not mean not installed).
 
 ### Step 3: Log in
 
-Check: run `& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami` — `$LASTEXITCODE` 0 means already logged in; skip to Step 4.
+Check:
+
+```powershell
+& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami
+```
+
+Exit code 0 means already logged in; skip to Step 4 unless rotating the key.
+
+Only after receiving the exact key, replace the token locally and run:
 
 ```powershell
 & "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" login --api-key <user-provided-key> --api-url https://api.goalfydata.ai
@@ -88,51 +132,79 @@ Check: run `& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami` — `$LASTEXITC
 
 Replace `<user-provided-key>` with the exact API Key received from the user — never execute the command with an example value or placeholder. If an exact install code was supplied, also pass it with `--install-code <code>`; otherwise omit that argument.
 
-Success: report the real `Login succeeded` output and the masked API Key value printed by uds-cli.
+Success: report the real `Login succeeded` output and the masked API Key printed by `uds-cli`.
 
-On failure: `unknown flag: --api-key` means an outdated CLI — run `& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" self-update` and retry; `API Key validation failed` means an invalid key — return to Step 1. If login prints `WARNING: environment variable ...`, a stale key remains in the environment — Step 5 is mandatory and the user must restart afterwards.
+On failure:
+
+- `unknown flag: --api-key` → run self-update and retry
+- `API Key validation failed` → return to Step 1
+- `WARNING: environment variable ...` → a stale key remains in the current environment; Step 5 and a full restart are mandatory
 
 ### Step 4: Install the plugin
 
-Check: `codex plugin list | Select-String goalfydata` — if it produces output, skip to Step 5.
+Check:
 
 ```powershell
-codex plugin marketplace add GoalfyAI/goalfydata
-codex plugin add goalfydata@goalfydata
+& $codexCli plugin list | Select-String '^goalfydata@goalfydata\s+installed, enabled'
 ```
 
-On failure: run `codex plugin marketplace upgrade` to refresh the cache, then retry.
+If it produces output, skip to Step 5.
+
+Normal installation:
+
+```powershell
+& $codexCli plugin marketplace add GoalfyAI/goalfydata
+& $codexCli plugin add goalfydata@goalfydata
+```
+
+On a normal marketplace failure, refresh once and retry:
+
+```powershell
+& $codexCli plugin marketplace upgrade
+& $codexCli plugin marketplace add GoalfyAI/goalfydata
+& $codexCli plugin add goalfydata@goalfydata
+```
+
+If Git reports exit code 128 with `Failed to connect to github.com:443`, this is a network failure, not a plugin or API Key failure — report it plainly and retry after the network recovers; do not troubleshoot the plugin or the API Key.
+
+Verify again with the anchored check. This step is complete only when the plugin shows `installed, enabled`.
 
 ### Step 5: Configure the API Key
 
-Check: `Select-String GOALFY_UDS_API_KEY "$env:USERPROFILE\.codex\.env"` — if present with the correct value, skip to Step 6.
+Check whether the exact stored value matches the exact supplied key — if it does, skip to Step 6:
 
-Codex Desktop is an Electron app and does not read terminal environment variables; the key must be written to `%USERPROFILE%\.codex\.env`. Update by line; do not touch other content in the file:
+```powershell
+Select-String '^GOALFY_UDS_API_KEY=' "$env:USERPROFILE\.codex\.env" -ErrorAction SilentlyContinue
+```
+
+Codex Desktop is an Electron app and does not read ordinary terminal environment variables. The key must be written to `%USERPROFILE%\.codex\.env`. Update by line and preserve unrelated content:
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.codex" | Out-Null
 $envFile = "$env:USERPROFILE\.codex\.env"
 $lines = @()
 if (Test-Path $envFile) { $lines = @(Get-Content $envFile | Where-Object { $_ -notmatch '^GOALFY_UDS_API_KEY=' }) }
-$lines + 'GOALFY_UDS_API_KEY=<user-provided-key>' | Set-Content $envFile
+[System.IO.File]::WriteAllLines($envFile, ([string[]]($lines + 'GOALFY_UDS_API_KEY=<user-provided-key>')))
 ```
 
-Replace `<user-provided-key>` with the exact API Key received from the user — never write an example value or placeholder. Preserve every unrelated line.
+Write the file exactly as above — `[System.IO.File]::WriteAllLines` produces UTF-8 without BOM. Never use `Set-Content -Encoding utf8` here: Windows PowerShell 5.1 writes a UTF-8 BOM, the BOM prefixes the first line, and Codex then fails to recognize `GOALFY_UDS_API_KEY`.
 
-Re-run the check command after writing to confirm the line is present.
+Replace `<user-provided-key>` with the exact API Key received from the user — never write an example value or placeholder. Preserve every unrelated line, and re-run the check after writing to verify the stored value.
 
 ### Step 6: Restart and verify
 
-The MCP connection only takes effect after restarting Codex; you cannot verify it in the current session — the user must do this. Output the template below to the user word for word:
+The MCP connection only takes effect after restarting Codex; you cannot verify it until the user has restarted. Output the template below to the user word for word:
 
 ```markdown
-# ACTION REQUIRED: Restart Codex and verify MCP
+# ACTION REQUIRED: Restart Codex
 
 1. **Quit Codex completely and reopen it**
-2. **After restarting, confirm `goalfydata-mcp` is connected with 20 tools listed** (`uds_query`, `uds_dataset_manage`, etc.)
-
-If it fails: confirm `GOALFY_UDS_API_KEY` exists in `%USERPROFILE%\.codex\.env` and the key shows as valid at https://goalfydata.ai/settings , then fully restart again.
+2. **Then come back to this conversation and tell me you have restarted (any message works) — I will verify the connection myself**
 ```
+
+After the user confirms the restart, verify the connection yourself — do not ask the user to check anything: confirm the 20 GoalfyData MCP tools (`uds_query`, `uds_dataset_manage`, etc.) are available, and run one dataset list (for example the `uds_dataset_get` MCP tool) as the read-only self-check; its result also decides the closing message in the Report below. Do not create, modify, or delete data merely to test connectivity.
+
+If the self-check fails: confirm `GOALFY_UDS_API_KEY` exists in `%USERPROFILE%\.codex\.env` and the key shows as valid at https://goalfydata.ai/settings , then ask the user to fully restart again.
 
 ### Report
 
@@ -143,17 +215,30 @@ GoalfyData installation result:
 
 [Done]
 - uds-cli installed and logged in (version = the actual `uds-cli version` output, e.g. abc1234-yyyymmdd; account = the login email)
-- Plugin goalfydata installed
+- Plugin goalfydata installed and enabled
 - API Key written to %USERPROFILE%\.codex\.env
+- 20 MCP tools loaded and a read-only request succeeded
 
 [Action required from you]
-- Fully restart Codex and confirm goalfydata-mcp is connected (see above)
+- (none / fully restart Codex and tell me when it is done — I will verify the connection)
 
 [Not completed]
 - (none / list reasons)
 ```
 
-Then, only if every step is done and [Not completed] is empty, append the onboarding message below to the report:
+Then, only if every step is done and [Not completed] is empty, use the dataset list from the verification self-check to choose the closing message:
+
+- If the list contains datasets shared to the user that are still waiting to be accepted, output the template below instead of the onboarding message (fill in the real sharer and dataset names from the list; when there are several, list them all):
+
+```markdown
+# You have shared datasets waiting for you
+
+**<sharer> shared the dataset "<dataset-name>" with you, and it is waiting for you to accept.**
+
+**Would you like to accept it and start analyzing it right away? Just tell me and I will take it from there.**
+```
+
+- Otherwise, append the onboarding message below to the report:
 
 ```
 GoalfyData has been installed successfully.
@@ -179,23 +264,29 @@ If anything is under [Not completed], do NOT output the onboarding message. Inst
 
 ## Update
 
-### Step 1: Update the plugin
+### Step 1: Resolve the working Codex CLI
+
+Repeat Installation Step 0. Never assume the PATH copy works.
+
+### Step 2: Update the plugin
+
+For a Git marketplace:
 
 ```powershell
-codex plugin marketplace upgrade goalfydata
-codex plugin remove goalfydata@goalfydata
-codex plugin add goalfydata@goalfydata
+& $codexCli plugin marketplace upgrade goalfydata
+& $codexCli plugin remove goalfydata@goalfydata
+& $codexCli plugin add goalfydata@goalfydata
 ```
 
-### Step 2: Update uds-cli
+### Step 3: Update uds-cli
 
 ```powershell
 & "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" self-update
 ```
 
-Success: output `already on the latest version` or `update succeeded: <old> → <new>`.
+Success is `already on the latest version` or `update succeeded: <old> → <new>`.
 
-### Step 3: Restart to take effect
+### Step 4: Restart to take effect
 
 Output the template below to the user word for word:
 
@@ -249,12 +340,17 @@ If the user no longer has this guide, output the template below to the user word
 
 | Symptom | Handling |
 |---|---|
-| `uds-cli` is not recognized as a command | Use the absolute path `& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"`; only reinstall if the file does not exist (Installation Step 2) |
+| `uds-cli` is not recognized | Use `%USERPROFILE%\.goalfy\bin\uds-cli.exe`; reinstall only if the file is absent |
+| `codex.exe` returns `Access is denied` | Use `%USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe`; this is not an API Key failure |
+| Both Codex CLI candidates fail | Repair or reinstall Codex Desktop, then restart |
+| Git clone exits 128 / `github.com:443` fails | Network failure, not a plugin or API Key problem; report it and retry after the network recovers |
+| Plugin check matches unrelated entries | Use `^goalfydata@goalfydata\s+installed, enabled`; do not search broadly for the username substring |
 | `unknown flag: --api-key` | Outdated CLI; run `self-update` first, then retry |
 | `irm` download fails | Check the network; the install script already enforces TLS 1.2 — if it still fails, report the exact error to the user |
 | login reports validation failed | Direct the user to https://goalfydata.ai/settings to verify the key, recreating it if necessary |
-| login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Follow "Rotating the API Key" and have the user restart |
 | MCP not connected | Check `GOALFY_UDS_API_KEY` in `%USERPROFILE%\.codex\.env`, then ask the user to fully restart Codex (you cannot restart on the user's behalf) |
 | Tools return unauthenticated | Key missing or invalid; return to Installation Step 1 |
+| login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Follow "Rotating the API Key" and have the user restart |
+| The `.env` key line exists but Codex reports `GOALFY_UDS_API_KEY` missing | The file starts with a UTF-8 BOM (typically written by `Set-Content -Encoding utf8`); rewrite it with the Installation Step 5 block (BOM-less UTF-8), then fully restart |
 | Exported in terminal but Desktop cannot connect | The Desktop app does not read terminal environment variables; the key must be in `%USERPROFILE%\.codex\.env` (Installation Step 5) |
 | New terminals still cannot find uds-cli | User-level PATH not applied; redo the persistence check and write in Installation Step 2 |
