@@ -2,7 +2,7 @@
 
 Get set up in 3 minutes and let Codex help you build real-time data assets.
 
-> Prefer automated install? Send [AGENTS.md](../codex/AGENTS.md) to your agent and it handles everything.
+> Prefer automated install? Send [AGENTS.md](../codex/AGENTS.md) (or [AGENTS.windows.md](../codex/AGENTS.windows.md) on Windows) to your agent and it handles everything.
 
 ---
 
@@ -23,6 +23,13 @@ curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
 uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
 ```
 
+Windows (PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://cdn.goalfydata.ai/dataset-uds/install.ps1 | iex"
+# if "uds-cli is not recognized": use "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" instead of uds-cli
+uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
+```
+
 ## Step 3 -- Install the Plugin
 
 Codex CLI:
@@ -31,11 +38,11 @@ codex plugin marketplace add GoalfyAI/goalfydata
 codex plugin add goalfydata@goalfydata
 ```
 
-Codex Desktop: Paste the full content of [AGENTS.md](../codex/AGENTS.md) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself.
+Codex Desktop: Paste the full content of [AGENTS.md](../codex/AGENTS.md) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself. On Windows, use [AGENTS.windows.md](../codex/AGENTS.windows.md) instead.
 
 ## Step 4 -- Configure API Key
 
-Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to write the API Key into `~/.codex/.env`:
+Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to write the API Key into `~/.codex/.env` (on Windows: `%USERPROFILE%\.codex\.env`, saved as UTF-8 **without BOM** — a leading BOM makes Codex fail to recognize the first variable):
 
 ```bash
 # ~/.codex/.env

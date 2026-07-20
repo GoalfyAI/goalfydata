@@ -33,6 +33,8 @@ codex plugin add goalfydata@goalfydata
 
 Codex Desktop users: paste the full content of [AGENTS.md](./AGENTS.md) into the chat — it is the agent-executable runbook; Codex will run the install commands and complete the configuration itself.
 
+On Windows, use [AGENTS.windows.md](./AGENTS.windows.md) instead — it uses PowerShell commands and covers Windows-specific issues such as the WindowsApps `codex.exe` Access is denied error and GitHub clone failures.
+
 ## Authentication
 
 Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to configure the API Key in `~/.codex/.env`:
