@@ -1,6 +1,6 @@
 ---
 name: goalfydata
-description: Use when the user needs deep data analysis (multi-round SQL queries, aggregation, trend comparison) or wants to persist data (Excel / CSV / API / databases) as a long-lived, cross-platform structured asset — typical scenarios include complex or repeated analysis, accessing the same data across multiple Agents / services / machines, sharing data with collaborators, and building a Dashboard on the data with public deployment and sharing. GoalfyData is independent of any single project or conversation and covers the full dataset lifecycle from table creation, import, query and analysis, governance rules, permission sharing, credential management, and GoalfyData Managed Refresh (scheduled auto-update) to Dashboard deployment. [skill-version:v20260714-04b378]
+description: Use when the user needs deep data analysis (multi-round SQL queries, aggregation, trend comparison) or wants to persist data (Excel / CSV / API / databases) as a long-lived, cross-platform structured asset — typical scenarios include complex or repeated analysis, accessing the same data across multiple Agents / services / machines, sharing data with collaborators, and building a Dashboard on the data with public deployment and sharing. GoalfyData is independent of any single project or conversation and covers the full dataset lifecycle from table creation, import, query and analysis, governance rules, permission sharing, credential management, and GoalfyData Managed Refresh (scheduled auto-update) to Dashboard deployment. [skill-version:v20260717-ccea2e]
 keywords:
   - dataset
   - create table
@@ -117,7 +117,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 - Create tables and import data (CSV/Excel/API/scripts)
 - Analyze on datasets (multi-round SQL, aggregation, trend comparison, extraction and export)
 - Define table relations and governance rules (persisting business definitions)
-- Share datasets (one code per recipient / multi-recipient app links)
+- Share datasets through recipient email invitations; share apps through managed links
 - Configure fine-grained permission policies (table/column/row level)
 - Configure GoalfyData Managed Refresh (cron scheduled trigger + update script, run in the platform sandbox)
 - Manage data-source credentials (encrypted storage of API keys / database passwords)
@@ -127,7 +127,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 
 | User state | Handling |
 |---|---|
-| Explicitly wants a dataset | Enter the build flow directly |
+| Explicitly wants a dataset | Check for same-name or similar datasets first (Constraint 8); enter the build flow once the target is settled |
 | Full spec already given (fields, source, update mode) | Skip the interview and execute |
 | Uploaded a file without stating a goal | Ask first whether to persist it as a dataset |
 | "Analyze my data" + uploaded files | Confirm data size first; for multiple files or larger volumes suggest building a dataset before analysis, and only fall back to local processing after the user explicitly declines |
@@ -155,15 +155,16 @@ Guidance: use Direct Edit during the build phase; configure GoalfyData Managed R
 
 ### Constraint 1 — Task Ticket (task_id)
 
-At the start of every session/task, first call `uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`. Every subsequent operation in this session must carry it; missing task_ids are intercepted server-side.
+Before the first operation that requires a ticket, call `uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`; every subsequent operation in this session must carry the same id (missing task_ids are intercepted server-side). Pure catalog reads (`uds_dataset_get` / `uds-cli schemas` / `uds-cli describe`) are exempt — a session that performs only these calls needs no ticket.
 
 - **MCP tools**: `task_id` required on every call (`uds_task_manager` and `uds_dataset_get` are exempt — ticket management and catalog reads need no ticket)
-- **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task
+- **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task. Exception: `uds-cli schemas` and `uds-cli describe` are catalog/metadata reads (same as `uds_dataset_get`) and need no task_id
 - **Ticket mode**: read-only queries, listings, details, and analysis use `mode="read"`; any write operation — table creation, imports, rules, permissions, sharing, GoalfyData Managed Refresh, app deployment — uses `mode="write"`
+- **Write target confirmation**: before creating a `mode="write"` ticket that will create or modify datasets, use the ticket-exempt catalog reads to resolve every existing dataset's exact `dataset_id` and `dataset_name`, show the user those identities and the planned changes, and obtain explicit consent. Then create the ticket with `target_datasets=[{"dataset_id":"...","dataset_name":"..."}]` and the strict JSON boolean `user_confirmed=true`. For a proposed dataset that does not exist yet, include its exact proposed `dataset_name` and omit `dataset_id`. If the write does not target a dataset, omit `target_datasets` or pass an empty list. Never infer consent from the original request or pass the string `"true"`
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
-- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets
+- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets. The completion response may include a notice of shared datasets/apps still pending acceptance — relay it to the user
 - **Report datasets truthfully**: include only datasets actually modified in this round. Every dataset must carry its own `result_summary` in business language (100-200 characters) describing exactly what changed; this text is shown directly in the notification. For a read-only round, pass `datasets=[]` (or omit `--dataset` in CLI)
 - **Never complete Managed Refresh**: GoalfyData Managed Refresh is already notified by the sandbox callback. Do not call `complete` for any manual or scheduled refresh, or owners and share recipients receive duplicate notifications
 
@@ -209,6 +210,12 @@ A share or publish the user explicitly requested and that has completed is the f
 
 App visibility is adjusted only via `uds_share` on the existing `deploy_id` (public / specified / revoke): after revoking, the app is naturally owner-only and stays online. Under no circumstances redeploy or create a new app to change visibility.
 
+### Constraint 8 — Dataset Target Confirmation
+
+- **Check for duplicates before creating**: before proposing a new dataset, list the account's datasets via the ticket-exempt catalog reads (`uds_dataset_get` / `uds-cli schemas`). If any existing dataset has the same name, a shared business-domain prefix, or a clearly overlapping description, do not decide unilaterally: present the candidates (name, dataset_id, description, table count) and let the user choose between operating on an existing dataset and creating a new one. Create directly only when no similar dataset exists.
+- **Resolve name ambiguity explicitly**: when the dataset name provided by the user matches multiple candidates, list them and let the user choose; selecting the closest match unilaterally is forbidden. The chosen identities are exactly what `target_datasets` declares on the write ticket (Constraint 1).
+- Consent is given once at write-ticket creation via `target_datasets` / `user_confirmed`; operations within the ticket's declared targets require no repeated confirmation.
+
 ---
 
 ## 3. Tool Overview
@@ -218,7 +225,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | Tool | Purpose |
 |------|------|
 | `uds_dataset_manage` | Create/update/delete datasets |
-| `uds_dataset_get` | Dataset details or list (task_id exempt; callable before creating a ticket) |
+| `uds_dataset_get` | Dataset details or list (task_id exempt; callable before creating a ticket). Shared items with `accept_status='pending'` are addressed to the user's email but not accepted yet: metadata only, NOT queryable until accepted |
 | `uds_query` | Read-only SQL queries |
 | `uds_table_manage` | Register/manage table metadata; configure GoalfyData Managed Refresh (cron plan and switch) |
 | `uds_relations_set` | Manage table relations |
@@ -234,7 +241,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 | `uds_app_deploy` | Deploy an app (two steps: get the upload URL → deploy) |
 | `uds_app_status` | App status/URL/version |
 | `uds_app_manage` | App lifecycle (online/offline/rollback/delete/delete_version) |
-| `uds_app_list` | List deployed apps |
+| `uds_app_list` | List deployed apps. Shared apps with `accept_status='pending'` are not accepted yet (returned with `pending_apps` / `pending_hint`); they become usable only after acceptance |
 | `uds_task_manager` | Task tickets (create for a task_id / insert to append records / complete to close an operation round and notify / list / get details and operation log) |
 | `uds_billing_info` | Subscription plan, monthly usage, per-dimension quotas (data updates, storage, apps — online, offline and failed apps all count; only deleting frees a slot), and available add-on packs |
 
@@ -244,13 +251,14 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 |------|------|
 | `uds-cli --task-id <task_id> exec "SQL" --mode reader/writer` | Execute SQL (reader for queries, writer for DDL/DML) |
 | `uds-cli --task-id <task_id> import file.csv --table name --mode append/full_replace/upsert` | Import data. **CSV and JSON only** (`.csv` UTF-8 with a header row; `.json/.jsonl/.ndjson` NDJSON or an object array — keys are column names, nested values serialize to JSON text into jsonb). **xlsx/xls rejected** — Excel display text is ambiguous; read true values with pandas and convert to CSV first (`read_excel` → `to_csv`) |
+| `uds-cli --task-id <task_id> validate file.csv --table name` | Pre-import check: whether file columns/types match the target table; writes nothing |
 | `uds-cli --task-id <task_id> upload <file> --dataset <dataset_id> --type script` | Upload a GoalfyData Managed Refresh update script (.py) to dataset storage → `/workspace/goalfydata_dataset_scripts/`. Only the `script` type is supported |
 | `uds-cli --task-id <task_id> download-script <script_file path> --dataset <dataset_id>` | Returns a short-lived download URL for a registered update script (script directory only; the path comes from `uds_table_manage(list)`; download via `curl -o local "<URL>"` and edit; MCP equivalent: `uds_table_manage(get_script)`) |
-| `uds-cli --task-id <task_id> describe --dataset <dataset_id>` | Read-only aggregate of the dataset's semantics: description, usage guide, table configs, governance rules, relations (the semantics channel when no MCP is installed; read before querying to understand business definitions) |
+| `uds-cli describe --dataset <dataset_id>` | Read-only aggregate of the dataset's semantics: description, usage guide, table configs, governance rules, relations (the semantics channel when no MCP is installed; read before querying to understand business definitions). No `--task-id` needed (catalog metadata read) |
 | `uds-cli --task-id <task_id> inspect --table name` | View table structure |
 | `uds-cli --task-id <task_id> export --table name` | Export data |
 | `uds-cli --task-id <task_id> connect --mode reader/writer --schema X` | Dataset connection string (temporary credentials). --schema is required. Multiple datasets via comma or repeats: `--schema uds_a,uds_b` or `--schema uds_a --schema uds_b`. Credentials narrow to the selection: under writer, own datasets are read-write, shared ones read-only, unselected/unauthorized ones inaccessible |
-| `uds-cli --task-id <task_id> schemas` | List accessible dataset ids |
+| `uds-cli schemas` | List all datasets under the account: created / shared with you / shared-but-not-accepted. STATUS=pending rows are shared but not accepted yet — metadata only, NOT queryable. No `--task-id` needed (catalog read) |
 | `uds-cli --task-id <task_id> tables` | List accessible tables (schema, row count, column count); filter with `--schema` |
 | `uds-cli task-insert <task_id> --content "note"` | Append an info record to a ticket (note/result/checkpoint) |
 | `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"` | Complete an operation round and notify dataset owners/share recipients; repeat `--dataset` for multiple datasets, or omit it for a read-only round |
@@ -260,7 +268,7 @@ App visibility is adjusted only via `uds_share` on the existing `deploy_id` (pub
 ### 3.3 Core Call Chain
 
 ```
-uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>") → task_id (carried by every later call)
+uds_task_manager(action="create", task_name="task name", mode="read|write", target_datasets=[...], user_confirmed=true, skill_version="<version string from the description>") → task_id (target_datasets/user_confirmed are required only for writes that target datasets; task_id is carried by every later call)
   │
   ▼
 uds_dataset_manage(create, task_id) → dataset_id
@@ -268,6 +276,7 @@ uds_dataset_manage(create, task_id) → dataset_id
   ▼ per table:
   uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE ..."    create table
   uds_table_manage(create, table_name, task_id)                         register metadata
+  uds-cli --task-id <task_id> validate file --table ...                pre-import check (no write)
   uds-cli --task-id <task_id> import --table ... --mode ...            import data
   uds-cli --task-id <task_id> inspect --table ...                      read back target_columns
   write update script → uds-cli upload script.py --type script         fetch script (required for script sources)
@@ -296,16 +305,15 @@ Optional · develop a data app:
 
 #### Phase 1 — Requirements
 
-**Step 1.0 — Create the task ticket**
+**Step 1.0 — Confirm the target and create the task ticket**
 
-`uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` → `task_id`, carried by every MCP call and uds-cli command in this session (Constraint 1).
+Check for duplicates first per Constraint 8: list existing datasets via the ticket-exempt catalog reads; when same-name or similar candidates exist, have the user choose between reusing an existing dataset and creating a new one. Then show the user the proposed dataset name and the planned build/import changes. After the user explicitly agrees, call `uds_task_manager(action="create", task_name="task name", mode="write", target_datasets=[{"dataset_name":"<exact proposed name>"}], user_confirmed=true, skill_version="<version string from the description>")` → `task_id`, carried by every MCP call and uds-cli command in this session (Constraint 1). The dataset does not exist yet, so do not invent a `dataset_id`.
 
-**Step 1.1 — Intent confirmation + initialization**
+**Step 1.1 — Initialization**
 
-1. Confirm the user wants a dataset (Constraint 4). Skip the interview when the full spec is already given
-2. Identify the data source: file uploads / API / existing data
-3. Get a first look: scan file metadata or an API sample; record the structural profile (columns, rows, candidate keys, time columns, numeric columns, source type)
-4. Create the dataset: `uds_dataset_manage(action="create", name="...", task_id=<task_id>)` → `dataset_id` and `pg_schema`; governance rules found during the interview can persist in real time from here
+1. Identify the data source: file uploads / API / existing data
+2. Get a first look: scan file metadata or an API sample; record the structural profile (columns, rows, candidate keys, time columns, numeric columns, source type)
+3. Create the dataset: `uds_dataset_manage(action="create", name="...", task_id=<task_id>)` → `dataset_id` and `pg_schema`; governance rules found during the interview can persist in real time from here
 
 **Step 1.2 — Business interview**
 
@@ -340,7 +348,7 @@ Repeat for every file/source. **At the entry, read** `references/data-quality-gu
 | 2. Confirm the table plan | Show field business meanings; confirm the structure | Constraint 4 |
 | 3. Create the table | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.name (...)"` | snake_case fields; first read `references/dataset-building-guide.md` Sections 2-3 (naming + PG pitfalls) |
 | 4. Register metadata | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | Constraint 5 |
-| 5. Import data | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` (`inspect --table` first when unsure whether columns/types match) | CSV/NDJSON only; for xlsx sources, read true values with pandas and convert to CSV (profiling already uses pandas) |
+| 5. Import data | First `uds-cli --task-id <task_id> validate file.csv --table uds_{dataset_id}.name` (column/type check, no write), then `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` | CSV/NDJSON only; for xlsx sources, read true values with pandas and convert to CSV (profiling already uses pandas) |
 | 6. Quality check | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.name"` — rows, nulls, duplicates | upsert runs twice to verify idempotency |
 | 7. Read back columns | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` → target_columns | Never invent them |
 | 8. Confirm the update mode | Ask the user: append / full_replace / upsert? Scheduled pulls later? | |
@@ -436,7 +444,7 @@ Dataset build results:
 
 ### 4.2 Updating an Existing Dataset's Data
 
-Data updates come in two modes (see 1.4):
+Data updates come in two modes (see 1.4). Before mutating an existing dataset, resolve and confirm the target per Constraint 8, and declare it in the write ticket's `target_datasets` (Constraint 1).
 
 - **Agent Direct Edit** (4.2.1): the agent edits the dataset directly via uds-cli. No GoalfyData sandbox managed refresh is started; no data-update credits consumed
 - **GoalfyData Managed Refresh** (4.2.2): GoalfyData starts a sandbox and runs the table's registered update script for one dataset refresh. Each run consumes one data-update credit
@@ -446,9 +454,10 @@ Data updates come in two modes (see 1.4):
 No GoalfyData sandbox managed refresh, no data-update credits — for in-session data fixes, supplementary imports, and structure changes.
 
 ```
-1. Import:    uds-cli --task-id <task_id> import file --table uds_{dataset_id}.name --mode append/full_replace/upsert
-   (check columns first via uds-cli inspect --table when unsure; small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
-2. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
+1. Pre-check: uds-cli --task-id <task_id> validate file --table uds_{dataset_id}.name   (column/type match, no write)
+2. Import:    uds-cli --task-id <task_id> import file --table uds_{dataset_id}.name --mode append/full_replace/upsert
+   (small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
+3. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
 ```
 
 **Changing table structure:**
@@ -586,17 +595,47 @@ Credentials are injected via environment variables (`os.environ['CREDENTIAL_NAME
 
 ### 4.4 Sharing Datasets
 
-#### Dataset Sharing (one code per recipient)
+#### Dataset Sharing (email invitation per recipient)
 
 Precise per-person control, individually revocable:
 
 ```
-uds_share(resource="dataset", action="create", task_id=<task_id>) → share code (gfs_ prefix) → send to the recipient → they redeem → read-only access
+uds_share(resource="dataset", action="create", recipient_email="person@example.com", task_id=<task_id>) → invitation email sent → recipient opens the email link → read-only access
 ```
 
-- Sharing with N people = N create calls (each code independently revocable)
+- `recipient_email` is required. Never create a dataset share without an email address
+- Never request, display, copy, or send a standalone dataset share code or short link. The invitation link is delivered only by email
+- Sharing with N people = N create calls (each invitation is independently managed by its returned `share_id`)
 - Optionally attach a `policy_id` for fine-grained permissions (specific tables/columns/rows only)
-- Revoking (action="revoke") reclaims the PG permissions immediately
+- Listing returns `share_id`; revoking uses `uds_share(resource="dataset", action="revoke", share_id=..., task_id=<task_id>)` and reclaims PG permissions immediately
+
+#### Pending email invitations — accept / reject (recipient side)
+
+Shares addressed to the user's email appear in `uds_dataset_get` (or `uds-cli schemas`) as shared items with
+`accept_status='pending'` until accepted: **metadata only, the dataset cannot be queried yet**. Translate this
+state for the user (e.g. "you have 30 datasets, but the 2 you want to analyze are still pending acceptance —
+shall I accept them? Note: accepting counts toward your dataset quota"). Never request, display, or expose a
+share code or the invitation link — acceptance goes through this tool or the recipient's own invitation email.
+
+```
+uds_share(resource="dataset", action="accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # accept
+uds_share(resource="dataset", action="reject", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # reject
+```
+
+- **Explicit user consent is mandatory** (`user_confirmed=true`): never accept or reject on your own initiative.
+  Before asking, show which datasets are involved; for accept state the quota impact; for reject state that it
+  is permanent and the sharer is not notified
+- Batch-friendly: results are returned per dataset (succeeded/skipped with reason); one failure
+  (e.g. quota_insufficient) does not affect the others
+- Reject is **final**: the pending invitation for that dataset is voided, it cannot be undone, and the sharer is
+  NOT notified — getting access again requires the owner to share anew
+- The recipient can equally accept by opening the invitation email; both paths land on the same state
+
+Pending shared **apps** follow the same recipient-side flow: `uds_app_list` returns them with
+`accept_status='pending'` (plus `pending_app_count` / `pending_apps` / `pending_hint`). Accept with
+`uds_share(resource="app", action="accept", app_ids=[...], user_confirmed=true)` — obtain the app IDs from
+`uds_app_list` `pending_apps`; results are returned per app, and the same explicit-consent rule applies.
+Apps have **no reject action**: the user either accepts or leaves the invitation pending.
 
 #### Fine-grained Permission Policies
 
@@ -706,7 +745,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | `uds-cli exec` reports permission denied | Table name not fully qualified. Correct: `SELECT * FROM uds_{dataset_id}.table` |
 | `uds-cli exec` reports SQL syntax errors | The backend is PostgreSQL; MySQL syntax is forbidden. Common: `SERIAL` not `AUTO_INCREMENT`; standalone `COMMENT ON COLUMN` not `AFTER ... COMMENT`; single quotes for strings, double quotes (not backticks) for identifiers; `ALTER COLUMN ... TYPE` not `MODIFY COLUMN` |
 | Sync task stuck in running | The script crashed without returning. The zombie sweep marks it failed after 70 minutes. Read the full log via `log_url` from `uds_sync_logs` |
-| Recipient cannot see data after sharing | (1) share code not redeemed (2) a policy_id restricts visibility (3) the base table has no data |
+| Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(action="accept", user_confirmed=true)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |
 | Data vanished during full_replace | It did not. full_replace goes through a temp table + atomic RENAME; on failure the production table is untouched |
 | Schedule configured but not auto-updating | Most common cause: `cron_enabled=false` (not enabled). Verify via `uds_dataset_get`, then enable after user confirmation |
 | Import fails with duplicate key | Upsert with duplicate keys within one batch. Deduplicate the candidate keys via `drop_duplicates` in the script before importing |

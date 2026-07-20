@@ -182,7 +182,7 @@ Repeat for every file/data source. **At the entry, first read** `references/data
 | 2. Confirm the table plan | Show the user each field's business meaning; confirm the structure | Constraint 4 |
 | 3. Create the table | `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.name (...)"` | snake_case fields; read Sections 2-3 of this guide first (naming rules + PG pitfalls) |
 | 4. Register metadata | `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=...)` | Constraint 5 |
-| 5. Import data | `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` (`inspect --table` first when unsure whether columns/types match) | CSV/NDJSON only; xlsx sources get true-value pandas reads to CSV first |
+| 5. Import data | First `uds-cli --task-id <task_id> validate file.csv --table uds_{dataset_id}.name` to pre-check (column/type match, no write), then `uds-cli --task-id <task_id> import file.csv --table uds_{dataset_id}.name --mode full_replace` | CSV/NDJSON only; xlsx sources get true-value pandas reads to CSV first |
 | 6. Quality check | `uds-cli --task-id <task_id> exec "SELECT COUNT(*) FROM uds_{dataset_id}.name"` — rows, nulls, duplicates | upsert requires two runs to verify idempotency |
 | 7. Read back columns | `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` → target_columns | Never invent them |
 | 8. Confirm the update mode | Ask the user: append / full_replace / upsert? Scheduled pulls afterwards? | |

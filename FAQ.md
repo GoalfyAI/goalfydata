@@ -38,7 +38,7 @@ Plan quotas reset every 30 days. Add-on quotas are valid for 30 days from purcha
 
 ### 10. How many datasets can I create on each plan?
 
-The Free plan includes 3 datasets, Starter includes 20, and Pro includes 100. Dataset usage is counted in 300 MB blocks.
+The Free plan includes 3 datasets, Standard includes 20, and Pro includes 100. Dataset usage is counted in 300 MB blocks.
 
 ### 11. What does one dataset include?
 
@@ -58,7 +58,7 @@ You can upgrade your plan or buy an add-on for datasets, Managed Refreshes, or p
 
 ### 15. Can Free users buy add-on packs on their own?
 
-No. Add-ons are available only on Starter and Pro. If you are on the Free plan, upgrade before purchasing additional datasets, Managed Refreshes, or published apps.
+No. Add-ons are available only on Standard and Pro. If you are on the Free plan, upgrade before purchasing additional datasets, Managed Refreshes, or published apps.
 
 ### 16. Is my data safe?
 
