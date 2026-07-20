@@ -7,6 +7,7 @@ While executing this guide, you must follow these rules:
 3. The API Key must be the exact `gfk_` value sent by the user or returned in the setup message — never fabricate, rewrite, or substitute a placeholder
 4. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
 5. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
+6. Do not declare success until the plugin is enabled, Codex has been restarted, the GoalfyData MCP tools (20, such as `uds_query` and `uds_dataset_manage`) are loaded, and a read-only MCP request succeeds
 
 Every step starts with a check command: skip steps that are already done; re-running any step is safe.
 
@@ -118,16 +119,18 @@ Replace `<user-provided-key>` with the exact API Key received from the user — 
 
 ### Step 6: Restart and verify
 
-The MCP connection only takes effect after restarting Codex; you cannot verify it in the current session — the user must do this. Output the template below to the user word for word:
+The MCP connection only takes effect after restarting Codex; you cannot verify it until the user has restarted. Output the template below to the user word for word:
 
 ```markdown
-# ACTION REQUIRED: Restart Codex and verify MCP
+# ACTION REQUIRED: Restart Codex
 
 1. **Quit Codex completely and reopen it**
-2. **After restarting, confirm `goalfydata-mcp` is connected with 20 tools listed** (`uds_query`, `uds_dataset_manage`, etc.)
-
-If it fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.codex/.env` and the key shows as valid at https://goalfydata.ai/settings , then fully restart again.
+2. **Then come back to this conversation and tell me you have restarted (any message works) — I will verify the connection myself**
 ```
+
+After the user confirms the restart, verify the connection yourself — do not ask the user to check anything: confirm the 20 GoalfyData MCP tools (`uds_query`, `uds_dataset_manage`, etc.) are available, and run one dataset list (for example the `uds_dataset_get` MCP tool) as the read-only self-check; its result also decides the closing message in the Report below. Do not create, modify, or delete data merely to test connectivity.
+
+If the self-check fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.codex/.env` and the key shows as valid at https://goalfydata.ai/settings , then ask the user to fully restart again.
 
 ### Report
 
@@ -140,15 +143,28 @@ GoalfyData installation result:
 - uds-cli installed and logged in (version = the actual `uds-cli version` output, e.g. abc1234-yyyymmdd; account = the login email)
 - Plugin goalfydata installed
 - API Key written to ~/.codex/.env
+- 20 MCP tools loaded and a read-only request succeeded
 
 [Action required from you]
-- Fully restart Codex and confirm goalfydata-mcp is connected (see above)
+- (none / fully restart Codex and tell me when it is done — I will verify the connection)
 
 [Not completed]
 - (none / list reasons)
 ```
 
-Then, only if every step is done and [Not completed] is empty, append the onboarding message below to the report:
+Then, only if every step is done and [Not completed] is empty, use the dataset list from the verification self-check to choose the closing message:
+
+- If the list contains datasets shared to the user that are still waiting to be accepted, output the template below instead of the onboarding message (fill in the real sharer and dataset names from the list; when there are several, list them all):
+
+```markdown
+# You have shared datasets waiting for you
+
+**<sharer> shared the dataset "<dataset-name>" with you, and it is waiting for you to accept.**
+
+**Would you like to accept it and start analyzing it right away? Just tell me and I will take it from there.**
+```
+
+- Otherwise, append the onboarding message below to the report:
 
 ```
 GoalfyData has been installed successfully.
