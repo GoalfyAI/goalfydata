@@ -208,7 +208,7 @@ Right after creating each table, call `uds_table_manage(action="create", task_id
 
 A share or publish the user explicitly requested and that has completed is the final state. Unless the user asks again, never revoke the share, lower app visibility, or redeploy / create an app copy in the name of "risk mitigation" or "safety remediation".
 
-App visibility is adjusted only via `uds_share` on the existing `deploy_id` (public / specified / revoke): after revoking, the app is naturally owner-only and stays online. Under no circumstances redeploy or create a new app to change visibility.
+App share visibility cannot be changed on an existing link: when the user asks for a different visibility, revoke the old link and create a new one via `uds_share` on the same `deploy_id`. After revoking, the app is naturally owner-only and stays online. Under no circumstances redeploy or create a new app to change visibility.
 
 ### Constraint 8 — Dataset Target Confirmation
 
@@ -600,14 +600,14 @@ Credentials are injected via environment variables (`os.environ['CREDENTIAL_NAME
 Precise per-person control, individually revocable:
 
 ```
-uds_share(resource="dataset", action="create", recipient_email="person@example.com", task_id=<task_id>) → invitation email sent → recipient opens the email link → read-only access
+uds_share(operation="dataset_create", recipient_email="person@example.com", task_id=<task_id>) → invitation email sent → recipient opens the email link → read-only access
 ```
 
 - `recipient_email` is required. Never create a dataset share without an email address
 - Never request, display, copy, or send a standalone dataset share code or short link. The invitation link is delivered only by email
 - Sharing with N people = N create calls (each invitation is independently managed by its returned `share_id`)
 - Optionally attach a `policy_id` for fine-grained permissions (specific tables/columns/rows only)
-- Listing returns `share_id`; revoking uses `uds_share(resource="dataset", action="revoke", share_id=..., task_id=<task_id>)` and reclaims PG permissions immediately
+- Listing returns `share_id`; revoking uses `uds_share(operation="dataset_revoke", share_id=..., task_id=<task_id>)` and reclaims PG permissions immediately
 
 #### Pending email invitations — accept / reject (recipient side)
 
@@ -618,8 +618,8 @@ shall I accept them? Note: accepting counts toward your dataset quota"). Never r
 share code or the invitation link — acceptance goes through this tool or the recipient's own invitation email.
 
 ```
-uds_share(resource="dataset", action="accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # accept
-uds_share(resource="dataset", action="reject", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # reject
+uds_share(operation="dataset_accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # accept
+uds_share(operation="dataset_reject", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # reject
 ```
 
 - **Explicit user consent is mandatory** (`user_confirmed=true`): never accept or reject on your own initiative.
@@ -633,13 +633,13 @@ uds_share(resource="dataset", action="reject", dataset_ids=[...], user_confirmed
 
 Pending shared **apps** follow the same recipient-side flow: `uds_app_list` returns them with
 `accept_status='pending'` (plus `pending_app_count` / `pending_apps` / `pending_hint`). Accept with
-`uds_share(resource="app", action="accept", app_ids=[...], user_confirmed=true)` — obtain the app IDs from
+`uds_share(operation="app_accept", app_ids=[...], user_confirmed=true)` — obtain the app IDs from
 `uds_app_list` `pending_apps`; results are returned per app, and the same explicit-consent rule applies.
 Apps have **no reject action**: the user either accepts or leaves the invitation pending.
 
 #### Fine-grained Permission Policies
 
-First create a policy via `uds_policy_manage(action="create", task_id=<task_id>)` for a `policy_id`, then attach it when sharing via `uds_share(create, policy_id=..., task_id=<task_id>)`:
+First create a policy via `uds_policy_manage(action="create", task_id=<task_id>)` for a `policy_id`, then attach it when sharing via `uds_share(operation="dataset_create", policy_id=..., task_id=<task_id>)`:
 
 - `allowed_tables`: visible tables
 - `column_rules`: visible columns per table
@@ -650,13 +650,13 @@ First create a policy via `uds_policy_manage(action="create", task_id=<task_id>)
 Broad distribution of a deployed data app. Precondition: deploy the app first for a `deploy_id` (see 4.5).
 
 ```
-uds_share(resource="app", action="create", deploy_id=..., visibility="public"|"specified", task_id=<task_id>)
+uds_share(operation="app_create", deploy_id=..., visibility="public"|"specified", task_id=<task_id>)
 ```
 
 - `visibility="public"`: anyone with the link can access
 - `visibility="specified"`: `emails` allowlist
 
-Visibility is always adjusted via `uds_share` on the existing `deploy_id` (see Constraint 7): switching to public, changing the allowlist, and revoking never involve redeployment. After revoking (`action="revoke"`) the app stays online, owner-only. **Under no circumstances redeploy or create an app copy to change visibility; a publish the user confirmed must never be revoked or downgraded on your own.**
+Visibility cannot be changed on an existing link: to change it, revoke the link and create a new one on the same `deploy_id` (see Constraint 7). The note, allowlist emails, and expiry can be updated in place via `uds_share(operation="app_update")` — `expires_in` omitted keeps the current expiry, 0 clears it, and a positive value restarts the countdown from now. None of this involves redeployment. After revoking (`operation="app_revoke"`) the app stays online, owner-only. **Under no circumstances redeploy or create an app copy to change visibility; a publish the user confirmed must never be revoked or downgraded on your own.**
 
 ---
 
@@ -745,7 +745,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | `uds-cli exec` reports permission denied | Table name not fully qualified. Correct: `SELECT * FROM uds_{dataset_id}.table` |
 | `uds-cli exec` reports SQL syntax errors | The backend is PostgreSQL; MySQL syntax is forbidden. Common: `SERIAL` not `AUTO_INCREMENT`; standalone `COMMENT ON COLUMN` not `AFTER ... COMMENT`; single quotes for strings, double quotes (not backticks) for identifiers; `ALTER COLUMN ... TYPE` not `MODIFY COLUMN` |
 | Sync task stuck in running | The script crashed without returning. The zombie sweep marks it failed after 70 minutes. Read the full log via `log_url` from `uds_sync_logs` |
-| Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(action="accept", user_confirmed=true)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |
+| Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(operation="dataset_accept", user_confirmed=true)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |
 | Data vanished during full_replace | It did not. full_replace goes through a temp table + atomic RENAME; on failure the production table is untouched |
 | Schedule configured but not auto-updating | Most common cause: `cron_enabled=false` (not enabled). Verify via `uds_dataset_get`, then enable after user confirmation |
 | Import fails with duplicate key | Upsert with duplicate keys within one batch. Deduplicate the candidate keys via `drop_duplicates` in the script before importing |
