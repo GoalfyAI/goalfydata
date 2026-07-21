@@ -93,6 +93,8 @@ Tell the user upon persisting ("Recorded: amounts are in cents") — no silent p
 
 Always use fully-qualified table names `uds_{dataset_id}.table`.
 
+Excel is a supported source format, not a direct `uds-cli validate/import` format. Read it with pandas/openpyxl, clean headers and types, export UTF-8 CSV with `to_csv(..., index=False)`, and validate/import that CSV.
+
 ### 3.2 PG Syntax Pitfalls (the uds-cli backend is PostgreSQL; MySQL syntax is forbidden)
 
 - Column comments: `COMMENT ON COLUMN <table>.<col> IS 'comment'` (a standalone statement). **Never** MySQL's `... COMMENT '...'`
