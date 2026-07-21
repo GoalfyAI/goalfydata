@@ -114,7 +114,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 ### 1.2 Capabilities
 
 - Create universal datasets (project-independent, usable across Agent platforms)
-- Create tables and import data (CSV/Excel/API/scripts)
+- Create tables and import data (CSV/JSON directly; clean and convert Excel/API/script sources to CSV first)
 - Analyze on datasets (multi-round SQL, aggregation, trend comparison, extraction and export)
 - Define table relations and governance rules (persisting business definitions)
 - Share datasets through recipient email invitations; share apps through managed links
@@ -174,6 +174,8 @@ Reuse the same `task_id` within one session; do not create a new ticket per call
 
 - Create/alter tables: `uds-cli exec --mode writer "CREATE TABLE ..."`
 - Import data: `uds-cli import` (assembling large INSERT statements by hand is forbidden)
+- `uds-cli validate/import` directly accept CSV and JSON/JSONL/NDJSON only; never pass `.xlsx/.xls`
+- Excel remains a supported source: read true cell values with pandas/openpyxl, clean headers/types/dates, export UTF-8 CSV, then run `uds-cli validate` and `uds-cli import`
 - Read back structure: `uds-cli inspect --table ...`
 - SQL table names are always fully qualified: `uds_{dataset_id}.table`
 - Building your own database connections around uds-cli is forbidden
@@ -241,7 +243,7 @@ App share visibility cannot be changed on an existing link: when the user asks f
 | `uds_app_deploy` | Deploy an app (two steps: get the upload URL → deploy) |
 | `uds_app_status` | App status/URL/version |
 | `uds_app_manage` | App lifecycle (online/offline/rollback/delete/delete_version) |
-| `uds_app_list` | List deployed apps. Shared apps with `accept_status='pending'` are not accepted yet (returned with `pending_apps` / `pending_hint`); they become usable only after acceptance |
+| `uds_app_list` | List deployed apps. Shared apps with `accept_status='pending'` are not accepted yet (returned with `pending_apps` / `pending_hint`); they become usable only after explicit acceptance and can also be rejected |
 | `uds_task_manager` | Task tickets (create for a task_id / insert to append records / complete to close an operation round and notify / list / get details and operation log) |
 | `uds_billing_info` | Subscription plan, monthly usage, per-dimension quotas (data updates, storage, apps — online, offline and failed apps all count; only deleting frees a slot), and available add-on packs |
 
@@ -600,7 +602,7 @@ Credentials are injected via environment variables (`os.environ['CREDENTIAL_NAME
 Precise per-person control, individually revocable:
 
 ```
-uds_share(operation="dataset_create", recipient_email="person@example.com", task_id=<task_id>) → invitation email sent → recipient opens the email link → read-only access
+uds_share(operation="dataset_create", dataset_id=<dataset_id>, recipient_email="person@example.com", task_id=<task_id>) → invitation email sent → recipient opens the email link → read-only access
 ```
 
 - `recipient_email` is required. Never create a dataset share without an email address
@@ -631,15 +633,25 @@ uds_share(operation="dataset_reject", dataset_ids=[...], user_confirmed=true, ta
   NOT notified — getting access again requires the owner to share anew
 - The recipient can equally accept by opening the invitation email; both paths land on the same state
 
-Pending shared **apps** follow the same recipient-side flow: `uds_app_list` returns them with
-`accept_status='pending'` (plus `pending_app_count` / `pending_apps` / `pending_hint`). Accept with
-`uds_share(operation="app_accept", app_ids=[...], user_confirmed=true)` — obtain the app IDs from
-`uds_app_list` `pending_apps`; results are returned per app, and the same explicit-consent rule applies.
-Apps have **no reject action**: the user either accepts or leaves the invitation pending.
+Pending shared **apps** follow the same recipient-side decision flow: `uds_app_list` returns them with
+`accept_status='pending'` (plus `pending_app_count` / `pending_apps` / `pending_hint`). Obtain the app IDs from
+`uds_app_list` `pending_apps`, show the exact apps to the user, and ask whether to accept or reject them:
+
+```
+uds_share(operation="app_accept", app_ids=[...], user_confirmed=true, task_id=<task_id>)  # accept
+uds_share(operation="app_reject", app_ids=[...], user_confirmed=true, task_id=<task_id>)  # reject
+```
+
+- **Explicit user consent is mandatory** for both actions. Logging in, registering, or opening the email link is
+  identity verification only and must never be treated as acceptance
+- Accepting is the only action that grants app access; before acceptance the app is metadata-only and cannot be opened
+- Reject is **final for the current invitation**: its dedicated email link is invalidated, it cannot be undone, and the
+  owner must share the app again if access is wanted later. The owner is not notified of the rejection
+- Results are returned per app (`succeeded` / `skipped`); one failure does not affect the others
 
 #### Fine-grained Permission Policies
 
-First create a policy via `uds_policy_manage(action="create", task_id=<task_id>)` for a `policy_id`, then attach it when sharing via `uds_share(operation="dataset_create", policy_id=..., task_id=<task_id>)`:
+First create a policy via `uds_policy_manage(action="create", task_id=<task_id>)` for a `policy_id`, then attach it when sharing via `uds_share(operation="dataset_create", dataset_id=<dataset_id>, recipient_email=..., policy_id=..., task_id=<task_id>)`:
 
 - `allowed_tables`: visible tables
 - `column_rules`: visible columns per table
@@ -651,12 +663,17 @@ Broad distribution of a deployed data app. Precondition: deploy the app first fo
 
 ```
 uds_share(operation="app_create", deploy_id=..., visibility="public"|"specified", task_id=<task_id>)
+uds_share(operation="app_update", code=..., expires_in=..., task_id=<task_id>)
 ```
 
 - `visibility="public"`: anyone with the link can access
-- `visibility="specified"`: `emails` allowlist
+- `visibility="specified"`: `emails` recipient list. Every recipient starts in `accept_status='pending'`; the email
+  link signs in or registers the matching account and opens the invitation review, but access is granted only after
+  the recipient explicitly accepts. A different signed-in email cannot accept or open the app
+- `expires_in`: on create, omitted or `0` means never expires; on update, omitted keeps the current expiry, `0` clears it, and a positive value restarts the countdown from now
+- Updating `visibility` on an existing link is not supported. If the tool rejects it, report that limitation honestly; never claim the visibility changed
 
-Visibility cannot be changed on an existing link: to change it, revoke the link and create a new one on the same `deploy_id` (see Constraint 7). The note, allowlist emails, and expiry can be updated in place via `uds_share(operation="app_update")` — `expires_in` omitted keeps the current expiry, 0 clears it, and a positive value restarts the countdown from now. None of this involves redeployment. After revoking (`operation="app_revoke"`) the app stays online, owner-only. **Under no circumstances redeploy or create an app copy to change visibility; a publish the user confirmed must never be revoked or downgraded on your own.**
+Visibility cannot be changed on an existing link: only when the user explicitly asks for a different visibility, revoke the link and create a new one on the same `deploy_id` (see Constraint 7). The note, recipient emails, and expiry can be updated in place via `uds_share(operation="app_update")`; none of this involves redeployment. After revoking (`operation="app_revoke"`) the app stays online, owner-only. **Under no circumstances redeploy or create an app copy to change visibility; a publish the user confirmed must never be revoked or downgraded on your own.**
 
 ---
 
@@ -745,7 +762,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | `uds-cli exec` reports permission denied | Table name not fully qualified. Correct: `SELECT * FROM uds_{dataset_id}.table` |
 | `uds-cli exec` reports SQL syntax errors | The backend is PostgreSQL; MySQL syntax is forbidden. Common: `SERIAL` not `AUTO_INCREMENT`; standalone `COMMENT ON COLUMN` not `AFTER ... COMMENT`; single quotes for strings, double quotes (not backticks) for identifiers; `ALTER COLUMN ... TYPE` not `MODIFY COLUMN` |
 | Sync task stuck in running | The script crashed without returning. The zombie sweep marks it failed after 70 minutes. Read the full log via `log_url` from `uds_sync_logs` |
-| Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(operation="dataset_accept", user_confirmed=true)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |
+| Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(operation="dataset_accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |
 | Data vanished during full_replace | It did not. full_replace goes through a temp table + atomic RENAME; on failure the production table is untouched |
 | Schedule configured but not auto-updating | Most common cause: `cron_enabled=false` (not enabled). Verify via `uds_dataset_get`, then enable after user confirmation |
 | Import fails with duplicate key | Upsert with duplicate keys within one batch. Deduplicate the candidate keys via `drop_duplicates` in the script before importing |

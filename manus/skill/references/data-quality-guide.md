@@ -27,6 +27,7 @@ Once Category B is determined: **immediately stop all subsequent steps for this 
 - Some numeric column ≈ Σ of other columns (same granularity) → suspected aggregate dimension column
 - Inconsistent dtype within a column (numbers mixed with text/dates mixed with strings) → parsing noise
 - Entire column fails to parse (nothing converts to the target type) → hard failure
+- Empty headers, duplicate raw headers, or headers that collide after trim/snake_case normalization → file-structure error; import is forbidden
 - Duplicate values in the primary-key column → needs user confirmation for upsert/dedup
 
 ### 2.2 Semantic signals (understanding the first N rows, not keyword lists)
@@ -52,6 +53,8 @@ Core principle: any modification to the data (cleaning, dropping, replacing, fla
 6. **Persist the rule**: if the cleaning also applies to future imports from the same source, persist it via `uds_rule_manage(action="create", rule_type="cleaning", task_id=<task_id>)` to avoid asking again
 
 Merge multiple dirty spots into one round of questions, each with concrete evidence (affected rows, sample values, share). **Never** ask about them one by one in scattered messages.
+
+Never let a map/dict silently overwrite duplicate headers, and never rename them to `v_1` / `v_2` without confirmation. Show the duplicate columns' positions and sample values, then ask the user to confirm each column's business meaning before renaming. If the meanings cannot be established, route to Category B template re-upload.
 
 ---
 
@@ -87,6 +90,8 @@ If sufficient communication still yields no consensus: report honestly per Const
 | No aggregate rows | Summary/subtotal/cumulative rows over other rows are **forbidden** |
 | Reasonable column count | Keep core columns only; split into multiple tables when there are too many |
 
+The `.xlsx` template is a user-facing source file, not a direct `uds-cli` input. After the user returns a clean template, read it with pandas/openpyxl, export UTF-8 CSV, then run `uds-cli validate/import` on that CSV.
+
 ### 4.2.1 Template Generation Skeleton (openpyxl)
 
 Generate locally (you are a local agent — write the local file directly). Sample rows are the template's core value —
@@ -118,6 +123,7 @@ wb.save("<table_name>_template.xlsx")
 
 Before creating the table (standard loop step 3), you **must** confirm:
 
+- Every header is non-empty, and the raw names plus all names after trim/snake_case/renaming are unique
 - The chosen primary key is unique (no duplicates, no nulls); if no single column qualifies, check composite-key uniqueness
 - For every time-semantic column, the profiled format matches the DDL type (DATE ≠ TIMESTAMP ≠ TIME)
 - VARCHAR length ≥ measured max length × 1.5 (headroom against `value too long`)
