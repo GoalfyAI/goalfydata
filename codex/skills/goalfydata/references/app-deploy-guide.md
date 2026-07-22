@@ -80,7 +80,14 @@ App code must read business data live from the bound dataset — on the first bu
 
 ## 3. Version Management Details
 
-The system keeps the latest 2 versions (keep-2) and supports switching between the two adjacent versions.
+The system keeps the latest 2 successfully built recovery points (keep-2). Failed builds remain visible for audit but do not evict a known-good rollback target. Older history may remain visible after its source package is cleaned.
+
+**Runtime required parameters** (the deploy call is rejected when any is missing):
+
+- New app: `dataset_ids` (array, one or more) + `app_name`; new version of an existing app: `app_id` instead
+- Step 1 (get the upload URL): `filename` + `size` (package bytes)
+- Step 2 (deploy): `package_key`
+- Both steps: non-empty `release_notes` (array of user-facing highlights) + `release_detail` (full Markdown description)
 
 **New app vs new version**:
 - Omitting `app_id` = create a brand-new app (new app_id + new URL)
@@ -88,9 +95,10 @@ The system keeps the latest 2 versions (keep-2) and supports switching between t
 - Same name + same dataset but no app_id = yet another brand-new app (does not overwrite the original)
 
 **Rollback behavior** (no direction parameter; a rollback redeploys the target historical version's source package, URL unchanged):
-- First `uds_app_list(app_id=..., task_id=<task_id>)` to list the version history; pick the target version with `is_current=false` from `versions` and take its `deploy_id`
-- `uds_app_manage(action="rollback", deploy_id=<target historical version's deploy_id>, task_id=<task_id>)` — the platform redeploys that version's source package as the current version (a rebuild taking ~1-2 minutes, not an instant switch; it returns a NEW current deploy_id — re-fetch via `uds_app_list` before further operations)
-- Never pass the CURRENT version's deploy_id to rollback (the server rejects it: redeploying the current version is no rollback)
+- First `uds_app_list(app_id=..., task_id=<task_id>)` to list the version history; pick a target only when `is_current=false` and `can_rollback=true`, then take its `deploy_id`
+- If `can_rollback=false`, report `rollback_unavailable_reason` and do not call rollback; an audit record is not necessarily a usable recovery point
+- `uds_app_manage(action="rollback", deploy_id=<target historical version's deploy_id>, task_id=<task_id>)` — the platform redeploys that confirmed source package as the current version (a rebuild taking ~1-2 minutes, not an instant switch; it returns a NEW current deploy_id — re-fetch via `uds_app_list` before further operations)
+- Never pass the CURRENT version's deploy_id or a target with `can_rollback=false` (the server rejects current or unavailable targets)
 - "Undo the rollback" = run rollback again, passing the deploy_id of the pre-rollback version
 
 **Offline and recovery**:
@@ -128,27 +136,27 @@ The complete flow from project initialization to confirming the app is online:
    cd <project-root> && tar czf /tmp/app.tar.gz --exclude=node_modules --exclude=.git --exclude=.venv --exclude=.env .
 
 7. Deploy
-   Step 1: uds_app_deploy(dataset_id=..., app_name="my-app", filename="app.tar.gz", task_id=<task_id>)
+   Step 1: uds_app_deploy(dataset_ids=[...], app_name="my-app", filename="app.tar.gz", size=<package bytes>, release_notes=["..."], release_detail="...", task_id=<task_id>)
            → returns upload_url + package_key
    Step 2: locally curl -X PUT --upload-file /tmp/app.tar.gz -H "Content-Type: application/gzip" '<upload_url>'
-   Step 3: uds_app_deploy(dataset_id=..., app_name="my-app", package_key="<key from previous step>", task_id=<task_id>)
+   Step 3: uds_app_deploy(dataset_ids=[...], app_name="my-app", package_key="<key from previous step>", release_notes=["..."], release_detail="...", task_id=<task_id>)
            → returns app_url + deploy_id + app_id
 
 8. Confirm online
    uds_app_status(deploy_id=..., task_id=<task_id>) → status="online" means the deployment succeeded
 
 9. Deploy a new version (overwrite at the same URL)
-   Pass app_id (returned by the first deployment) → uds_app_deploy(app_id=..., filename=..., task_id=<task_id>) runs the same two-step flow
-   No app_id = create a brand-new app (new URL); with app_id = update the existing app (URL unchanged, latest 2 versions kept for rollback)
+   Pass app_id (returned by the first deployment) → uds_app_deploy(app_id=..., filename=..., size=<package bytes>, release_notes=["..."], release_detail="...", task_id=<task_id>) runs the same two-step flow
+   No app_id = create a brand-new app (new URL); with app_id = update the existing app (URL unchanged, latest 2 successfully built recovery points kept for rollback)
 ```
 
 ---
 
 ## 5. Version Management Operations
 
-- `uds_app_status(deploy_id, task_id=<task_id>)` — check status, URL, version number, and whether rollback is possible
-- `uds_app_list(app_id=..., task_id=<task_id>)` — list the version history and take the deploy_id of the target version with `is_current=false`
-- `uds_app_manage(action="rollback", deploy_id=<target historical version's deploy_id>, task_id=<task_id>)` — rollback: redeploys that version's source package as the current version (passing the current version is rejected; the rollback produces a NEW current deploy_id — re-fetch it via `uds_app_list` before further operations)
+- `uds_app_status(deploy_id, task_id=<task_id>)` — check status, URL, and version number
+- `uds_app_list(app_id=..., task_id=<task_id>)` — list version history and choose only a target with `is_current=false` and `can_rollback=true`
+- `uds_app_manage(action="rollback", deploy_id=<target historical version's deploy_id>, task_id=<task_id>)` — rollback a target confirmed by the latest list response; the rollback produces a NEW current deploy_id, so re-fetch via `uds_app_list` before further operations
 - `uds_app_manage(action="offline", deploy_id, task_id=<task_id>)` — take the app offline
 - `uds_app_manage(action="online", deploy_id, task_id=<task_id>)` — bring it back online
 - `uds_app_manage(action="delete", deploy_id, task_id=<task_id>)` — delete permanently (irreversible)
