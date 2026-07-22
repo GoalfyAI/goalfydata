@@ -113,7 +113,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 
 ### 1.2 Capabilities
 
-- Create universal datasets (project-independent, usable across Agent platforms)
+- Place and evolve universal datasets — merge new data into existing assets by default, or create new ones (project-independent, usable across Agent platforms)
 - Create tables and import data (CSV/JSON directly; clean and convert Excel/API/script sources to CSV first)
 - Analyze on datasets (multi-round SQL, aggregation, trend comparison, extraction and export)
 - Define table relations and governance rules (persisting business definitions)
@@ -127,10 +127,11 @@ GoalfyData is independent of any single project or conversation — a long-lived
 
 | User state | Handling |
 |---|---|
-| Explicitly wants a dataset | Check for same-name or similar datasets first (Constraint 8); enter the build flow once the target is settled |
+| Explicitly wants a dataset | A requirement, not a placement decision: run placement (4.0) first; when a candidate owner exists, let the user choose between merging and creating (Constraint 8), then enter the confirmed flow |
 | Full spec already given (fields, source, update mode) | Skip the interview and execute |
 | Uploaded a file without stating a goal | Ask first whether to persist it as a dataset |
-| "Analyze my data" + uploaded files | Confirm data size first; for multiple files or larger volumes suggest building a dataset before analysis, and only fall back to local processing after the user explicitly declines |
+| "Analyze my data" + uploaded files | Confirm data size first; for multiple files or larger volumes run placement (4.0) — merge into the owning dataset or build a new one per the user's choice — before analysis, and only fall back to local processing after the user explicitly declines |
+| "Add this data in" / "append X to my data" | Run the placement flow (4.0): locate the owning dataset/table, then extend or import per the confirmed exit |
 | "Analyze my data" + no files | Check for existing datasets (uds_dataset_get); if any, analyze directly with uds_query |
 | "Show me my datasets" | Call uds_dataset_get to list available datasets |
 | "Share with someone" | Enter the sharing flow |
@@ -155,13 +156,14 @@ Guidance: use Direct Edit during the build phase; configure GoalfyData Managed R
 
 ### Constraint 1 — Task Ticket (task_id)
 
-Before the first operation that requires a ticket, call `uds_task_manager(action="create", task_name="task name", mode="read|write", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`; every subsequent operation in this session must carry the same id (missing task_ids are intercepted server-side). Pure catalog reads (`uds_dataset_get` / `uds-cli schemas` / `uds-cli describe`) are exempt — a session that performs only these calls needs no ticket.
+Before the first operation that requires a ticket, call `uds_task_manager(action="create", task_name="task name", mode="read|write", language="<user conversation language>", skill_version="<version string from the description>")` to create a task ticket and obtain a `task_id`; every subsequent operation in this session must carry the same id (missing task_ids are intercepted server-side). Pure catalog reads (`uds_dataset_get` / `uds-cli schemas` / `uds-cli describe`) are exempt — a session that performs only these calls needs no ticket.
 
 - **MCP tools**: `task_id` required on every call (`uds_task_manager` and `uds_dataset_get` are exempt — ticket management and catalog reads need no ticket)
 - **uds-cli commands**: add `--task-id <task_id>` to every data-plane command (the same id as MCP), attributing SQL/imports to the current task. Exception: `uds-cli schemas` and `uds-cli describe` are catalog/metadata reads (same as `uds_dataset_get`) and need no task_id
 - **Ticket mode**: read-only queries, listings, details, and analysis use `mode="read"`; any write operation — table creation, imports, rules, permissions, sharing, GoalfyData Managed Refresh, app deployment — uses `mode="write"`
 - **Write target confirmation**: before creating a `mode="write"` ticket that will create or modify datasets, use the ticket-exempt catalog reads to resolve every existing dataset's exact `dataset_id` and `dataset_name`, show the user those identities and the planned changes, and obtain explicit consent. Then create the ticket with `target_datasets=[{"dataset_id":"...","dataset_name":"..."}]` and the strict JSON boolean `user_confirmed=true`. For a proposed dataset that does not exist yet, include its exact proposed `dataset_name` and omit `dataset_id`. If the write does not target a dataset, omit `target_datasets` or pass an empty list. Never infer consent from the original request or pass the string `"true"`
 - **Skill version**: with `mode="write"` you must pass the version string from `[skill-version:...]` at the end of this file's description verbatim as `skill_version`; never guess the version or rewrite the format
+- **Language**: `language` is required on create — pass the user's conversation language as a bare BCP 47 primary language subtag (2-8 letters, e.g. en, zh, yue); never include region or script (en-US / zh-Hant are rejected)
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
 - **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets. The completion response may include a notice of shared datasets/apps still pending acceptance — relay it to the user
@@ -212,9 +214,11 @@ A share or publish the user explicitly requested and that has completed is the f
 
 App share visibility cannot be changed on an existing link: when the user asks for a different visibility, revoke the old link and create a new one via `uds_share` on the same `deploy_id`. After revoking, the app is naturally owner-only and stays online. Under no circumstances redeploy or create a new app to change visibility.
 
-### Constraint 8 — Dataset Target Confirmation
+### Constraint 8 — Data Placement and Target Confirmation
 
-- **Check for duplicates before creating**: before proposing a new dataset, list the account's datasets via the ticket-exempt catalog reads (`uds_dataset_get` / `uds-cli schemas`). If any existing dataset has the same name, a shared business-domain prefix, or a clearly overlapping description, do not decide unilaterally: present the candidates (name, dataset_id, description, table count) and let the user choose between operating on an existing dataset and creating a new one. Create directly only when no similar dataset exists.
+- **Placement before creation**: any operation that introduces new data or new structure starts from the placement flow (4.0) — locate existing owners via the ticket-exempt catalog reads and treat merging into an existing table/dataset as the default; a new dataset is proposed only when no existing asset can own the data, or when the user explicitly chooses it.
+- **Placement confirmation**: every placement exit (add columns / add a table / create a dataset) is shown to the user with the planned changes and executed only after explicit consent; no exit is exempt from confirmation.
+- **Duplicate check** (a sub-case of placement): when a proposed new dataset's name, business-domain prefix, or description overlaps an existing one, present the candidates and let the user choose between reusing and creating. Create directly only when no similar dataset exists.
 - **Resolve name ambiguity explicitly**: when the dataset name provided by the user matches multiple candidates, list them and let the user choose; selecting the closest match unilaterally is forbidden. The chosen identities are exactly what `target_datasets` declares on the write ticket (Constraint 1).
 - Consent is given once at write-ticket creation via `target_datasets` / `user_confirmed`; operations within the ticket's declared targets require no repeated confirmation.
 
@@ -270,7 +274,7 @@ App share visibility cannot be changed on an existing link: when the user asks f
 ### 3.3 Core Call Chain
 
 ```
-uds_task_manager(action="create", task_name="task name", mode="read|write", target_datasets=[...], user_confirmed=true, skill_version="<version string from the description>") → task_id (target_datasets/user_confirmed are required only for writes that target datasets; task_id is carried by every later call)
+uds_task_manager(action="create", task_name="task name", mode="read|write", language="<user conversation language>", target_datasets=[...], user_confirmed=true, skill_version="<version string from the description>") → task_id (target_datasets/user_confirmed are required only for writes that target datasets; task_id is carried by every later call)
   │
   ▼
 uds_dataset_manage(create, task_id) → dataset_id
@@ -303,13 +307,42 @@ Optional · develop a data app:
 
 ## 4. Execution Flows
 
+### 4.0 Data Placement — Where New Data Lands
+
+Datasets are long-lived, evolving data assets, not one-off deliverables. When new data or a new requirement arrives, first determine its placement: merging into an existing asset is the default; creating a new dataset is an exit branch taken only when no existing asset can own the data. Creating without a placement decision is forbidden.
+
+Every write that introduces new data or new structure runs the placement flow first:
+
+**Step 1 — Locate candidate owners** (ticket-exempt catalog reads, no task_id needed): list the account's datasets via `uds_dataset_get` (or `uds-cli schemas`), and read a candidate's business semantics via `uds-cli describe` when needed. Match by business meaning, not name similarity alone: does the new data describe an entity that already lives in some table (same granularity, joins on its existing key); or does it belong to a business domain an existing dataset already covers?
+
+**Step 2 — Determine the placement exit**:
+
+| The new data is | Placement | Flow |
+|---|---|---|
+| New attributes of an entity already in a table (same granularity, joins on the existing key) | Add columns to that table | 4.2.3 |
+| A new entity inside a domain an existing dataset covers | Add a new table to that dataset | 4.2.4 |
+| Data no existing dataset's domain covers | Create a new dataset | 4.1 |
+
+**Step 3 — Confirm the placement with the user** (Constraint 8). Every exit requires confirmation before execution; no exit is exempt:
+
+- When candidate owners exist: present them (name, `dataset_id`, description, the matching tables) with the recommended exit and the reasoning; the user chooses between merging and creating.
+- When no candidate exists: state that no owning asset was found, present the proposed dataset name and planned table structure, and proceed only after explicit consent.
+- The confirmed placement goes into the write ticket's `target_datasets`: the add-columns / add-table exits pass the existing dataset's exact `dataset_id` + `dataset_name`; the new-dataset exit passes the proposed `dataset_name` only. Pass `user_confirmed=true` only after the user has seen the target and the planned changes and explicitly agreed.
+
+Additional rules:
+
+- A user request phrased as "create a dataset for X" is a requirement, not a placement decision: still run Step 1; when a candidate owner exists, present it and let the user choose between merging and creating.
+- Never split one business domain across multiple datasets: fragmentation breaks cross-table analysis, relation registration, and the scope of sharing.
+
 ### 4.1 Creating a Dataset (from files/data sources)
+
+Entry condition: the placement flow (4.0) concluded with no existing owner, and the user confirmed creating a new dataset.
 
 #### Phase 1 — Requirements
 
 **Step 1.0 — Confirm the target and create the task ticket**
 
-Check for duplicates first per Constraint 8: list existing datasets via the ticket-exempt catalog reads; when same-name or similar candidates exist, have the user choose between reusing an existing dataset and creating a new one. Then show the user the proposed dataset name and the planned build/import changes. After the user explicitly agrees, call `uds_task_manager(action="create", task_name="task name", mode="write", target_datasets=[{"dataset_name":"<exact proposed name>"}], user_confirmed=true, skill_version="<version string from the description>")` → `task_id`, carried by every MCP call and uds-cli command in this session (Constraint 1). The dataset does not exist yet, so do not invent a `dataset_id`.
+Placement (4.0) has already concluded here with the user confirming a new dataset. Show the user the proposed dataset name and the planned build/import changes. After the user explicitly agrees, call `uds_task_manager(action="create", task_name="task name", mode="write", language="<user conversation language>", target_datasets=[{"dataset_name":"<exact proposed name>"}], user_confirmed=true, skill_version="<version string from the description>")` → `task_id`, carried by every MCP call and uds-cli command in this session (Constraint 1). The dataset does not exist yet, so do not invent a `dataset_id`.
 
 **Step 1.1 — Initialization**
 
@@ -444,9 +477,9 @@ Dataset build results:
 
 ---
 
-### 4.2 Updating an Existing Dataset's Data
+### 4.2 Evolving an Existing Dataset
 
-Data updates come in two modes (see 1.4). Before mutating an existing dataset, resolve and confirm the target per Constraint 8, and declare it in the write ticket's `target_datasets` (Constraint 1).
+An existing dataset evolves along two dimensions: its data is updated (4.2.1 / 4.2.2, two modes per 1.4), and its structure is extended when the placement flow (4.0) routes new data into it (4.2.3 new columns, 4.2.4 new tables). Before mutating an existing dataset, resolve and confirm the target per Constraint 8, and declare it in the write ticket's `target_datasets` (Constraint 1).
 
 - **Agent Direct Edit** (4.2.1): the agent edits the dataset directly via uds-cli. No GoalfyData sandbox managed refresh is started; no data-update credits consumed
 - **GoalfyData Managed Refresh** (4.2.2): GoalfyData starts a sandbox and runs the table's registered update script for one dataset refresh. Each run consumes one data-update credit
@@ -461,27 +494,6 @@ No GoalfyData sandbox managed refresh, no data-update credits — for in-session
    (small fixes go straight through uds-cli --task-id <task_id> exec --mode writer "UPDATE/DELETE ...")
 3. Verify:    uds-cli --task-id <task_id> exec — rows/nulls/duplicates; confirm the result with the user
 ```
-
-**Changing table structure:**
-
-After changing an existing table's structure (adding columns, changing types, adding indexes, renaming), the related metadata must be synced — otherwise sync tasks, the usage guide, and permission policies drift from the real structure.
-
-Before: `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` to view the current structure and confirm the plan with the user.
-
-Apply: `uds-cli --task-id <task_id> exec --mode writer "ALTER TABLE ..."`.
-
-Follow-up sync:
-
-| Change | Sync action |
-|------|------|
-| target_columns changed | `uds_table_manage(update, target_columns=[...], task_id=<task_id>)` — read back via `uds-cli inspect`, never invent |
-| Table list or field meanings changed | `uds_dataset_manage(update, tool_usage_guide=..., task_id=<task_id>)` |
-| New relation field | `uds_relations_set(action="create", task_id=<task_id>)` incrementally, or replace wholesale |
-| New calculation definition | `uds_rule_manage(action="create", task_id=<task_id>)` |
-| Script logic affected | Modify the script → `uds-cli upload --type script` re-upload → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
-| Columns dropped/renamed on a table with policies | `uds_policy_manage(action="update", task_id=<task_id>)` to update the columns referenced in row_filters/column_rules, or the policy View breaks |
-
----
 
 #### 4.2.2 GoalfyData Managed Refresh
 
@@ -531,6 +543,37 @@ Fix the problem (script or data file)
 ```
 
 ---
+
+#### 4.2.3 Extending a Table (placement exit: new attributes of an existing entity)
+
+Entry: the placement flow (4.0) routed the new data here — it describes new attributes of an entity already stored in this table (same granularity, joins on the existing key).
+
+Before: `uds-cli --task-id <task_id> inspect --table uds_{dataset_id}.name` to view the current structure, then confirm the column plan (names, types, backfill) with the user per Constraint 8.
+
+Apply: `uds-cli --task-id <task_id> exec --mode writer "ALTER TABLE ... ADD COLUMN ..."`. Backfill existing rows in the same round when the source provides values (`uds-cli import --mode upsert` on the existing key, or `exec UPDATE`); otherwise state explicitly that historical rows stay NULL and confirm that is acceptable.
+
+The same follow-up applies to every structure change (adding columns, changing types, adding indexes, renaming) — sync the related metadata, otherwise sync tasks, the usage guide, and permission policies drift from the real structure:
+
+| Change | Sync action |
+|------|------|
+| target_columns changed | `uds_table_manage(update, target_columns=[...], task_id=<task_id>)` — read back via `uds-cli inspect`, never invent |
+| Table list or field meanings changed | `uds_dataset_manage(update, tool_usage_guide=..., task_id=<task_id>)` |
+| New relation field | `uds_relations_set(action="create", task_id=<task_id>)` incrementally, or replace wholesale |
+| New calculation definition | `uds_rule_manage(action="create", task_id=<task_id>)` |
+| Script logic affected | Modify the script → `uds-cli upload --type script` re-upload → `uds_table_manage(update, script_file=..., task_id=<task_id>)` |
+| Columns dropped/renamed on a table with policies | `uds_policy_manage(action="update", task_id=<task_id>)` to update the columns referenced in row_filters/column_rules, or the policy View breaks |
+
+#### 4.2.4 Adding Tables to an Existing Dataset (placement exit: new entity in a covered domain)
+
+Entry: the placement flow (4.0) routed the new data here — it is a new entity inside a business domain this dataset already covers.
+
+Work inside the existing dataset; do not create a new one. The steps mirror 4.1 Phase 2 at table scope, under a write ticket whose `target_datasets` declares this dataset:
+
+1. Create the table: `uds-cli --task-id <task_id> exec --mode writer "CREATE TABLE uds_{dataset_id}.new_table ..."` (Constraint 2; PG syntax, no foreign keys)
+2. Import and verify per 4.2.1
+3. Register metadata immediately per Constraint 5: `uds_table_manage(action="create", dataset_id=..., table_name=..., task_id=<task_id>)`
+4. Register logical relations to existing tables via `uds_relations_set`, and persist any new governance rules via `uds_rule_manage`
+5. Update the dataset's `tool_usage_guide` when the table list changes: `uds_dataset_manage(update, tool_usage_guide=..., task_id=<task_id>)`
 
 ### 4.3 Configuring GoalfyData Managed Refresh
 
@@ -721,25 +764,25 @@ When the user says "redeploy after changes" or "show me the result", that is the
    cd <project-root> && tar czf /tmp/app.tar.gz --exclude=node_modules --exclude=.git --exclude=.venv --exclude=.env .
 
 7. Deploy
-   Step 1: uds_app_deploy(dataset_id=..., app_name="my-app", filename="app.tar.gz", task_id=<task_id>)
+   Step 1: uds_app_deploy(dataset_ids=[...], app_name="my-app", filename="app.tar.gz", size=<package bytes>, release_notes=["..."], release_detail="...", task_id=<task_id>)
            → returns upload_url + package_key
    Step 2: locally curl -X PUT --upload-file /tmp/app.tar.gz -H "Content-Type: application/gzip" '<upload_url>'
-   Step 3: uds_app_deploy(dataset_id=..., app_name="my-app", package_key="<key from previous step>", task_id=<task_id>)
+   Step 3: uds_app_deploy(dataset_ids=[...], app_name="my-app", package_key="<key from previous step>", release_notes=["..."], release_detail="...", task_id=<task_id>)
            → returns app_url + deploy_id + app_id
 
 8. Confirm online
    uds_app_status(deploy_id=..., task_id=<task_id>) → status="online" means success
 
 9. New version (overwrite at the same URL)
-   Pass app_id (from the first deployment) → uds_app_deploy(app_id=..., filename=..., task_id=<task_id>) runs the same two-step flow
-   No app_id = brand-new app (new URL); with app_id = update the existing app (URL unchanged; latest 2 versions kept for rollback)
+   Pass app_id (from the first deployment) → uds_app_deploy(app_id=..., filename=..., size=<package bytes>, release_notes=["..."], release_detail="...", task_id=<task_id>) runs the same two-step flow
+   No app_id = brand-new app (new URL); with app_id = update the existing app (URL unchanged; latest 2 successfully built recovery points kept for rollback)
 ```
 
 #### Version Management
 
-- `uds_app_status(deploy_id, task_id=<task_id>)` — status, URL, version, rollback availability
-- `uds_app_list(app_id=..., task_id=<task_id>)` — list the version history and take the deploy_id of the target version with `is_current=false`
-- `uds_app_manage(action="rollback", deploy_id=<target historical version's deploy_id>, task_id=<task_id>)` — rollback: redeploys that version's source package as the current version (passing the current version is rejected; the rollback produces a NEW current deploy_id — re-fetch it via `uds_app_list` before further operations)
+- `uds_app_status(deploy_id, task_id=<task_id>)` — status, URL, and version
+- `uds_app_list(app_id=..., task_id=<task_id>)` — list version history; choose a target only when `is_current=false` and `can_rollback=true`. If false, report `rollback_unavailable_reason` and do not attempt rollback
+- `uds_app_manage(action="rollback", deploy_id=<target historical version's deploy_id>, task_id=<task_id>)` — rollback only a target confirmed by the latest list response; redeploys its source package as the current version (the rollback produces a NEW current deploy_id — re-fetch it via `uds_app_list` before further operations)
 - `uds_app_manage(action="offline", deploy_id, task_id=<task_id>)` — take the app offline
 - `uds_app_manage(action="online", deploy_id, task_id=<task_id>)` — bring it back online
 - `uds_app_manage(action="delete", deploy_id, task_id=<task_id>)` — delete permanently (irreversible)
