@@ -1,8 +1,8 @@
 {
-  "version": "v20260721-c2eef3",
-  "notes": "Pending shared apps can now be accepted or rejected explicitly (both need your confirmation; email-link login alone never accepts); imports take CSV/JSON directly - Excel sources are cleaned and converted to CSV first; app link expiry can be updated on existing links",
-  "update_reason": "Pending shared apps can now be accepted or rejected explicitly (both need your confirmation; email-link login alone never accepts); imports take CSV/JSON directly - Excel sources are cleaned and converted to CSV first; app link expiry can be updated on existing links",
-  "updated_at": "2026-07-21T10:57:18.711928+00:00",
+  "version": "v20260722-ca56e3",
+  "notes": "New data now merges into your existing datasets by default - the agent locates the owning dataset or table, confirms with you, and only creates a new dataset when nothing can own the data; app version rollback targets are validated for real availability before rollback; deploy and task-ticket examples now match runtime requirements exactly",
+  "update_reason": "New data now merges into your existing datasets by default - the agent locates the owning dataset or table, confirms with you, and only creates a new dataset when nothing can own the data; app version rollback targets are validated for real availability before rollback; deploy and task-ticket examples now match runtime requirements exactly",
+  "updated_at": "2026-07-22T11:22:18.281665+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "3007056698cd7bd1e24895966f76a902cf7bb6e6531ff8ccb2a8a75803a256e7",
-    "codex/skills/goalfydata/SKILL.md": "3007056698cd7bd1e24895966f76a902cf7bb6e6531ff8ccb2a8a75803a256e7",
-    "manus/skill/SKILL.md": "3007056698cd7bd1e24895966f76a902cf7bb6e6531ff8ccb2a8a75803a256e7",
-    "generic/SKILL.md": "3007056698cd7bd1e24895966f76a902cf7bb6e6531ff8ccb2a8a75803a256e7"
+    "claude-code/skills/goalfydata/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9",
+    "codex/skills/goalfydata/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9",
+    "manus/skill/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9",
+    "generic/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9"
   }
 }

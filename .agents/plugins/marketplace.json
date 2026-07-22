@@ -9,7 +9,7 @@
     {
       "name": "goalfydata",
       "description": "Build, query, and share datasets and deploy public dashboards from Codex via MCP — with managed refresh, fine-grained permissions, and one-link sharing, so results outlive the conversation.",
-      "version": "1.0.9",
+      "version": "1.0.10",
       "author": {
         "name": "GoalfyAI"
       },
