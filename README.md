@@ -7,12 +7,12 @@
 </p>
 
 <p align="center">
- <strong>Agent-generated data should not disappear after one task.</strong>
+  <strong>A shared place for AI agents to build, update, analyze, and reuse business data.</strong>
 </p>
 
 <p align="center">
-  GoalfyData turns agent outputs into structured, governed, and continuously reusable data assets<br>
-for AI agents and teams.
+  Turn spreadsheets, APIs, databases, and agent outputs into reusable datasets and data apps<br>
+  that preserve business context and stay up to date.
 </p>
 
 <p align="center">
@@ -25,188 +25,156 @@ for AI agents and teams.
 <p align="center">
   <a href="https://goalfydata.ai"><strong>Website</strong></a>
   ·
-  <a href="#overview">Overview</a>
+  <a href="https://goalfydata.ai/integrations"><strong>Get Started</strong></a>
   ·
-  <a href="#problem">Problem</a>
-  ·
-  <a href="#quickstart">Quickstart</a>
+  <a href="#documentation"><strong>Documentation</strong></a>
 </p>
 
-<br>
-
 ---
 
-<a id="overview"></a>
+## Understand GoalfyData in 30 Seconds
 
-## 🔗 One-Line Understanding
+Codex, Claude Code, Manus, and other connected agents can create datasets, write update scripts, analyze results, and build data apps. GoalfyData keeps the resulting data together with its field definitions, metric definitions, table relationships, permissions, and governance rules.
 
-AI agents can quickly generate datasets, scripts, reports, and dashboards.
+The result is a durable data asset that can be reused across conversations, agents, devices, and teams. Import data, run SQL analysis, schedule updates, share with controlled access, and deploy data apps from the same dataset. When the dataset updates, connected apps continue to read the latest data.
 
-But agent-generated data often stays trapped in one conversation, one local file, or one agent workspace.
+## Quick Start
 
-**GoalfyData turns those outputs into durable data assets that can be reused across conversations, agents and teams.**
+The fastest path is to open the integration page for your platform, copy its setup instructions, and give them to your agent. Create your API Key in [GoalfyData Settings](https://goalfydata.ai/settings); keys use the `gfk_` prefix and are shown only once.
 
-> [!TIP]
-> Agents create the first version. GoalfyData keeps it running, governed, shared, and reusable.
+| Platform | Fastest setup | Detailed guide | Status |
+|---|---|---|---|
+| **Codex** | [Open the Codex integration](https://goalfydata.ai/integrations/codex) and send the setup text to Codex | [Codex Quick Start](./docs/codex-quickstart.md) | Available |
+| **Claude Code** | [Open the Claude Code integration](https://goalfydata.ai/integrations/claude-code) and send the setup text to Claude Code | [Claude Code Quick Start](./docs/claude-code-quickstart.md) | Available |
+| **Manus** | [Open the Manus integration](https://goalfydata.ai/integrations/manus), then add the MCP connector and upload the Skill in Manus | [Manus Quick Start](./docs/manus-quickstart.md) | Available |
+| **Other Agents / Generic MCP** | Connect the remote MCP and load the generic Skill | [Generic Integration Guide](./generic/README.md) | Available for compatible MCP/CLI agents |
 
-## ❓ What Problem Does GoalfyData Solve?
+> Manus setup currently requires manual steps in its web interface; it cannot be completed by pasting an install runbook into a Manus conversation.
 
-AI agents are already good at generating a first version, but many outputs still remain one-off results:
+### Minimal manual CLI setup
 
-| Common Output       | Real-world Problem                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Scripts**         | They only run locally and become hard to maintain when people or environments change                               |
-| **CSV / Excel**     | They need to be repeatedly uploaded to different AI tools, while field meanings and business rules are easily lost |
-| **Datasets**        | They lack a unified update mechanism, version management, and access control                                       |
-| **Dashboards**      | They quickly become stale when source data changes and often require manual refresh or regeneration                |
-| **Client Reports**  | What gets delivered is often a static file, not a continuously updated data asset                                  |
-| **Agent Workflows** | Different agents struggle to reuse the same governed data context                                                  |
+For macOS or Linux developers who prefer manual setup:
 
----
+```bash
+curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
+uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
+```
 
-## 🚫 What GoalfyData Is Not
+Then follow the platform guide above to install the Skill/plugin and connect MCP. The detailed guides cover Windows, updates, key rotation, and troubleshooting. A successful connection exposes 20 GoalfyData MCP tools, including `uds_query` and `uds_dataset_manage`.
 
-GoalfyData is not a generic data platform, nor is it simply a BI tool.
-It is closer to **a runtime and governance layer for data assets generated by AI agents**.
+## Try These First
 
-| Not This                                               | What GoalfyData Focuses On                                                                 |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Not a regular file storage tool                        | Making data assets callable, understandable, and reusable by agents                        |
-| Not a traditional database                             | Adding field meanings, business rules, and usage guidance that agents need                 |
-| Not just a dashboard tool                              | Keeping the data behind dashboards continuously updated and governed                       |
-| Not a one-off file upload tool                         | Moving datasets into a lifecycle of creation, updates, versioning, sharing, and retirement |
-| Not a replacement for Claude / Codex / Manus / ChatGPT | Providing a unified, callable data layer for different agents                              |
+After connecting, attach the relevant file or provide the source details, then copy one of these requests to your agent:
 
-> [!IMPORTANT]
-> GoalfyData is not about “storing files.” It is about making agent-generated data assets continuously runnable, governed, and reusable.
+```text
+Turn this Excel file into a reusable dataset. Preserve the field meanings, metric definitions, and table relationships.
+```
 
----
+```text
+Analyze the orders data and report monthly sales, order count, and refund rate.
+```
 
-## ⚙️ How GoalfyData Works
+```text
+Update this dataset from the API every day. Notify me if a managed refresh fails.
+```
 
-GoalfyData organizes the lifecycle of agent-generated data assets around **Build → Run → Share**.
+```text
+Build a sales dashboard from this dataset and deploy it as a shareable data app.
+```
 
-| Stage     | Description                                                                                                                                                        | Result                                 |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| **Build** | Agents create datasets, scripts, and dashboards from files, APIs, databases, or spreadsheets, while adding field definitions, table relationships, and usage rules | Creates understandable data assets     |
-| **Run**   | GoalfyData handles scheduled refresh, task execution, sandboxed runtime, version management, logs, and failure notifications                                       | Keeps data assets continuously running |
-| **Share** | Teams can securely share data assets with members, clients, collaborators, or other agents, with permission control                                                | Enables safe reuse of data assets      |
+```text
+Share this dataset with xxx@example.com and give them view-only access to the approved data.
+```
 
----
+## From Request to Reusable Result
 
-<a id="preview"></a>
+**You ask:**
 
-## 🖼️ Product Preview
+> Merge Shopify orders and ad reports, update them daily, and analyze GMV, refund rate, and ROAS.
 
-Learn more about GoalfyData at [goalfydata.ai](https://goalfydata.ai).
+**Your agent and GoalfyData:**
 
-> [!NOTE]
-> Demo video coming soon.
-> The video will show how GoalfyData turns datasets, scripts, and dashboards generated by agents into continuously updated, governed, and shareable data assets.
+1. Create or reuse a dataset.
+2. Import, clean, and relate the source data.
+3. Save field meanings and metric definitions.
+4. Configure a Managed Refresh for daily updates.
+5. Create an analysis or dashboard backed by the dataset.
+6. Share the result using controlled access.
 
-<!--
-<p align="center">
-  <a href="https://your-demo-video-link.com">
-    <img src="./assets/video-cover.png" alt="Watch GoalfyData Demo" width="100%">
-  </a>
-</p>
--->
+**You get:** one continuously updated data asset that preserves its business definitions and remains reusable across conversations and connected agents.
 
-## 🔐 Sharing and Access Control
+## Core Capabilities
 
-GoalfyData helps teams safely share data assets with teammates, clients, collaborators, and authorized agents.
-
-Instead of copying files, sending spreadsheets, or manually limiting fields, you can describe who should access what:
-
-> Share all tables except financial details with xxx@company.com.
-
-GoalfyData turns that intent into data boundaries and access rules, so the right data is available to the right people and agents.
-
-Typical sharing patterns include:
-
-* Share datasets with teammates for collaborative analysis
-* Share continuously updated results with clients
-* Authorize another agent to use a dataset as business context
-* Control access by role, table, field, or rule
-
----
-
-## 🧩 Core Capabilities
-
-| Capability             | Description                                                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Agent Integration**  | Connect Claude Code, Codex, Manus, ChatGPT, and other agents through MCP, CLI, API, or Actions           |
-| **Dataset Hosting**    | Host datasets generated or organized by agents, so they are no longer just local files or one-off spreadsheets   |
-| **Governed Context**   | Manage field meanings, metric definitions, table relationships, business rules, and usage constraints            |
-| **Continuous Updates** | Support scheduled refresh, data synchronization, script execution, version management, and failure notifications |
-| **Secure Sharing**     | Enable permission-based access for teams, clients, and other agents, reducing repeated file transfers            |
-| **Result Outputs**     | Use datasets for reports, analysis, dashboards, and automated workflows                                          |
-
-> GoalfyData does not replace agents. It provides a reusable, governed, continuously updated data asset layer for different agents.
-
----
-
-<a id="quickstart"></a>
-
-## 🚀 Quickstart
-
-| Platform            | Guide                                                      | Agent-assisted Install                    |
-| ------------------- | ---------------------------------------------------------- | ----------------------------------------- |
-| **Claude Code**     | [Claude Code Quickstart](./docs/claude-code-quickstart.md) | [AGENTS.md](./claude-code/AGENTS.md)      |
-| **Codex**           | [Codex Quickstart](./docs/codex-quickstart.md)             | [AGENTS.md](./codex/AGENTS.md) · [Windows](./codex/AGENTS.windows.md) |
-| **Manus**           | [Manus Quickstart](./docs/manus-quickstart.md)             | —                                         |
-| **Other Platforms** | [Generic Setup](./generic/README.md)                       | —                                         |
-
----
-
-## 🤖 Supported AI Agents
-
-| Agent / Platform          | Integration Method | Status    |
-| ------------------------- | ------------------ | --------- |
-| **Claude Code**           | MCP / Plugin       | Available |
-| **Codex**                 | CLI / Plugin       | Available |
-| **Manus**                 | API                | Available |
-| **ChatGPT / Custom GPTs** | Actions            | Planned   |
-| **Generic Agents**        | REST API / CLI     | Available |
-
----
-
-## 📖 Documentation
-
-| Document                                                   | Description                                                     |
-| ---------------------------------------------------------- | --------------------------------------------------------------- |
-| [Claude Code Quickstart](./docs/claude-code-quickstart.md) | Install and use the Claude Code plugin                          |
-| [Codex Quickstart](./docs/codex-quickstart.md)             | Install and use the Codex plugin                                |
-| [Manus Quickstart](./docs/manus-quickstart.md)             | Set up and use Manus                                            |
-| [Core Concepts](./docs/concepts.md)                        | Understand Dataset, Governance Rules, Skills, and Relationships |
-| [Agent Install Runbook (Claude Code)](./claude-code/AGENTS.md) | Send it to your agent for fully automated install & update      |
-| [Agent Install Runbook (Codex)](./codex/AGENTS.md)         | Send it to your agent for fully automated install & update      |
-| [Agent Install Runbook (Codex on Windows)](./codex/AGENTS.windows.md) | Windows variant: PowerShell commands plus Windows-specific fixes |
-| [FAQ](./FAQ.md)                                               | Common questions about GoalfyData                               |
-
----
-
-<a id="community"></a>
-
-## 🤝 Community and Feedback
-
-We welcome feedback on GoalfyData usage issues, integration needs, and real-world scenarios.
-
-| Entry | What to Submit |
+| Capability | What it enables |
 |---|---|
-| [Report a Bug](https://github.com/GoalfyAI/goalfydata/issues/new?template=bug_report.md) | Confirmed bugs, installation failures, agent integration issues, data update failures, permission issues, and regressions. |
-| [Ask a Question](https://github.com/GoalfyAI/goalfydata/discussions/categories/q-a) | Setup, installation, usage, and troubleshooting questions. |
-| [Suggest an Idea](https://github.com/GoalfyAI/goalfydata/discussions/categories/ideas) | New integrations, dataset capabilities, governance rules, sharing permissions, dashboard ideas, and workflow improvements. |
-| [Share a Use Case](https://github.com/GoalfyAI/goalfydata/discussions/categories/show-and-tell) | Business data scenarios, agent workflows, team collaboration scenarios, and demos. |
+| **Data import and hosting** | Turn spreadsheets, CSV files, APIs, databases, and agent outputs into hosted datasets |
+| **Business context** | Preserve field meanings, metric definitions, table relationships, processing rules, and usage guidance |
+| **SQL and agent analysis** | Query and analyze governed datasets through the CLI and MCP tools |
+| **Managed Refresh** | Run scheduled update scripts in an isolated environment, with logs and failure status |
+| **Controlled sharing** | Share datasets and results with teammates, clients, and authorized agents using permissions |
+| **Data App Deployment** | Deploy dashboards and lightweight apps that continue to read the latest dataset data |
 
-⭐ If GoalfyData helps you turn AI agent outputs into continuously updated data assets, please consider supporting us.
+## How It Works
 
----
+GoalfyData organizes the lifecycle around **Build → Run → Share**.
 
-## ⚖️ License
+| Stage | What happens | Result |
+|---|---|---|
+| **Build** | Agents create datasets, update scripts, analyses, and apps from files, APIs, databases, or spreadsheets | An understandable data asset with business context |
+| **Run** | GoalfyData hosts datasets and runs scheduled updates with version and status information | Data stays available and up to date |
+| **Share** | Teams grant controlled access to datasets and apps | People and agents reuse the same governed result |
 
-The client tools, examples, and documentation in this repository are licensed under the [Apache-2.0 License](./LICENSE).
+## Supported Platforms
+
+| Agent / platform | Integration | Status |
+|---|---|---|
+| **Codex** | Plugin, MCP, and CLI | Available |
+| **Claude Code** | Plugin, MCP, and CLI | Available |
+| **Manus** | Remote MCP connector and uploaded Skill | Available |
+| **Other compatible agents** | Remote MCP, generic Skill, and CLI | Available; setup varies by platform |
+
+## What This Repository Contains
+
+This repository provides the client-side materials needed to connect agents to GoalfyData:
+
+- Codex and Claude Code plugins, Skills, MCP configuration, and agent-executable install runbooks
+- Manus and generic-agent Skill packages
+- Platform quick-start guides, examples, update instructions, and troubleshooting documentation
+- Community, contribution, security, and license files
+
+GoalfyData datasets, Managed Refresh, permission sharing, and Data App Deployment are provided by the hosted GoalfyData service. Cloning this repository installs none of those server-side services and is **not** a self-hosted GoalfyData deployment.
+
+## What GoalfyData Is Not
+
+GoalfyData does not replace your AI agent, operational database, spreadsheet, or BI tool. It provides the reusable data asset layer that lets connected agents preserve business context, keep data updated, and share results safely.
+
+<a id="documentation"></a>
+
+## Documentation
+
+| Resource | Use it for |
+|---|---|
+| [Codex Quick Start](./docs/codex-quickstart.md) | Codex installation, verification, updates, and troubleshooting |
+| [Claude Code Quick Start](./docs/claude-code-quickstart.md) | Claude Code installation, verification, updates, and troubleshooting |
+| [Manus Quick Start](./docs/manus-quickstart.md) | Manus MCP and Skill setup |
+| [Generic Integration Guide](./generic/README.md) | Other MCP/CLI-compatible agents |
+| [Core Concepts](./docs/concepts.md) | Datasets, governance rules, Skills, and relationships |
+| [FAQ](./FAQ.md) · [Website FAQ](https://goalfydata.ai/faq) | Product and plan questions |
+
+## Community and Security
+
+| Entry | What to submit |
+|---|---|
+| [Report a Bug](https://github.com/GoalfyAI/goalfydata/issues/new?template=bug_report.md) | Confirmed bugs, installation failures, integration issues, or regressions |
+| [Ask a Question](https://github.com/GoalfyAI/goalfydata/discussions/categories/q-a) | Setup, usage, and troubleshooting questions |
+| [Suggest an Idea](https://github.com/GoalfyAI/goalfydata/discussions/categories/ideas) | New integrations and product ideas |
+| [Share a Use Case](https://github.com/GoalfyAI/goalfydata/discussions/categories/show-and-tell) | Agent workflows, business scenarios, and demos |
+| [Security Policy](./SECURITY.md) | How to report a vulnerability privately |
+
+## License and Service Terms
+
+The client tools, plugins, Skills, examples, and documentation in this repository are licensed under the [Apache-2.0 License](./LICENSE).
+
+GoalfyData's hosted datasets, Managed Refresh, sharing, and Data App Deployment are provided under the separate [GoalfyData Terms of Service](https://goalfydata.ai/terms).
 
 © GoalfyData Team
-
-The hosted GoalfyData service is provided under separate terms.
