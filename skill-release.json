@@ -1,8 +1,8 @@
 {
-  "version": "v20260722-ca56e3",
-  "notes": "New data now merges into your existing datasets by default - the agent locates the owning dataset or table, confirms with you, and only creates a new dataset when nothing can own the data; app version rollback targets are validated for real availability before rollback; deploy and task-ticket examples now match runtime requirements exactly",
-  "update_reason": "New data now merges into your existing datasets by default - the agent locates the owning dataset or table, confirms with you, and only creates a new dataset when nothing can own the data; app version rollback targets are validated for real availability before rollback; deploy and task-ticket examples now match runtime requirements exactly",
-  "updated_at": "2026-07-22T11:22:18.281665+00:00",
+  "version": "v20260725-6a3bcc",
+  "notes": "Datasets can now also be shared through an explicit reusable code that multiple signed-in users can accept - created only on your explicit request with a confirmed scope (whole dataset, selected tables, or a permission policy); recipients review the share before accepting, and owners can revoke it from everyone at any time",
+  "update_reason": "Datasets can now also be shared through an explicit reusable code that multiple signed-in users can accept - created only on your explicit request with a confirmed scope (whole dataset, selected tables, or a permission policy); recipients review the share before accepting, and owners can revoke it from everyone at any time",
+  "updated_at": "2026-07-25T13:10:38.864944+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9",
-    "codex/skills/goalfydata/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9",
-    "manus/skill/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9",
-    "generic/SKILL.md": "82598bcb89bfea6a83fd828b4b42f5841c46a3db94776d58a5d88f15afaf88f9"
+    "claude-code/skills/goalfydata/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d",
+    "codex/skills/goalfydata/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d",
+    "manus/skill/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d",
+    "generic/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d"
   }
 }
