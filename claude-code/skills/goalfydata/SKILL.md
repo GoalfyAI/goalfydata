@@ -117,7 +117,7 @@ GoalfyData is independent of any single project or conversation — a long-lived
 - Create tables and import data (CSV/JSON directly; clean and convert Excel/API/script sources to CSV first)
 - Analyze on datasets (multi-round SQL, aggregation, trend comparison, extraction and export)
 - Define table relations and governance rules (persisting business definitions)
-- Share datasets through recipient email invitations; share apps through managed links
+- Share datasets through either recipient email invitations or explicit reusable multi-user codes; share apps through managed links
 - Configure fine-grained permission policies (table/column/row level)
 - Configure GoalfyData Managed Refresh (cron scheduled trigger + update script, run in the platform sandbox)
 - Manage data-source credentials (encrypted storage of API keys / database passwords)
@@ -649,18 +649,57 @@ uds_share(operation="dataset_create", dataset_id=<dataset_id>, recipient_email="
 ```
 
 - `recipient_email` is required. Never create a dataset share without an email address
-- Never request, display, copy, or send a standalone dataset share code or short link. The invitation link is delivered only by email
+- In this email-invitation mode, never request, display, copy, or send a share code or short link — the invitation link is delivered only by email. Reusable public codes are a separate, explicit mode with their own credential rules (see "Dataset Sharing (reusable public code)")
 - Sharing with N people = N create calls (each invitation is independently managed by its returned `share_id`)
 - Optionally attach a `policy_id` for fine-grained permissions (specific tables/columns/rows only)
 - Listing returns `share_id`; revoking uses `uds_share(operation="dataset_revoke", share_id=..., task_id=<task_id>)` and reclaims PG permissions immediately
+
+#### Dataset Sharing (reusable public code)
+
+Use this only when the owner explicitly asks for one link/code that multiple signed-in users can accept. It is a
+separate sharing mode, not a fallback for a missing email address:
+
+```
+uds_share(operation="dataset_public_create", dataset_id=<dataset_id>, scope_type="all", user_confirmed=true, task_id=<task_id>)
+uds_share(operation="dataset_public_create", dataset_id=<dataset_id>, scope_type="tables", shared_tables=[...], user_confirmed=true, task_id=<task_id>)
+uds_share(operation="dataset_public_create", dataset_id=<dataset_id>, scope_type="policy", policy_id=<policy_id>, user_confirmed=true, task_id=<task_id>)
+```
+
+- Before creation, explain that the resulting code is reusable by multiple users, show the exact scope, and obtain
+  explicit owner consent. Never set `user_confirmed=true` from inference or earlier unrelated approval
+- Generate an `idempotency_key` for each intended creation and retain it until that call succeeds. Reuse it only when
+  retrying the same timed-out/failed request; generate a new key when the owner intentionally wants another code
+- Scope is mandatory and strict: `all` forbids `policy_id`/`shared_tables`; `tables` requires a non-empty table list;
+  `policy` requires a valid policy ID. Never silently widen an invalid or empty scope to `all`
+- `dataset_public_list` is owner-only and returns active/revoking/revoked state plus accepted-user count. It may return
+  the code/link for the owner to copy; treat both as credentials and never put them in logs, telemetry, task summaries,
+  screenshots, or unrelated messages
+- First call `uds_share(operation="dataset_public_resolve", share_code=..., task_id=<task_id>)` so the recipient can
+  review the safe dataset/owner/scope summary. The recipient must explicitly agree before
+  `uds_share(operation="dataset_public_accept", share_code=..., user_confirmed=true, task_id=<task_id>)`.
+  Acceptance counts toward the recipient's final effective dataset quota. An owner cannot accept their own code
+- Accepting the same code twice is idempotent. Access from multiple accepted shares is the union of allowed tables and
+  columns; row filters are OR across sources, while conditions within one policy remain AND
+- When changing a policy used by accepted public shares, the service may return
+  `policy_public_share_confirmation_required` with an accepted-user count. Explain the exact count and scope change,
+  obtain fresh confirmation, then retry the same `uds_policy_manage(action="update", ...)` call with
+  `confirm_public_share_impact=true`. Never silently confirm a policy expansion or deactivation
+- Deleting a policy can invalidate its public links and reclaim their recipients' access. Explain that impact and call
+  `uds_policy_manage(action="delete", ..., confirmed=true)` only after explicit confirmation
+- `dataset_public_remove` removes only the current recipient's membership. `dataset_public_revoke` is owner-only and
+  reclaims this share's access from every recipient; both require explicit confirmation. Other independent grants
+  continue to apply
+- Never substitute email operations and public-code operations for each other. Missing `recipient_email` in
+  `dataset_create` is an error, not permission to create a public code
 
 #### Pending email invitations — accept / reject (recipient side)
 
 Shares addressed to the user's email appear in `uds_dataset_get` (or `uds-cli schemas`) as shared items with
 `accept_status='pending'` until accepted: **metadata only, the dataset cannot be queried yet**. Translate this
 state for the user (e.g. "you have 30 datasets, but the 2 you want to analyze are still pending acceptance —
-shall I accept them? Note: accepting counts toward your dataset quota"). Never request, display, or expose a
-share code or the invitation link — acceptance goes through this tool or the recipient's own invitation email.
+shall I accept them? Note: accepting counts toward your dataset quota"). Never request, display, or expose an
+email invitation's link or code — email-invitation acceptance goes through this tool or the recipient's own
+invitation email (public-code shares are accepted separately via dataset_public_resolve / dataset_public_accept).
 
 ```
 uds_share(operation="dataset_accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)  # accept
