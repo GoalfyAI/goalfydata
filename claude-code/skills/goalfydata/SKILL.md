@@ -166,7 +166,7 @@ Before the first operation that requires a ticket, call `uds_task_manager(action
 - **Language**: `language` is required on create — pass the user's conversation language as a bare BCP 47 primary language subtag (2-8 letters, e.g. en, zh, yue); never include region or script (en-US / zh-Hant are rejected)
 - `op_summary`: required — describe in business language why this operation runs and what comes next (100-200 characters); never mention tool names/function names/technical parameters
 - `agent_name`: optional — identifies the current Agent (e.g. claude / codex / manus)
-- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets. The completion response may include a notice of shared datasets/apps still pending acceptance — relay it to the user
+- **Explicit completion**: after the operation round is fully finished and before the final user report, complete the ticket. In an MCP environment call `uds_task_manager(action="complete", task_id=<task_id>, datasets=[...])`; in a CLI-only environment (including Agent-created cron scripts) call `uds-cli task-complete <task_id> --dataset "<dataset_id>=<result_summary>"`, repeating `--dataset` for multiple datasets. The completion response may include a notice of shared datasets/apps still pending acceptance — relay it to the user. After completing, reconcile the asset memory (4.6)
 - **Report datasets truthfully**: include only datasets actually modified in this round. Every dataset must carry its own `result_summary` in business language (100-200 characters) describing exactly what changed; this text is shown directly in the notification. For a read-only round, pass `datasets=[]` (or omit `--dataset` in CLI)
 - **Never complete Managed Refresh**: GoalfyData Managed Refresh is already notified by the sandbox callback. Do not call `complete` for any manual or scheduled refresh, or owners and share recipients receive duplicate notifications
 
@@ -832,6 +832,55 @@ When the user says "redeploy after changes" or "show me the result", that is the
 uds_init_project(mode="fork", from_deploy_id=<deploy_id>, task_id=<task_id>)
 → download the source package + inherit the original app's dataset → modify locally → follow steps 4-8 above to self-check, package, and deploy as a NEW app
 ```
+
+---
+
+### 4.6 Asset Memory — Record Delivered Assets in Platform Memory
+
+After a milestone succeeds, record the resulting asset in the agent platform's cross-session memory, so later
+conversations know the user's GoalfyData assets by name without a cold start. This is a UX enhancement, never a
+blocker: when the platform has no writable persistent memory, skip silently.
+
+**Triggers** (write immediately after each success; reconcile at ticket completion):
+
+- Dataset created (4.1 delivery) → add a `[dataset]` entry
+- Structure evolved (4.2.3 new columns / 4.2.4 new tables) → update that dataset's entry
+- App deployed (`app_url` returned) → add or update an `[app]` entry
+- Share created (email invitation / reusable public code / app link) → add a `[share]` entry
+- Ticket completion (Constraint 1) → reconcile: every dataset reported in `complete` must be reflected in memory
+
+**Where to write**:
+
+- Claude Code: maintain the marked block in `~/.claude/CLAUDE.md` (globally loaded). If the current project also has
+  an auto-memory directory, add one index line to its `MEMORY.md` pointing at the assets — the global file stays the
+  primary copy
+- Codex: maintain the marked block in `~/.codex/AGENTS.md`
+- Manus: maintain a single Knowledge entry named "GoalfyData Assets" with the same content rules; update that entry in
+  place — never create a new entry per change
+- Other platforms: use the platform's persistent cross-session memory when one exists; otherwise skip
+
+**Block format** (for file targets — update lines inside the markers only; never touch anything else in the file):
+
+```markdown
+<!-- goalfydata:start -->
+## GoalfyData Assets (account: <login email>; snapshot hints — verify live state via uds_dataset_get before operating)
+- [dataset] sales_orders (ds_abc123) — orders + ads, 2 tables, managed refresh daily 02:00; updated 2026-07-31
+- [app] sales-dashboard (app_xyz) — https://sales.example.goalfydata.ai; deployed 2026-07-31
+- [share] sales_orders -> bob@example.com (email invitation, read-only); shared 2026-07-31
+<!-- goalfydata:end -->
+```
+
+**Rules**:
+
+- One line per asset, deduplicated by ID: update the existing line instead of appending a duplicate
+- Keep at most 12 lines; when full, evict the oldest `[share]` lines first, then the oldest remaining entries
+- Record names, IDs, one-line descriptions, and times only. Never write share codes, invitation links, app share
+  links, API keys, or credentials into memory
+- Memory is a hint, not the source of truth: before operating on any remembered asset, fetch the real current list
+  via `uds_dataset_get` (or `uds-cli schemas`) — placement (4.0) and every mutation start from that live result. When
+  memory disagrees with it, trust the live result and correct the memory
+- Write failures (missing permissions, read-only filesystem, unsupported platform) are silently skipped — never
+  surface them as task errors and never retry more than once
 
 ---
 
