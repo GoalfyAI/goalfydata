@@ -1,8 +1,8 @@
 {
-  "version": "v20260725-6a3bcc",
-  "notes": "Datasets can now also be shared through an explicit reusable code that multiple signed-in users can accept - created only on your explicit request with a confirmed scope (whole dataset, selected tables, or a permission policy); recipients review the share before accepting, and owners can revoke it from everyone at any time",
-  "update_reason": "Datasets can now also be shared through an explicit reusable code that multiple signed-in users can accept - created only on your explicit request with a confirmed scope (whole dataset, selected tables, or a permission policy); recipients review the share before accepting, and owners can revoke it from everyone at any time",
-  "updated_at": "2026-07-25T13:10:38.864944+00:00",
+  "version": "v20260731-fd734a",
+  "notes": "Your agent now remembers your GoalfyData assets across conversations: after creating a dataset, deploying an app, or sharing, it records the name and time in your platform's memory (Claude Code / Codex / Manus), so future chats know your data by name - while always verifying live state before acting; codes, links, and keys are never stored",
+  "update_reason": "Your agent now remembers your GoalfyData assets across conversations: after creating a dataset, deploying an app, or sharing, it records the name and time in your platform's memory (Claude Code / Codex / Manus), so future chats know your data by name - while always verifying live state before acting; codes, links, and keys are never stored",
+  "updated_at": "2026-07-31T09:27:01.114973+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d",
-    "codex/skills/goalfydata/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d",
-    "manus/skill/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d",
-    "generic/SKILL.md": "a1aaf252128e41766014031142f90d5113d162bea400995ba6b1bce2f04b566d"
+    "claude-code/skills/goalfydata/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22",
+    "codex/skills/goalfydata/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22",
+    "manus/skill/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22",
+    "generic/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22"
   }
 }
