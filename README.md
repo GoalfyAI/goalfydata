@@ -102,7 +102,7 @@ To automate updates, give the agent a schedule in natural language. The agent wi
 
 Use natural language in your agent—or open the GoalfyData web app—to inspect the dataset structure, manage access, and share datasets or dashboards with your team.
 
-![View a dataset's structure through an agent](./assets/how-to-use/see-data-stracture.png)
+![View the dataset structure and share datasets, dashboards, or apps](./assets/how-to-use/share.png)
 
 ## From Request to Reusable Result
 
