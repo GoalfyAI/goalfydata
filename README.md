@@ -62,29 +62,47 @@ uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
 
 Then follow the platform guide above to install the Skill/plugin and connect MCP. The detailed guides cover Windows, updates, key rotation, and troubleshooting. A successful connection exposes 20 GoalfyData MCP tools, including `uds_query` and `uds_dataset_manage`.
 
-## Try These First
+## How to Use GoalfyData
 
-After connecting, attach the relevant file or provide the source details, then copy one of these requests to your agent:
+### 1. Install GoalfyData in your agent
 
-```text
-Turn this Excel file into a reusable dataset. Preserve the field meanings, metric definitions, and table relationships.
-```
+Choose your platform in [Quick Start](#quick-start), copy the setup instructions, and paste them into Codex, Claude Code, or another compatible agent. The agent will guide you through the installation and connection process.
 
-```text
-Analyze the orders data and report monthly sales, order count, and refund rate.
-```
+### 2. Get your data
 
-```text
-Update this dataset from the API every day. Notify me if a managed refresh fails.
-```
+Ask your agent to collect the data you need, as shown below. You can also upload your own Excel or CSV files, or connect sources such as Google Analytics 4 (GA4) and Google Search Console (GSC).
 
-```text
-Build a sales dashboard from this dataset and deploy it as a shareable data app.
-```
+You control which sources and data the agent can access. Private workspace data is not public by default, and access is limited by the permissions and sharing settings you authorize.
 
-```text
-Share this dataset with xxx@example.com and give them view-only access to the approved data.
-```
+![Ask an agent to collect data from GitHub](./assets/how-to-use/step2-get-data.png)
+
+### 3. Create a dataset
+
+Tell your agent to organize the results into a GoalfyData dataset. The agent can preserve the field meanings, table relationships, metric definitions, and update rules so the data remains understandable and reusable.
+
+![Ask an agent to create a GoalfyData dataset](./assets/how-to-use/step3-create-dataset.png)
+
+Want a quicker way to explore the product? Email [goalfydata@goalfyai.com](mailto:goalfydata@goalfyai.com), and we can share ready-to-use sample datasets with you.
+
+### 4. Create a dashboard and keep it updated
+
+Ask your agent to build a dashboard from the dataset. Once it is ready, tell the agent how often the underlying data should refresh, and the dashboard will continue to read the latest dataset data.
+
+![Ask an agent to create and deploy a dashboard](./assets/how-to-use/step4-create-dashboard.png)
+
+![Example of an automatically refreshed dashboard](./assets/how-to-use/dashboard-examples.png)
+
+You can [view the dashboard from this walkthrough](https://app-08a1b21d0a98-github-ai-tools-dashboar-5f51cc722fed.goalfydata.app/).
+
+To automate updates, give the agent a schedule in natural language. The agent will explain the Managed Refresh usage and ask for confirmation before enabling it.
+
+![Ask an agent to schedule automatic data updates](./assets/how-to-use/step5-set-autorefresh.png)
+
+### 5. View, manage, and share
+
+Use natural language in your agent—or open the GoalfyData web app—to inspect the dataset structure, manage access, and share datasets or dashboards with your team.
+
+![View a dataset's structure through an agent](./assets/how-to-use/see-data-stracture.png)
 
 ## From Request to Reusable Result
 
