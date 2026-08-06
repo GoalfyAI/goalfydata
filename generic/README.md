@@ -51,7 +51,7 @@ MCP configuration formats may vary across tools (field names, transport type syn
 
 ### Step 4: Load Skill
 
-Download [goalfydata-generic.zip](https://github.com/GoalfyAI/goalfydata/raw/main/generic/goalfydata-generic.zip) and extract it, or clone the repo and use the `generic/` directory.
+Download [goalfydata-generic.zip](https://cdn.goalfydata.ai/dataset-uds/guides/generic/goalfydata-generic.zip) and extract it, or clone the repo and use the `generic/` directory.
 
 Import `SKILL.md` and the `references/` directory into your tool. Choose the method based on your platform's capabilities:
 
@@ -79,7 +79,7 @@ If the Agent calls the MCP tool and returns a dataset list, the integration is s
 
 The MCP connection points to a remote service and does not require configuration updates. Re-fetch the skill files the same way you originally obtained them:
 
-- **Downloaded the zip**: download [goalfydata-generic.zip](https://github.com/GoalfyAI/goalfydata/raw/main/generic/goalfydata-generic.zip) again and unpack it
+- **Downloaded the zip**: download [goalfydata-generic.zip](https://cdn.goalfydata.ai/dataset-uds/guides/generic/goalfydata-generic.zip) again and unpack it
 - **Cloned the repository**: `cd goalfydata && git pull`
 
 Then re-import the latest `SKILL.md` and `references/` into your tool following Step 4, and **start a new session** (skills are only loaded at session start — without a new session the update does not take effect).

@@ -51,7 +51,7 @@ Go to **Plugins** in the left sidebar -> click **Create** in the top right -> Sk
 
 Manus requires uploading a `.zip` or `.skill` file with `SKILL.md` at the root level.
 
-**Download pre-built ZIP**: Download [goalfydata-skill.zip](https://github.com/GoalfyAI/goalfydata/raw/main/manus/goalfydata-skill.zip) directly and skip to the upload step below.
+**Download pre-built ZIP**: Download [goalfydata-skill.zip](https://cdn.goalfydata.ai/dataset-uds/guides/manus/goalfydata-skill.zip) directly and skip to the upload step below.
 
 **Or clone and package manually**:
 
@@ -127,7 +127,7 @@ Confirm you uploaded a `.zip` file packaged from the `manus/skill/` directory, w
 MCP connector points to the remote service, no update needed. Skill files need to be manually updated:
 
 1. Delete the old `goalfydata` Skill in the Skills management page
-2. Download the latest [goalfydata-skill.zip](https://github.com/GoalfyAI/goalfydata/raw/main/manus/goalfydata-skill.zip) and re-upload
+2. Download the latest [goalfydata-skill.zip](https://cdn.goalfydata.ai/dataset-uds/guides/manus/goalfydata-skill.zip) and re-upload
 3. Close the current conversation and reopen (Skills are only loaded at session start)
 
 
