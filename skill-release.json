@@ -1,8 +1,8 @@
 {
-  "version": "v20260731-fd734a",
-  "notes": "Your agent now remembers your GoalfyData assets across conversations: after creating a dataset, deploying an app, or sharing, it records the name and time in your platform's memory (Claude Code / Codex / Manus), so future chats know your data by name - while always verifying live state before acting; codes, links, and keys are never stored",
-  "update_reason": "Your agent now remembers your GoalfyData assets across conversations: after creating a dataset, deploying an app, or sharing, it records the name and time in your platform's memory (Claude Code / Codex / Manus), so future chats know your data by name - while always verifying live state before acting; codes, links, and keys are never stored",
-  "updated_at": "2026-07-31T09:27:01.114973+00:00",
+  "version": "v20260806-ec98ac",
+  "notes": "Automatic release for SKILL changes through 7d9c177d67b6: docs(T-2559): synchronize all agent skills",
+  "update_reason": "Automatic release for SKILL changes through 7d9c177d67b6: docs(T-2559): synchronize all agent skills",
+  "updated_at": "2026-08-06T13:13:43.660002+00:00",
   "files": [
     "claude-code/skills/goalfydata/SKILL.md",
     "codex/skills/goalfydata/SKILL.md",
@@ -10,9 +10,9 @@
     "generic/SKILL.md"
   ],
   "checksums": {
-    "claude-code/skills/goalfydata/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22",
-    "codex/skills/goalfydata/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22",
-    "manus/skill/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22",
-    "generic/SKILL.md": "9acf8c2fcdd99b8d4d5bc52601b275cb2366a004157012602fe849dcc49efd22"
+    "claude-code/skills/goalfydata/SKILL.md": "4c75910795a7729c2bb766f99c52edc83ed57ca71b6c5c2944c6e1e6bd717393",
+    "codex/skills/goalfydata/SKILL.md": "4c75910795a7729c2bb766f99c52edc83ed57ca71b6c5c2944c6e1e6bd717393",
+    "manus/skill/SKILL.md": "4c75910795a7729c2bb766f99c52edc83ed57ca71b6c5c2944c6e1e6bd717393",
+    "generic/SKILL.md": "4c75910795a7729c2bb766f99c52edc83ed57ca71b6c5c2944c6e1e6bd717393"
   }
 }
