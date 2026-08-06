@@ -62,46 +62,97 @@ uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
 
 Then follow the platform guide above to install the Skill/plugin and connect MCP. The detailed guides cover Windows, updates, key rotation, and troubleshooting. A successful connection exposes 20 GoalfyData MCP tools, including `uds_query` and `uds_dataset_manage`.
 
-## Try These First
+## How AI Agents Create and Reuse Data Assets with GoalfyData
 
-After connecting, attach the relevant file or provide the source details, then copy one of these requests to your agent:
+CSV files give an agent rows and columns. Prompts give it instructions for one conversation. Neither preserves the structure, definitions, relationships, and business rules another agent needs to continue the work later. GoalfyData turns that missing context into a reusable data asset.
 
-```text
-Turn this Excel file into a reusable dataset. Preserve the field meanings, metric definitions, and table relationships.
-```
+### 1. Connect GoalfyData with your AI agent
 
-```text
-Analyze the orders data and report monthly sales, order count, and refund rate.
-```
+Choose your platform in [Quick Start](#quick-start), copy the MCP and Skill setup instructions, and give them to Codex, Claude Code, Manus, or another compatible agent.
 
-```text
-Update this dataset from the API every day. Notify me if a managed refresh fails.
-```
+This connection gives your agent the ability to create, understand, update, manage, and reuse governed data assets—not simply send data to another tool.
 
-```text
-Build a sales dashboard from this dataset and deploy it as a shareable data app.
-```
+### 2. Tell your agent what you want to build
 
-```text
-Share this dataset with xxx@example.com and give them view-only access to the approved data.
-```
+Start with the business outcome and data you need. For example:
 
-## From Request to Reusable Result
+> Help me scrape today's recommended AI tools and categories on GitHub.
 
-**You ask:**
+Your agent can work out the required sources, tables, field relationships, and metrics, then collect or prepare the data. You can also provide an Excel or CSV file, or connect sources such as Google Analytics 4 (GA4) and Google Search Console (GSC).
 
-> Merge Shopify orders and ad reports, update them daily, and analyze GMV, refund rate, and ROAS.
+<div align="center"><img src="./assets/how-to-use/step2-get-data.png" alt="Ask an agent to collect the data required for a business goal" width="50%"></div>
 
-**Your agent and GoalfyData:**
+Want to try the workflow yourself? Click the file title below to download the example files, then give them to your agent and describe the data asset you want to build.
 
-1. Create or reuse a dataset.
-2. Import, clean, and relate the source data.
-3. Save field meanings and metric definitions.
-4. Configure a Managed Refresh for daily updates.
-5. Create an analysis or dashboard backed by the dataset.
-6. Share the result using controlled access.
+- [EXAMPLE Ecommerce Data](https://github.com/GoalfyAI/goalfydata/raw/refs/heads/main/examples/sample-data/example-ecommerce-data.zip) — simulated Amazon, Shopify, Meta Ads, returns, and SKU cost data for two weekly reporting periods
 
-**You get:** one continuously updated data asset that preserves its business definitions and remains reusable across conversations and connected agents.
+For other ready-to-use datasets, email [goalfydata@goalfyai.com](mailto:goalfydata@goalfyai.com).
+
+### 3. Create a reusable data asset
+
+Ask your agent to organize the result in GoalfyData. It saves more than rows of data: it preserves the context that another agent needs to use the asset correctly.
+
+| Preserved context | What it provides |
+|---|---|
+| **Tables** | The original data structure |
+| **Relationships** | How tables and records connect |
+| **Field meanings** | What each field represents |
+| **Rules** | Business logic, metrics, and processing requirements |
+| **Usage guidance / Skills** | How agents should query, update, and apply the asset |
+
+**Your AI agent doesn't just access data. It understands how to use it.**
+
+<div align="center"><img src="./assets/how-to-use/step3-create-dataset.png" alt="Ask an agent to create a reusable GoalfyData asset" width="50%"></div>
+
+### 4. Create applications powered by your data assets
+
+Once the data asset exists, ask your agent to create a purpose-built application such as an analysis report, business dashboard, or automated analysis tool.
+
+For example:
+
+> Create a dashboard from the GitHub AI Tools Intelligence dataset.
+
+The agent uses the asset's structure, field definitions, relationships, and analysis rules to build the application. The application remains connected to its dataset, so when the data updates, metrics recalculate and reports or dashboards continue to reflect the latest information—without rebuilding the application or manually changing its configuration.
+
+<div align="center"><img src="./assets/how-to-use/step4-create-dashboard.png" alt="Ask an agent to create an application from a data asset" width="50%"></div>
+
+<div align="center"><img src="./assets/how-to-use/dashboard-examples.png" alt="Example of an application powered by a reusable data asset" width="50%"></div>
+
+You can [view the dashboard from this walkthrough](https://app-08a1b21d0a98-github-ai-tools-dashboar-5f51cc722fed.goalfydata.app/).
+
+To keep the data current, tell your agent the update schedule in natural language. The agent will explain Managed Refresh usage and ask for confirmation before enabling it.
+
+<div align="center"><img src="./assets/how-to-use/step5-set-autorefresh.png" alt="Ask an agent to schedule automatic data updates" width="50%"></div>
+
+### 5. Analyze, manage, and share with any agent
+
+A GoalfyData asset is not tied to the agent or conversation that created it. One agent can build the asset, and any other connected, authorized agent can continue the work later.
+
+For example, Codex could create the GitHub AI Tools Intelligence dataset today. Later, you could ask another agent to `Analyze this dataset from GoalfyData`, then use Claude to `Generate market insights based on this dataset`.
+
+There is no need to upload the CSV again, explain every field again, or restate the business rules. Each authorized agent can continue from the same preserved data context.
+
+<div align="center"><img src="./assets/how-to-use/cross-agent-ability.png" alt="Use the same reusable data asset with another AI agent" width="50%"></div>
+
+You can also manage and share the same data asset through natural-language requests such as:
+
+> Show me the latest status of the GitHub AI Tools Intelligence dataset.
+
+> Share this dataset with my team and give them read-only access.
+
+> Update the access permissions for this dataset.
+
+Your agent can inspect asset status, update dataset configuration, manage permissions, and share data assets with team members. Throughout the process, GoalfyData preserves the data structure, field definitions, relationships, rules, and access controls so future agents can continue safely from the same context.
+
+You can also use the GoalfyData Console to view and manage datasets and applications through a visual interface.
+
+<div align="center"><img src="./assets/how-to-use/share.png" alt="View the data structure and share datasets, dashboards, or apps" width="50%"></div>
+
+## A Reusable Data Layer for AI Agents
+
+**GoalfyData is not a dashboard that agents send data to. It is the reusable data layer that lets agents continue the work.**
+
+[Explore GoalfyData examples](https://goalfydata.ai/examples) to see practical use cases and reusable data assets. To request a sample dataset or a walkthrough for your own use case, email [goalfydata@goalfyai.com](mailto:goalfydata@goalfyai.com).
 
 ## Core Capabilities
 
