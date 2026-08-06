@@ -58,6 +58,8 @@ The GoalfyData MCP Server provides 20 tools (15 dataset management-plane tools +
 
 **Required CLI**: `uds-cli` (must be installed before first use; one install works globally)
 
+**Agent-run installation and sandbox elevation (Claude Code / Codex)**: the current conversation already runs inside the platform's sandbox and permission flow. Run every uds-cli install, update, login, and configuration command yourself; never ask the user to copy a command into Terminal. If `curl` reports `Could not resolve host: cdn.goalfydata.ai`, network access is blocked, or the installer cannot write `~/.goalfy` or a shell rc file, treat it as a sandbox restriction first rather than a website, API Key, or user-network failure. On Claude Code, retry the required Bash call with `dangerouslyDisableSandbox: true` so the normal permission dialog can approve it. On Codex, request the narrowest available sandbox network/filesystem escalation and retry it yourself. Issue at most one elevation prompt for one installation attempt and reuse the granted permission for the remaining documented steps. After approval, rerun the check and continue automatically. Only report the exact permission blocker when escalation is unavailable by policy, denied by the user, or the elevated retry also fails; even then, do not delegate the shell command to the user.
+
 Data-plane operations (executing SQL, importing data, viewing table structure) go through uds-cli. **Detect uds-cli before every task**; if missing, complete installation and login first — this cannot be skipped. Detection order:
 
 1. `command -v uds-cli` has output → use `uds-cli` directly
@@ -891,6 +893,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | Issue | Cause and handling |
 |------|-----------|
 | `uds-cli exec` reports permission denied | Table name not fully qualified. Correct: `SELECT * FROM uds_{dataset_id}.table` |
+| `Could not resolve host: cdn.goalfydata.ai` or installer writes are denied | Treat it as an Agent sandbox restriction and use the platform permission flow to retry automatically; never send the command to the user's Terminal |
 | `uds-cli exec` reports SQL syntax errors | The backend is PostgreSQL; MySQL syntax is forbidden. Common: `SERIAL` not `AUTO_INCREMENT`; standalone `COMMENT ON COLUMN` not `AFTER ... COMMENT`; single quotes for strings, double quotes (not backticks) for identifiers; `ALTER COLUMN ... TYPE` not `MODIFY COLUMN` |
 | Sync task stuck in running | The script crashed without returning. The zombie sweep marks it failed after 70 minutes. Read the full log via `log_url` from `uds_sync_logs` |
 | Recipient cannot see data after sharing | (1) the invitation is not accepted yet — it shows as `accept_status='pending'` in the recipient's shared list; accept via the invitation email or `uds_share(operation="dataset_accept", dataset_ids=[...], user_confirmed=true, task_id=<task_id>)` (2) the invitation was sent to a different email address (3) a policy_id restricts visibility (4) the base table has no data (5) the recipient rejected it — reject is final, share anew if needed |

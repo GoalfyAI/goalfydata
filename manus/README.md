@@ -55,7 +55,7 @@ Go to **Plugins** in the left sidebar -> click **Create** in the top right -> in
 
 Manus requires uploading a `.zip` or `.skill` file with `SKILL.md` in the root directory.
 
-**Download pre-built ZIP**: Download [goalfydata-skill.zip](https://github.com/GoalfyAI/goalfydata/raw/main/manus/goalfydata-skill.zip) directly and skip to the upload step below.
+**Download pre-built ZIP**: Download [goalfydata-skill.zip](https://cdn.goalfydata.ai/dataset-uds/guides/manus/goalfydata-skill.zip) directly and skip to the upload step below.
 
 **Or package manually**:
 
