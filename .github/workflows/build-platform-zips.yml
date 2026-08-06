@@ -1,4 +1,4 @@
-name: Auto Release Skill and Build Platform ZIPs
+name: Build Platform ZIPs
 
 on:
   push:
@@ -9,83 +9,32 @@ on:
       - 'manus/skill/**'
       - 'generic/**'
       - '!**/*.zip'
-      - '.github/workflows/build-platform-zips.yml'
-      - 'scripts/release-skill.sh'
-      - 'scripts/verify-skill-release.py'
   workflow_dispatch:
-
-concurrency:
-  group: auto-release-skill-main
-  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'goalfydata-bot[bot]'
     runs-on: ubuntu-latest
     steps:
-      # The GitHub App supplies push credentials. Commit metadata remains the
-      # repository-wide GoalfyAI identity instead of a personal or bot author.
+      # Commits are authored and pushed as goalfydata-bot[bot] via a GitHub App
+      # token, so automation never shows up under a personal or org user account.
       - uses: actions/create-github-app-token@v2
         id: app-token
         with:
           app-id: ${{ vars.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
 
+      - name: Resolve bot user id
+        id: bot-user
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}%5Bbot%5D" --jq .id)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 0
-
-      - name: Configure release identity and use latest main
-        id: base
-        run: |
-          git config user.name "GoalfyAI"
-          git config user.email "goalfymax@goalfyai.com"
-          git fetch origin main --tags
-          git checkout -B main origin/main
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Cut a Skill release when content changed
-        id: release
-        run: |
-          set -euo pipefail
-
-          if ! cmp -s claude-code/skills/goalfydata/SKILL.md codex/skills/goalfydata/SKILL.md \
-            || ! cmp -s claude-code/skills/goalfydata/SKILL.md manus/skill/SKILL.md \
-            || ! cmp -s claude-code/skills/goalfydata/SKILL.md generic/SKILL.md; then
-            echo "::error::The four published SKILL copies are not identical"
-            exit 1
-          fi
-
-          if python3 scripts/verify-skill-release.py; then
-            echo "created=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          source_commit="$(git log -1 --format=%H -- \
-            claude-code/skills/goalfydata/SKILL.md \
-            codex/skills/goalfydata/SKILL.md \
-            manus/skill/SKILL.md \
-            generic/SKILL.md)"
-          source_subject="$(git show -s --format=%s "${source_commit}")"
-          export source_commit source_subject
-          release_notes="$(python3 - <<'PY'
-          import os
-
-          commit = os.environ["source_commit"][:12]
-          subject = os.environ["source_subject"].strip()
-          print(f"Automatic release for SKILL changes through {commit}: {subject}"[:1024])
-          PY
-          )"
-          scripts/release-skill.sh "$release_notes"
-          python3 scripts/verify-skill-release.py
-
-          version="$(python3 -c "import json; print(json.load(open('skill-release.json'))['version'])")"
-          echo "created=true" >> "$GITHUB_OUTPUT"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Build ZIPs
         run: |
@@ -94,24 +43,13 @@ jobs:
 
       - name: Commit and push ZIPs
         run: |
+          git config user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config user.email "${{ steps.bot-user.outputs.id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
           git add manus/goalfydata-skill.zip generic/goalfydata-generic.zip
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: auto-build platform zips"
-          fi
-
-          if [ "$(git rev-parse HEAD)" = "${{ steps.base.outputs.sha }}" ]; then
-            echo "No release or ZIP changes detected, skipping push."
-            exit 0
-          fi
-
-          remote_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
-          if [ "${remote_main}" != "${{ steps.base.outputs.sha }}" ]; then
-            echo "main advanced to ${remote_main}; a newer queued run will process it"
-            exit 0
-          fi
-
-          if [ "${{ steps.release.outputs.created }}" = "true" ]; then
-            git push --atomic origin HEAD:main "refs/tags/skill/${{ steps.release.outputs.version }}"
+          if git diff --cached --quiet; then
+            echo "No ZIP changes detected, skipping commit."
           else
-            git push origin HEAD:main
+            git commit -m "chore: auto-build platform zips"
+            git pull --rebase origin main
+            git push
           fi
