@@ -8,7 +8,7 @@ The MCP connection points to a remote service and does not require configuration
 
 Re-fetch the same way the skill was originally obtained:
 
-- **Downloaded the zip**: download https://github.com/GoalfyAI/goalfydata/raw/main/generic/goalfydata-generic.zip again and unpack it
+- **Downloaded the zip**: download https://cdn.goalfydata.ai/dataset-uds/guides/generic/goalfydata-generic.zip again and unpack it
 - **Cloned the repository**: `cd goalfydata && git pull`
 
 ## Step 2: Update uds-cli

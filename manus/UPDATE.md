@@ -10,7 +10,7 @@ Output the template below in the user's conversation language (translate it when
 
 # ACTION REQUIRED: Update the goalfydata skill
 
-**1. Download the latest skill package: https://github.com/GoalfyAI/goalfydata/raw/main/manus/goalfydata-skill.zip**
+**1. Download the latest skill package: https://cdn.goalfydata.ai/dataset-uds/guides/manus/goalfydata-skill.zip**
 
 **2. On the Manus Skills management page, delete the old `goalfydata` skill, then upload the new zip.**
 
