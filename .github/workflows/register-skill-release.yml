@@ -21,8 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 防"改 SKILL 忘跑 scripts/release-skill.sh"：SKILL 内容变了但版本串没换时，
-      # 注册的还是旧版本，服务端闸门无法区分新旧内容。此处强制两者一致，不一致直接红灯。
+      # Reject Skill edits that skipped scripts/release-skill.sh: unchanged version
+      # metadata cannot distinguish new content from the previous release.
       - name: Verify SKILL version strings match skill-release.json
         run: |
           python3 - <<'PY'
@@ -41,7 +41,7 @@ jobs:
           if not files:
               errors.append('skill-release.json has an empty files list')
           if not checksums:
-              # 旧版 json（发 checksums 之前的存量），只做版本串比对
+              # Legacy metadata predates checksums, so only compare version markers.
               print('WARNING: no checksums in skill-release.json (legacy release); content drift cannot be detected')
           for name in files:
               path = Path(name)
@@ -92,7 +92,7 @@ jobs:
           targets = [line.strip() for line in os.environ.get('TARGETS', '').splitlines() if line.strip()]
           if not targets:
               raise SystemExit('SKILL_RELEASE_REGISTRY_TARGETS is empty')
-          # 尽力而为：单环境故障不阻断其余环境的注册，最后统一失败
+          # Try every environment, then report all failures together.
           failures = []
           for target in targets:
               try:
