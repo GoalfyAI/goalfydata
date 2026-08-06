@@ -41,14 +41,14 @@ for path in files:
     for i, line in enumerate(lines):
         if line.startswith("description: "):
             line = marker.sub("", line)
-            lines[i] = f"{line} [skill-version:{version}]"  # 冒号后不能有空格：YAML 无引号标量禁止 ": "
+            lines[i] = f"{line} [skill-version:{version}]"  # Keep the colon tight: YAML plain scalars forbid ": ".
             break
     else:
         raise SystemExit(f"missing description line: {path}")
     path.write_text("\n".join(lines) + "\n")
 
-# skill 发版必须联动 bump 插件版本号：claude/codex 的 plugin update 只认
-# plugin.json 的版本，不看内容——不 bump 则已装用户永远拿不到新 SKILL（实测验证）。
+# Every Skill release must bump the plugin version: Claude and Codex update
+# plugins from plugin.json versions, so installed users miss new content otherwise.
 plugin_manifests = [
     Path("claude-code/.claude-plugin/plugin.json"),
     Path("codex/.codex-plugin/plugin.json"),
@@ -69,7 +69,7 @@ Path("skill-release.json").write_text(json.dumps({
     "update_reason": notes,
     "updated_at": datetime.now(timezone.utc).isoformat(),
     "files": [str(p) for p in files],
-    # 内容指纹：CI 据此发现"改了 SKILL 没重新发版"的漂移
+    # Content fingerprints let CI detect Skill edits that were not released.
     "checksums": {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
 }, ensure_ascii=False, indent=2) + "\n")
 INNER_PY
@@ -83,7 +83,7 @@ python3 -c "import json; print('\n'.join(json.load(open('skill-release.json'))['
 done
 
 git commit -m "chore(skill): release ${VERSION}" -m "${NOTES}"
-# 发版即打 tag：版本串 ↔ 提交点一一对应，GitHub 侧由 publish-skill-release.yml 生成 Release
+# Tag every release so each version maps to one commit; GitHub publishes the Release.
 git tag -a "skill/${VERSION}" -m "${NOTES}"
 echo "released ${VERSION}"
 echo "push with: git push --follow-tags && git push --follow-tags git@github.com:GoalfyAI/goalfydata.git main"
