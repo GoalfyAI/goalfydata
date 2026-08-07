@@ -37,14 +37,14 @@ On Windows, use [AGENTS.windows.md](./AGENTS.windows.md) instead — it uses Pow
 
 ## Authentication
 
-GoalfyData still uses a Bearer credential internally, but users do not need to view or paste it. `uds-cli login` receives it through the one-time browser handoff and saves it to `~/.goalfy/config.json`. The agent-executable [AGENTS.md](./AGENTS.md) then writes the matching `~/.codex/.env` entry with a fixed local script that never prints the value. Restart Codex Desktop afterwards.
+GoalfyData still uses a Bearer credential internally, but users do not need to view or paste it. `uds-cli login` receives it through the one-time browser handoff and saves it to `~/.goalfy/config.json`. The agent-executable [AGENTS.md](./AGENTS.md) then updates the existing `~/.codex/.env` entry through Codex's protected local file access, without adding a helper runtime or displaying the value. Restart Codex Desktop afterwards.
 
 ## Verification
 
 After restarting Codex, confirm that `goalfydata-mcp` is connected and the tool list contains 20 tools (`uds_query`, `uds_dataset_manage`, etc.).
 
 If connection fails:
-- Re-run the non-printing credential equality check in [AGENTS.md](./AGENTS.md)
+- Re-run the protected in-memory credential comparison in [AGENTS.md](./AGENTS.md)
 - If it differs, repeat its browser login and local sync steps
 - Fully quit and restart Codex
 

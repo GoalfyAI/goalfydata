@@ -5,7 +5,7 @@ While executing this guide, you must follow these rules:
 1. Only run the commands listed here; only write to the installer-owned `%USERPROFILE%\.goalfy\` directory, the user-level PATH entry described in Step 2, `%USERPROFILE%\.codex\.env` (line-level update), and the Codex plugin directory
 2. Run every command in PowerShell
 3. Never ask the user to create, copy, paste, or send an API Key; `uds-cli login` opens the verified setup page and receives the credential locally
-4. Never print or read the plaintext Key into the conversation; fixed local scripts may move it from `%USERPROFILE%\.goalfy\config.json` into Codex's environment without echoing it
+4. Never print or read the plaintext Key into the conversation. After browser login, use Codex's existing protected local file access to copy the saved `api_key` from `%USERPROFILE%\.goalfy\config.json` into the existing Codex environment setting; do not add a helper runtime or generated synchronization script
 5. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
 6. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
 7. Do not declare success until the plugin is enabled, Codex has been restarted, the GoalfyData MCP tools (20, such as `uds_query` and `uds_dataset_manage`) are loaded, and a read-only MCP request succeeds
@@ -59,15 +59,15 @@ If neither candidate runs, output the template below to the user word for word:
 After resolving `$codexCli`, run all state checks:
 
 ```powershell
-Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"                                              # CLI installed?
-& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami *> $null                                     # logged in? (exit code 0 = yes; never surface credential output)
-$configPath = "$env:USERPROFILE\.goalfy\config.json"; if (Test-Path $configPath) { $config = Get-Content $configPath -Raw | ConvertFrom-Json; [bool](($config.api_key -is [string]) -and $config.api_key.StartsWith('gfk_')) } else { $false } # local credential saved?
-$envFile = "$env:USERPROFILE\.codex\.env"; if ((Test-Path $envFile) -and (Get-Content $envFile | Where-Object { $_ -match '^GOALFY_UDS_API_KEY=gfk_' })) { $true } else { $false } # MCP credential configured without printing it
-& $codexCli plugin list | Select-String '^goalfydata@goalfydata\s+installed, enabled'             # plugin installed?
+Test-Path "$env:USERPROFILE\.goalfy\bin\uds-cli.exe"                                                       # CLI installed?
+& "$env:USERPROFILE\.goalfy\bin\uds-cli.exe" whoami *> $null                                              # logged in? (exit code 0 = yes)
+Select-String -Quiet '^GOALFY_UDS_API_KEY=' "$env:USERPROFILE\.codex\.env" -ErrorAction SilentlyContinue    # existing MCP setting present? (no value output)
+& $codexCli plugin list | Select-String '^goalfydata@goalfydata\s+installed, enabled'                         # plugin installed?
 ```
 
+- After the four commands, use Codex's protected local file access to compare `api_key` in `%USERPROFILE%\.goalfy\config.json` with the `GOALFY_UDS_API_KEY` value in `%USERPROFILE%\.codex\.env`. Keep both values only in the ephemeral file-edit operation; never display or persist them elsewhere. This is the fifth check
 - All five pass → the user has a complete installation: **continue with Update**, asking the user for nothing
-- Some pass → run only the steps for failing items; skip Steps 1 and 3 only when both `whoami` and the local credential check pass
+- Some pass → run only the steps for failing items; when `whoami` passes, skip Steps 1 and 3 because the credential is already saved locally. Run Step 5 whenever the fifth check fails
 - None pass → perform the full installation from Step 1
 
 Use the anchored plugin expression exactly. A broad search for `goalfydata` can falsely match the Windows username `goalfydata_test` in unrelated plugin paths.
@@ -171,36 +171,19 @@ If Git reports exit code 128 with `Failed to connect to github.com:443`, this is
 
 Verify again with the anchored check. This step is complete only when the plugin shows `installed, enabled`.
 
-### Step 5: Sync the local credential to Codex
+### Step 5: Configure the API Key
 
-Check whether `%USERPROFILE%\.codex\.env` matches the CLI config without printing either value:
+This is the same Codex environment configuration used before browser login was introduced; only the source of the value has changed. The source is now the `api_key` already saved by `uds-cli login` in `%USERPROFILE%\.goalfy\config.json`, never a value supplied in conversation.
 
-```powershell
-$config = Get-Content "$env:USERPROFILE\.goalfy\config.json" -Raw | ConvertFrom-Json
-$envFile = "$env:USERPROFILE\.codex\.env"
-$envPrefix = 'GOALFY_UDS_API_KEY='
-$escapedPrefix = '^' + [Regex]::Escape($envPrefix)
-$stored = if (Test-Path $envFile) { (Get-Content $envFile | Where-Object { $_ -match $escapedPrefix } | Select-Object -First 1) -replace $escapedPrefix, '' } else { $null }
-if (($config.api_key -is [string]) -and $config.api_key.StartsWith('gfk_') -and ($stored -eq $config.api_key)) { $true } else { $false }
-```
+Using Codex's existing protected local file read/edit capability:
 
-If the check returns False, update the file from the local CLI config without displaying the credential:
+1. Read `api_key` from `%USERPROFILE%\.goalfy\config.json` only within the ephemeral file-edit operation, without displaying or persisting it elsewhere.
+2. Read `%USERPROFILE%\.codex\.env` if it exists; otherwise treat it as an empty text file.
+3. Replace only the `GOALFY_UDS_API_KEY=` line with the saved value, or append the line when it is absent. Preserve every unrelated line.
+4. Save the result to the same path as BOM-less UTF-8.
+5. Re-read both files and compare the two values within the same ephemeral operation. Do not print or persist either value, its prefix, or the comparison operands.
 
-```powershell
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.codex" | Out-Null
-$config = Get-Content "$env:USERPROFILE\.goalfy\config.json" -Raw | ConvertFrom-Json
-if (-not ($config.api_key -is [string]) -or -not $config.api_key.StartsWith('gfk_')) { throw 'uds-cli login has not produced a valid local credential' }
-$envFile = "$env:USERPROFILE\.codex\.env"
-$lines = @()
-$envPrefix = 'GOALFY_UDS_API_KEY='
-$escapedPrefix = '^' + [Regex]::Escape($envPrefix)
-if (Test-Path $envFile) { $lines = @(Get-Content $envFile | Where-Object { $_ -notmatch $escapedPrefix }) }
-[System.IO.File]::WriteAllLines($envFile, ([string[]]($lines + ($envPrefix + $config.api_key))))
-```
-
-Write the file exactly as above — `[System.IO.File]::WriteAllLines` produces UTF-8 without BOM. Never use `Set-Content -Encoding utf8` here: Windows PowerShell 5.1 writes a UTF-8 BOM, the BOM prefixes the first line, and Codex then fails to recognize `GOALFY_UDS_API_KEY`.
-
-Never print, grep, compare prefixes, or interpolate the credential into a command. Preserve every unrelated line, and re-run the non-printing equality check after writing.
+Do not generate a PowerShell synchronization script or add another helper runtime for this step. Do not put the credential in a command, tool summary, user-facing message, log, or persistent Agent memory. If the two stored values already match, make no write and continue to Step 6.
 
 ### Step 6: Restart and verify
 
@@ -215,7 +198,7 @@ The MCP connection only takes effect after restarting Codex; you cannot verify i
 
 After the user confirms the restart, verify the connection yourself — do not ask the user to check anything: confirm the 20 GoalfyData MCP tools (`uds_query`, `uds_dataset_manage`, etc.) are available, and run one dataset list (for example the `uds_dataset_get` MCP tool) as the read-only self-check; its result also decides the closing message in the Report below. Do not create, modify, or delete data merely to test connectivity.
 
-If the self-check fails: re-run Step 5's non-printing equality check. If it fails, repeat Steps 3 and 5; otherwise ask the user to fully restart again. Never request or display the Key.
+If the self-check fails: repeat Step 5's protected in-memory comparison. If the values differ, repeat Steps 3 and 5; otherwise ask the user to fully restart again. Never request or display the Key.
 
 ### Report
 
@@ -227,7 +210,7 @@ GoalfyData installation result:
 [Done]
 - uds-cli installed and logged in (version = the actual `uds-cli version` output, e.g. abc1234-yyyymmdd; account = the login email)
 - Plugin goalfydata installed and enabled
-- Local credential synced to %USERPROFILE%\.codex\.env without displaying it
+- Existing MCP credential setting updated from the local uds-cli login without displaying it
 - 20 MCP tools loaded and a read-only request succeeded
 
 [Action required from you]
@@ -322,7 +305,7 @@ Execute in order (skip the Step 0 routing in the rotation case):
 1. Run Installation Step 3 again, **never skipped just because whoami passes**; the CLI opens a fresh verified browser setup and receives the replacement locally
 2. Do not ask the user to copy or send the new Key
 3. Update the MCP-side storage: run Installation Step 5, **unconditionally — never skipped because its check passes**. `%USERPROFILE%\.codex\.env` still holds the old key; without this update, MCP and new sessions keep using the old key after restart (whether login printed `WARNING: environment variable ...` only reflects the current session environment and must not be used as a reason to skip)
-4. Consistency check: run Installation Step 5's non-printing equality check; never compare or display Key prefixes
+4. Consistency check: repeat Installation Step 5's protected in-memory comparison; never display either value or its prefix
 5. Output the template below to the user word for word:
 
 ```markdown
@@ -362,6 +345,6 @@ If the user no longer has this guide, output the template below to the user word
 | MCP not connected | Check `GOALFY_UDS_API_KEY` in `%USERPROFILE%\.codex\.env`, then ask the user to fully restart Codex (you cannot restart on the user's behalf) |
 | Tools return unauthenticated | Run Installation Steps 3 and 5 again without requesting or displaying a Key |
 | login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Follow "Rotating the API Key" and have the user restart |
-| The `.env` key line exists but Codex reports `GOALFY_UDS_API_KEY` missing | The file starts with a UTF-8 BOM (typically written by `Set-Content -Encoding utf8`); rewrite it with the Installation Step 5 block (BOM-less UTF-8), then fully restart |
+| The `.env` key line exists but Codex reports `GOALFY_UDS_API_KEY` missing | The file may start with a UTF-8 BOM; save it as BOM-less UTF-8 with the protected local file editor, then fully restart |
 | Exported in terminal but Desktop cannot connect | The Desktop app does not read terminal environment variables; the key must be in `%USERPROFILE%\.codex\.env` (Installation Step 5) |
 | New terminals still cannot find uds-cli | User-level PATH not applied; redo the persistence check and write in Installation Step 2 |

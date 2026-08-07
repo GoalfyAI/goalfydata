@@ -57,14 +57,14 @@ After installation, restart Claude Code and the plugin will automatically load t
 
 ## Authentication
 
-GoalfyData still uses a Bearer credential internally, but users do not need to view or paste it. `uds-cli login` receives it through the one-time browser handoff and saves it to `~/.goalfy/config.json`. The agent-executable [AGENTS.md](./AGENTS.md) then merges it into `~/.claude/settings.json` with a fixed local script that never prints the value.
+GoalfyData still uses a Bearer credential internally, but users do not need to view or paste it. `uds-cli login` receives it through the one-time browser handoff and saves it to `~/.goalfy/config.json`. The agent-executable [AGENTS.md](./AGENTS.md) then updates the existing `~/.claude/settings.json` environment setting through Claude Code's protected local file access, without adding a helper runtime or displaying the value.
 
 ## Verification
 
 After restarting Claude Code, type `/mcp` and confirm that `goalfydata-mcp` shows status connected + 20 tools.
 
 If connection fails:
-- Re-run the non-printing credential equality check in [AGENTS.md](./AGENTS.md)
+- Re-run the protected in-memory credential comparison in [AGENTS.md](./AGENTS.md)
 - If it differs, repeat its browser login and local sync steps
 - Fully quit and restart Claude Code
 

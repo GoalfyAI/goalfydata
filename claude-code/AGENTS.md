@@ -4,7 +4,7 @@ While executing this guide, you must follow these rules:
 
 1. Only run the commands listed here; only write to the installer-owned `~/.goalfy/` directory, the matching shell rc PATH line described in Step 2, `~/.claude/settings.json` (merge-write), and the Claude Code plugin directory
 2. Never ask the user to create, copy, paste, or send an API Key; `uds-cli login` opens the verified setup page and receives the credential locally
-3. Never print or read the plaintext Key into the conversation; fixed local scripts may move it from `~/.goalfy/config.json` into Claude Code's environment without echoing it
+3. Never print or read the plaintext Key into the conversation. After browser login, use Claude Code's existing protected local file access to copy the saved `api_key` from `~/.goalfy/config.json` into the existing Claude Code environment setting; do not require Python, Node.js, `jq`, or another helper runtime
 4. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
 5. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
 6. Do not declare success until the plugin is enabled, Claude Code has been restarted, the GoalfyData MCP tools (20, such as `uds_query` and `uds_dataset_manage`) are loaded, and a read-only MCP request succeeds
@@ -28,18 +28,18 @@ This conversation is running inside Claude Code's sandbox and permission system,
 
 ### Step 0: Detect the current state (install vs update)
 
-The following are all check commands — no user interaction. Route by the result:
+Start with the following four check commands — no user interaction. Then complete the protected comparison below and route by all five results:
 
 ```bash
-command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"   # CLI installed?
-"$HOME/.goalfy/bin/uds-cli" whoami >/dev/null 2>&1      # logged in? (exit code 0 = yes; never surface credential output)
-python3 -c 'import json,os,sys; p=os.path.expanduser("~/.goalfy/config.json"); d=json.load(open(p)) if os.path.exists(p) else {}; sys.exit(0 if str(d.get("api_key","")).startswith("gfk_") else 1)' # local credential saved?
-python3 -c 'import json,os,sys; p=os.path.expanduser("~/.claude/settings.json"); d=json.load(open(p)) if os.path.exists(p) else {}; sys.exit(0 if str(d.get("env",{}).get("GOALFY_UDS_API_KEY","")).startswith("gfk_") else 1)' # MCP credential configured?
-claude plugin list | grep goalfydata                   # plugin installed?
+command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"                 # CLI installed?
+"$HOME/.goalfy/bin/uds-cli" whoami >/dev/null 2>&1                    # logged in? (exit code 0 = yes)
+grep -q '"GOALFY_UDS_API_KEY"' "$HOME/.claude/settings.json"         # existing MCP setting present? (no value output)
+claude plugin list | grep goalfydata                                  # plugin installed?
 ```
 
+- After the four commands, use Claude Code's protected local file access to compare `api_key` in `~/.goalfy/config.json` with `env.GOALFY_UDS_API_KEY` in `~/.claude/settings.json`. Keep both values only in the ephemeral file-edit operation; never display or persist them elsewhere. This is the fifth check
 - All five pass → the user has a complete installation: **continue with Update**, asking the user for nothing
-- Some pass → run only the steps for the failing items; skip Steps 1 and 3 only when both `whoami` and the local credential check pass
+- Some pass → run only the steps for the failing items; when `whoami` passes, skip Steps 1 and 3 because the credential is already saved locally. Run Step 5 whenever the fifth check fails
 - None pass → full installation from Step 1
 
 ### Step 1: Keep credentials out of the conversation
@@ -112,49 +112,19 @@ claude plugin install goalfydata@goalfydata
 
 On failure: for `source type not supported`, run `claude plugin marketplace update goalfydata` and retry.
 
-### Step 5: Sync the local credential to Claude Code
+### Step 5: Configure the API Key
 
-Check whether `~/.claude/settings.json` already matches `~/.goalfy/config.json` without printing either value:
+This is the same Claude Code environment configuration used before browser login was introduced; only the source of the value has changed. The source is now the `api_key` already saved by `uds-cli login` in `~/.goalfy/config.json`, never a value supplied in conversation.
 
-```bash
-python3 - <<'PY'
-import json, os, sys
-home = os.path.expanduser('~')
-config = json.load(open(os.path.join(home, '.goalfy', 'config.json')))
-key = config.get('api_key')
-path = os.path.join(home, '.claude', 'settings.json')
-settings = json.load(open(path)) if os.path.exists(path) else {}
-sys.exit(0 if isinstance(key, str) and key.startswith('gfk_') and settings.get('env', {}).get('GOALFY_UDS_API_KEY') == key else 1)
-PY
-```
+Using Claude Code's existing protected local file read/edit capability:
 
-If the check fails, merge the locally saved credential without displaying it:
+1. Read `api_key` from `~/.goalfy/config.json` only within the ephemeral file-edit operation, without displaying or persisting it elsewhere.
+2. Read `~/.claude/settings.json` if it exists; otherwise start with an empty JSON object.
+3. Merge the saved value into the existing `env.GOALFY_UDS_API_KEY` field, preserving every unrelated setting. Never overwrite the complete file with a template.
+4. Save valid JSON to the same path and keep the file private to the user.
+5. Re-read both files and compare the two values within the same ephemeral operation. Do not print or persist either value, its prefix, or the comparison operands.
 
-```bash
-python3 - <<'PY'
-import json, os
-home = os.path.expanduser('~')
-config = json.load(open(os.path.join(home, '.goalfy', 'config.json')))
-key = config.get('api_key')
-if not isinstance(key, str) or not key.startswith('gfk_'):
-    raise SystemExit('uds-cli login has not produced a valid local credential')
-path = os.path.join(home, '.claude', 'settings.json')
-os.makedirs(os.path.dirname(path), exist_ok=True)
-settings = json.load(open(path)) if os.path.exists(path) else {}
-settings.setdefault('env', {})['GOALFY_UDS_API_KEY'] = key
-tmp = path + '.tmp'
-with open(tmp, 'w') as handle:
-    json.dump(settings, handle, indent=2)
-    handle.write('\n')
-os.chmod(tmp, 0o600)
-os.replace(tmp, path)
-PY
-```
-
-Requirements:
-- This file holds the user's entire Claude Code configuration; corrupting it makes Claude Code unusable. Read the existing content first and merge — never overwrite the file wholesale
-- Never print, grep, compare prefixes, or interpolate the credential into a shell command
-- Re-run the non-printing equality check above after writing
+Do not use Python, Node.js, `jq`, or another helper runtime for this step. Do not put the credential in a shell command, tool summary, user-facing message, log, or persistent Agent memory. If the two stored values already match, make no write and continue to Step 6.
 
 ### Step 6: Restart and verify
 
@@ -169,7 +139,7 @@ The MCP connection only takes effect after a restart; you cannot verify it until
 
 After the user confirms the restart, verify the connection yourself — do not ask the user to check anything: confirm the 20 GoalfyData MCP tools (`uds_query`, `uds_dataset_manage`, etc.) are available, and run one dataset list (for example the `uds_dataset_get` MCP tool) as the read-only self-check; its result also decides the closing message in the Report below. Do not create, modify, or delete data merely to test connectivity.
 
-If the self-check fails: re-run Step 5's non-printing equality check. If it fails, repeat Steps 3 and 5; otherwise ask the user to fully restart again. Never request or display the Key.
+If the self-check fails: repeat Step 5's protected in-memory comparison. If the values differ, repeat Steps 3 and 5; otherwise ask the user to fully restart again. Never request or display the Key.
 
 ### Report
 
@@ -181,7 +151,7 @@ GoalfyData installation result:
 [Done]
 - uds-cli installed and logged in (version = the actual `uds-cli version` output, e.g. abc1234-yyyymmdd; account = the login email)
 - Plugin goalfydata installed
-- Local credential synced to ~/.claude/settings.json without displaying it
+- Existing MCP credential setting updated from the local uds-cli login without displaying it
 - 20 MCP tools loaded and a read-only request succeeded
 
 [Action required from you]
@@ -272,7 +242,7 @@ Execute in order (skip the Step 0 routing in the rotation case):
 1. Run Installation Step 3 again, **never skipped just because whoami passes**; the CLI opens a fresh verified browser setup and receives the replacement locally
 2. Do not ask the user to copy or send the new Key
 3. Update the MCP-side storage: run Installation Step 5, **unconditionally — never skipped because its check passes**. `~/.claude/settings.json` still holds the old key; without this update, MCP and new sessions keep using the old key after restart (whether login printed `WARNING: environment variable ...` only reflects the current session environment and must not be used as a reason to skip)
-4. Consistency check: run Installation Step 5's non-printing equality check; never compare or display Key prefixes
+4. Consistency check: repeat Installation Step 5's protected in-memory comparison; never display either value or its prefix
 5. Output the template below to the user word for word:
 
 ```markdown
