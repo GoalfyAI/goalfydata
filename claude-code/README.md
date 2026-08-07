@@ -12,19 +12,19 @@ Claude Code plugin for connecting to the GoalfyData universal dataset service.
 
 ## Prerequisites
 
-1. **GoalfyData API Key**: Create one at https://goalfydata.ai/settings
+1. **GoalfyData account**: The browser setup can sign in or register with email verification.
 2. **uds-cli**:
 
    macOS / Linux:
    ```bash
    curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
    # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
-   uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
+   uds-cli login --api-url https://api.goalfydata.ai
    ```
 
 ## Installation
 
-Make sure you have completed the prerequisites above (API Key creation + uds-cli installed and logged in) before installing.
+Make sure uds-cli is installed and the browser login has completed before installing.
 
 ### Option 1: Via marketplace (recommended)
 
@@ -57,34 +57,15 @@ After installation, restart Claude Code and the plugin will automatically load t
 
 ## Authentication
 
-MCP connection requires the `GOALFY_UDS_API_KEY` environment variable. Claude Code supports `${VAR}` expansion and automatically injects it into request headers.
-
-**Configuration methods (by priority, choose one)**:
-
-1. **Claude Code settings.json (recommended, works with all launch methods)**:
-   Add to the `env` section in `~/.claude/settings.json`:
-   ```json
-   {
-     "env": {
-       "GOALFY_UDS_API_KEY": "gfk_your_api_key_here"
-     }
-   }
-   ```
-
-2. **Shell environment variable (only works when launching `claude` from terminal)**:
-   ```bash
-   export GOALFY_UDS_API_KEY="gfk_your_api_key_here"  # Add to ~/.zshrc or ~/.bashrc
-   ```
-
-   Note: When launching Claude Code from a desktop app or IDE, shell config files are not sourced, so this method will not work.
+GoalfyData still uses a Bearer credential internally, but users do not need to view or paste it. `uds-cli login` receives it through the one-time browser handoff and saves it to `~/.goalfy/config.json`. The agent-executable [AGENTS.md](./AGENTS.md) then merges it into `~/.claude/settings.json` with a fixed local script that never prints the value.
 
 ## Verification
 
 After restarting Claude Code, type `/mcp` and confirm that `goalfydata-mcp` shows status connected + 20 tools.
 
 If connection fails:
-- Confirm `GOALFY_UDS_API_KEY` is configured in `~/.claude/settings.json`
-- Confirm the API Key has a valid `gfk_` prefix
+- Re-run the non-printing credential equality check in [AGENTS.md](./AGENTS.md)
+- If it differs, repeat its browser login and local sync steps
 - Fully quit and restart Claude Code
 
 ## Update
@@ -118,14 +99,9 @@ Both `already on the latest version` and `update succeeded: <old> → <new>` are
 
 When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP).
 
-The easiest way: copy the setup text from the official integration page ( https://goalfydata.ai/integrations/claude-code ) and send it to your agent again and it handles everything. Manual steps:
+Copy the setup text from the official integration page ( https://goalfydata.ai/integrations/claude-code ) and send it to your agent again. It will run browser login, sync the replacement credential locally without displaying it, and ask you to restart Claude Code.
 
-1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
-2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
-3. Update the value of `GOALFY_UDS_API_KEY` in `~/.claude/settings.json` to the new key
-4. Quit Claude Code completely and reopen it
-
-> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the new key after a full restart. Afterwards, run `uds-cli whoami` to confirm the displayed key prefix is the new one.
+> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the replacement credential after a full restart.
 
 ## Usage
 

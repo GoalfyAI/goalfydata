@@ -4,9 +4,11 @@
 
 Manus is a cloud-based agent with two parts to configure separately: **Tools (MCP)** are added as a connector in the plugin page; **Skills** are uploaded as skill files.
 
-## Step 1: Obtain API Key
+## Step 1: Prepare the Connector Credential
 
-Go to the [GoalfyData](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`). The plaintext key is only shown once at creation time -- save it securely.
+Manus custom MCP connectors currently accept credentials in their protected connector settings. Go to [GoalfyData settings](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`). The plaintext key is shown only once.
+
+**Enter this value only in the Manus Connector settings. Never paste it into a Manus conversation or send it to an Agent.**
 
 ## Step 2: Add MCP Connector (Tools)
 
@@ -14,7 +16,7 @@ Go to **Plugins** in the left sidebar -> click **Create** in the top right -> in
 
 ### Method A: Import MCP via JSON (recommended)
 
-Click **Import MCP via JSON**, paste the following JSON, replace `gfk_YOUR_API_KEY_HERE` with your API Key, and save.
+Click **Import MCP via JSON**, paste the following JSON into the protected Connector UI, replace `gfk_YOUR_API_KEY_HERE` there, and save. Do not paste this configured JSON into a conversation.
 
 ```json
 {
@@ -47,7 +49,7 @@ Custom header (authentication, required):
 - Key: `Authorization`
 - Value: `Bearer gfk_your_actual_api_key`
 
-Save when done.
+Save when done. This is the only place where the credential should be entered.
 
 ## Step 3: Upload Skill
 
@@ -89,12 +91,12 @@ The MCP connector points to a remote service and does not need updating. Skill f
 
 When the old key is deleted or needs rotation:
 
-1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
-2. In the Manus connector settings, update the `Authorization` value to `Bearer gfk_your_new_key` and save
+1. Delete the old key and create/copy a new one in [GoalfyData settings](https://goalfydata.ai/settings)
+2. In the protected Manus Connector settings, update the `Authorization` value and save; never send the new key in a conversation
 3. Close the current conversation and open a new one (connector changes take effect in new sessions)
 
 ## Troubleshooting
 
 1. **Server URL must be publicly accessible** -- Manus runs on its own cloud and cannot reach private networks. This is the most common cause of failure.
-2. **API Key** is incorrect or missing the `Bearer ` prefix.
+2. The credential in the protected Connector settings is incorrect or missing the `Bearer ` prefix. Do not troubleshoot by posting it in chat.
 3. Try `HTTP` for transport type first; if that doesn't work, check if Manus offers a `Streamable HTTP` option.
