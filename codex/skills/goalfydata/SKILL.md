@@ -54,7 +54,7 @@ The GoalfyData MCP Server provides 20 tools (15 dataset management-plane tools +
 }
 ```
 
-- `${GOALFY_UDS_API_KEY}` is the user's exact GoalfyData API Key (with the `gfk_` prefix); without it every tool returns unauthenticated
+- `${GOALFY_UDS_API_KEY}` must come from the platform's protected secret/environment settings or native OAuth. Never ask the user to paste or send its value in a conversation.
 
 **Required CLI**: `uds-cli` (must be installed before first use; one install works globally)
 
@@ -69,31 +69,29 @@ Data-plane operations (executing SQL, importing data, viewing table structure) g
   macOS / Linux:
   ```bash
   curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
-  "$HOME/.goalfy/bin/uds-cli" login --api-key gfk_xxx --api-url https://api.goalfydata.ai
+  "$HOME/.goalfy/bin/uds-cli" login --api-url https://api.goalfydata.ai
   ```
 
-  After the user sends the setup message, log in with the exact API Key from that message and `--api-url https://api.goalfydata.ai`. If the copied installation instructions also contain an install code, include that exact value with `--install-code`; otherwise omit the argument.
+  The login command opens the verified `/connect/skill` page and waits. Ask the user only to complete email verification there; the credential is returned directly to the CLI and saved locally, never through the conversation. If the copied installation instructions contain an install code, include that exact value with `--install-code`; otherwise omit the argument.
 
   The installer puts uds-cli into `~/.goalfy/bin/` and writes the shell rc files; when PATH is not yet effective in the current session, call it by absolute path — no source needed.
 
-  Update: `uds-cli self-update` (if login reports `unknown flag: --api-key`, the local binary is old — run self-update first, then log in)
+  Update: `uds-cli self-update`
 
-**Authentication**: the user needs a GoalfyData API Key (gfk_xxx), authenticated via API Key (Bearer scheme). The MCP tools (request header `Authorization: Bearer gfk_xxx`) and uds-cli (`uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai`) share the same exact API Key. `--api-url` is required with no default — always use `https://api.goalfydata.ai`; after a successful login it is saved to `~/.goalfy/config.json` and later commands use it automatically.
+**Authentication**: credentials remain API Keys internally, but they must never pass through an Agent conversation. For MCP, prefer platform-native OAuth; otherwise use the platform's protected secret/environment settings. For uds-cli, run browser-based `uds-cli login --api-url https://api.goalfydata.ai`; after verification, it saves the credential to `~/.goalfy/config.json` and later commands use it automatically.
 
-**Getting an API Key**: send the user to https://goalfydata.ai/connect/skill for first-time setup. After email verification, the page creates an API Key and provides a complete setup message containing the real values the Agent must use. As an alternative, the user may create or manage an API Key manually at https://goalfydata.ai/settings . The plaintext is shown only once at creation; store it safely.
+**Connecting GoalfyData**: run uds-cli login and let it open https://goalfydata.ai/connect/skill. For MCP, use the platform's native connection UI. If that platform cannot use OAuth, instruct the user to configure the credential only in its protected secret/environment settings. Never request, echo, log, or store it in chat or Agent memory.
 
 **Install-code attribution**: only use an install code already present in the copied instructions or setup message and matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`. Preserve it exactly: append it as `gf_ref` to GoalfyData website URLs while preserving existing query parameters, and pass the same value to `uds-cli login` with `--install-code`. Do not add it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no install code was provided, omit it. Never generate, infer, rewrite, or use an install code as a credential.
 
-**When no API Key is held, or tools return unauthenticated**, output the template below to the user in the user's conversation language (translate the text when the user is not conversing in English; keep it as body text with the H1 heading and bold intact). Before outputting, append any available exact install code to the page URL as `gf_ref`. Never invent or use a placeholder API Key:
+**When authentication is missing or tools return unauthenticated**, output the template below in the user's conversation language. If uds-cli is the failing component, run its browser login first. If MCP is failing, use the platform's protected connection settings. Never ask for the credential in chat:
 
 ```markdown
 # Action required: connect GoalfyData
 
-**Open https://goalfydata.ai/connect/skill and verify your email address.**
+**For CLI access, complete the email verification page opened by `uds-cli login`.**
 
-**When verification is complete, copy the full setup message shown on the page and send it back to me. I will use its exact values to continue.**
-
-**Alternatively, you can create or manage an API Key manually at https://goalfydata.ai/settings and send me the exact key.**
+**For MCP access, connect GoalfyData through your platform's OAuth or protected secret settings. Do not paste any credential into this conversation.**
 ```
 
 ---
@@ -888,7 +886,7 @@ blocker: when the platform has no writable persistent memory, skip silently.
 
 ## 5. Common Issues
 
-For any step in the table requiring the user's own action (visiting the website, updating a plugin, restarting the app or session), present it with the bold H1 "Action required" format (style per the API Key template in Prerequisites), written in the user's conversation language — never as a plain sentence.
+For any step in the table requiring the user's own action (visiting the website, updating a plugin, restarting the app or session), present it with the bold H1 "Action required" format (style per the connection template in Prerequisites), written in the user's conversation language — never as a plain sentence.
 
 | Issue | Cause and handling |
 |------|-----------|
@@ -903,7 +901,7 @@ For any step in the table requiring the user's own action (visiting the website,
 | A table fails on schedule in a shared sandbox but runs fine alone | Another script on the same schedule polluted the shared sandbox (`os.chdir()`, `os.environ` edits, unreleased connections). Locate and fix the polluter, or isolate the table with `exclusive_sandbox=true` |
 | Table creation reports `FOREIGN_KEY_NOT_ALLOWED` | Dataset schemas do not support database foreign keys (they break full_replace's atomic swap). Remove the `FOREIGN KEY` / `REFERENCES` clauses, rebuild with `CREATE TABLE IF NOT EXISTS` (avoiding re-creating tables that already succeeded), and register the relations via `uds_relations_set` |
 | A `uds-cli` command fails | First run `uds-cli <command> --help` to verify arguments. At most 1 retry per command, and only after analyzing and fixing the error — blind identical retries are forbidden |
-| Tools or uds-cli return 401/unauthenticated (previously fine) | The API Key was deleted or rotated. Send the user to https://goalfydata.ai/connect/skill for a new setup message; https://goalfydata.ai/settings is the manual alternative. Log in again with the exact new Key, update the MCP configuration if it still stores the old Key, and have the user fully restart the session because environment variables outrank the saved login configuration. |
+| Tools or uds-cli return 401/unauthenticated (previously fine) | For uds-cli, rerun browser-based login and complete email verification. For MCP, reconnect through native OAuth or update the protected secret/environment setting, then restart the Agent. Never request the credential in conversation. |
 | SKILL guidance conflicts with actual tool behavior (parameter errors, flow mismatch) | The bundled copy of this document may be outdated. Follow "5.1 Updating an outdated SKILL" below |
 
 ### 5.1 Updating an Outdated SKILL

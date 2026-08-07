@@ -8,13 +8,7 @@ If you are using one of the platforms above, refer to the README in the correspo
 
 ## Integration Steps
 
-### Step 1: Obtain API Key
-
-Go to the [GoalfyData](https://goalfydata.ai/settings) to create an API Key (in the format `gfk_xxx`).
-
-The plaintext key is only shown once at creation time -- save it securely.
-
-### Step 2: Install uds-cli
+### Step 1: Connect the CLI
 
 uds-cli is used for data plane operations (executing SQL, importing data, viewing table schemas).
 
@@ -22,12 +16,14 @@ macOS / Linux:
 ```bash
 curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
 # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
-uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
+uds-cli login --api-url https://api.goalfydata.ai
 ```
 
-### Step 3: Configure MCP Connection
+The login command opens the verified GoalfyData connection page. Complete email verification there; the credential is returned directly to uds-cli and saved locally. **Never paste an API Key into an Agent conversation.**
 
-Merge the following configuration into your tool's MCP configuration file, replacing `gfk_YOUR_API_KEY_HERE` with your actual API Key:
+### Step 2: Configure MCP Connection
+
+Prefer your platform's native OAuth connector when available. Otherwise, create `GOALFY_UDS_API_KEY` in the platform's protected secret/environment settings and reference it from the MCP configuration. Never put the plaintext value in a prompt, conversation, or shared configuration:
 
 ```json
 {
@@ -36,7 +32,7 @@ Merge the following configuration into your tool's MCP configuration file, repla
       "type": "streamable-http",
       "url": "https://mcp.goalfydata.ai/mcp",
       "headers": {
-        "Authorization": "Bearer gfk_YOUR_API_KEY_HERE"
+        "Authorization": "Bearer ${GOALFY_UDS_API_KEY}"
       }
     }
   }
@@ -47,9 +43,11 @@ MCP configuration formats may vary across tools (field names, transport type syn
 
 - **Transport**: streamable-http
 - **URL**: `https://mcp.goalfydata.ai/mcp`
-- **Authentication**: API Key (gfk_ prefix) sent via the Authorization: Bearer header
+- **Authentication**: native OAuth when available; otherwise a protected secret/environment variable sent via the Authorization: Bearer header
 
-### Step 4: Load Skill
+MCP configuration and environment-variable syntax vary across tools. If the platform cannot resolve environment variables in MCP headers, enter the value only in that platform's protected connector/secret UI — never in Agent chat.
+
+### Step 3: Load Skill
 
 Download [goalfydata-generic.zip](https://cdn.goalfydata.ai/dataset-uds/guides/generic/goalfydata-generic.zip) and extract it, or clone the repo and use the `generic/` directory.
 
@@ -61,7 +59,7 @@ Import `SKILL.md` and the `references/` directory into your tool. Choose the met
 | Supports system prompts | Paste the contents of `SKILL.md` into the system prompt |
 | Supports knowledge base / document attachments | Import all `.md` files as reference documents |
 
-### Step 5: Verification
+### Step 4: Verification
 
 In your Agent, type:
 
@@ -94,16 +92,16 @@ Both `already on the latest version` and `update succeeded: <old> → <new>` are
 
 ---
 
-## Rotating the API Key
+## Rotating the Credential
 
-When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP):
+When the old credential is deleted or needs rotation, complete all steps in order:
 
-1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
-2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
-3. Update the key in the `Authorization` header (or the corresponding environment variable) of your MCP configuration
+1. Run `uds-cli login --api-url https://api.goalfydata.ai` again and complete browser verification
+2. Reconnect the platform's native OAuth connector, or update `GOALFY_UDS_API_KEY` only in its protected secret/environment settings
+3. Never send the new credential to the Agent or paste it into a conversation
 4. Fully restart your agent tool
 
-> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the new key after a full restart. Afterwards, run `uds-cli whoami` to confirm the displayed key prefix is the new one.
+> Why the restart is required: the configuration saved by login takes effect immediately, but the Agent and MCP connection may keep the previous environment until a full restart. Afterwards, run `uds-cli whoami` only as an exit-code check with stdout and stderr suppressed; never surface its credential output in chat.
 
 ---
 

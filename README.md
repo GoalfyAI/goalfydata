@@ -40,7 +40,7 @@ The result is a durable data asset that can be reused across conversations, agen
 
 ## Quick Start
 
-The fastest path is to open the integration page for your platform, copy its setup instructions, and give them to your agent. Create your API Key in [GoalfyData Settings](https://goalfydata.ai/settings); keys use the `gfk_` prefix and are shown only once.
+The fastest path is to open the integration page for your platform, copy its setup instructions, and give them to your agent. The installer opens GoalfyData for email verification and transfers the credential directly to the local CLI; you do not need to copy or paste an API Key.
 
 | Platform | Fastest setup | Detailed guide | Status |
 |---|---|---|---|
@@ -57,7 +57,7 @@ For macOS or Linux developers who prefer manual setup:
 
 ```bash
 curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
-uds-cli login --api-key gfk_your_api_key --api-url https://api.goalfydata.ai
+uds-cli login --api-url https://api.goalfydata.ai
 ```
 
 Then follow the platform guide above to install the Skill/plugin and connect MCP. The detailed guides cover Windows, updates, key rotation, and troubleshooting. A successful connection exposes 20 GoalfyData MCP tools, including `uds_query` and `uds_dataset_manage`.

@@ -12,19 +12,19 @@ OpenAI Codex plugin for connecting to the GoalfyData universal dataset service.
 
 ## Prerequisites
 
-1. **GoalfyData API Key**: Create one at https://goalfydata.ai/settings
+1. **GoalfyData account**: The browser setup can sign in or register with email verification.
 2. **uds-cli**:
 
    macOS / Linux:
    ```bash
    curl -fsSL https://cdn.goalfydata.ai/dataset-uds/install.sh | sh
    # if "command not found": use "$HOME/.goalfy/bin/uds-cli" instead of uds-cli
-   uds-cli login --api-key gfk_xxx --api-url https://api.goalfydata.ai
+   uds-cli login --api-url https://api.goalfydata.ai
    ```
 
 ## Installation
 
-Make sure you have completed the prerequisites above (API Key creation + uds-cli installed and logged in) before installing.
+Make sure uds-cli is installed and the browser login has completed before installing.
 
 ```bash
 codex plugin marketplace add GoalfyAI/goalfydata
@@ -37,30 +37,15 @@ On Windows, use [AGENTS.windows.md](./AGENTS.windows.md) instead — it uses Pow
 
 ## Authentication
 
-Codex Desktop is an Electron application and does not inherit terminal environment variables. You need to configure the API Key in `~/.codex/.env`:
-
-```bash
-# ~/.codex/.env
-GOALFY_UDS_API_KEY=gfk_your_api_key_here
-```
-
-Restart Codex Desktop after configuration for it to take effect.
-
-Codex CLI (terminal) can also use standard shell export:
-
-```bash
-export GOALFY_UDS_API_KEY="gfk_your_api_key_here"
-```
-
-MCP tools and uds-cli share the same API Key.
+GoalfyData still uses a Bearer credential internally, but users do not need to view or paste it. `uds-cli login` receives it through the one-time browser handoff and saves it to `~/.goalfy/config.json`. The agent-executable [AGENTS.md](./AGENTS.md) then writes the matching `~/.codex/.env` entry with a fixed local script that never prints the value. Restart Codex Desktop afterwards.
 
 ## Verification
 
 After restarting Codex, confirm that `goalfydata-mcp` is connected and the tool list contains 20 tools (`uds_query`, `uds_dataset_manage`, etc.).
 
 If connection fails:
-- Confirm `GOALFY_UDS_API_KEY` is configured in `~/.codex/.env`
-- Confirm the API Key is valid (verify at https://goalfydata.ai/settings)
+- Re-run the non-printing credential equality check in [AGENTS.md](./AGENTS.md)
+- If it differs, repeat its browser login and local sync steps
 - Fully quit and restart Codex
 
 ## Update
@@ -87,14 +72,9 @@ Both `already on the latest version` and `update succeeded: <old> → <new>` are
 
 When the old key is deleted or needs rotation, complete all steps in order (logging in alone is not enough: environment variables take precedence over the saved login configuration, so a stale value keeps being used by both uds-cli and MCP).
 
-The easiest way: copy the setup text from the official integration page ( https://goalfydata.ai/integrations/codex ) and send it to your agent again and it handles everything. Manual steps:
+Copy the setup text from the official integration page ( https://goalfydata.ai/integrations/codex ) and send it to your agent again. It will run browser login, sync the replacement credential locally without displaying it, and ask you to restart Codex.
 
-1. Delete the old key and create/copy a new one in the [GoalfyData](https://goalfydata.ai/settings)
-2. Log in again: `uds-cli login --api-key gfk_your_new_key --api-url https://api.goalfydata.ai`
-3. Update the value of `GOALFY_UDS_API_KEY` in `~/.codex/.env` to the new key
-4. Quit Codex completely and reopen it
-
-> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the new key after a full restart. Afterwards, run `uds-cli whoami` to confirm the displayed key prefix is the new one.
+> Why the restart is required: the configuration saved by login takes effect immediately, but the environment variables injected from the config file and the MCP connection only switch to the replacement credential after a full restart.
 
 ## Usage
 

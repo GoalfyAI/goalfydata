@@ -3,8 +3,8 @@
 While executing this guide, you must follow these rules:
 
 1. Only run the commands listed here; only write to the installer-owned `~/.goalfy/` directory, the matching shell rc PATH line described in Step 2, `~/.claude/settings.json` (merge-write), and the Claude Code plugin directory
-2. For first-time setup, send the user to https://goalfydata.ai/connect/skill; https://goalfydata.ai/settings is only the manual alternative for creating or managing a Key
-3. The API Key must be the exact `gfk_` value sent by the user or returned in the setup message — never fabricate, rewrite, or substitute a placeholder
+2. Never ask the user to create, copy, paste, or send an API Key; `uds-cli login` opens the verified setup page and receives the credential locally
+3. Never print or read the plaintext Key into the conversation; fixed local scripts may move it from `~/.goalfy/config.json` into Claude Code's environment without echoing it
 4. If the copied instructions or setup message contain an install code matching `^(inst|ref)_[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8,12}$`, preserve it exactly: append it as `gf_ref` to every `goalfydata.ai` page URL while keeping existing query parameters, and pass it to `uds-cli login` with `--install-code`. Do not append it to GitHub, CDN, or `api.goalfydata.ai` URLs. If no code was supplied, omit it. Never use an install code as a credential. This rule overrides static page URLs in the templates below
 5. Whenever the user must act or provide something, output the corresponding ACTION REQUIRED template: as normal body text, never inside a code block or blockquote; the level-1 heading and bold must be preserved and never rewritten as plain sentences. The templates are written in English — when the user converses in another language, translate the content and keep the structure and emphasis intact
 6. Do not declare success until the plugin is enabled, Claude Code has been restarted, the GoalfyData MCP tools (20, such as `uds_query` and `uds_dataset_manage`) are loaded, and a read-only MCP request succeeds
@@ -32,28 +32,19 @@ The following are all check commands — no user interaction. Route by the resul
 
 ```bash
 command -v uds-cli || ls "$HOME/.goalfy/bin/uds-cli"   # CLI installed?
-"$HOME/.goalfy/bin/uds-cli" whoami                      # logged in? (exit code 0 = yes)
-grep GOALFY_UDS_API_KEY "$HOME/.claude/settings.json" # MCP-side key configured?
+"$HOME/.goalfy/bin/uds-cli" whoami >/dev/null 2>&1      # logged in? (exit code 0 = yes; never surface credential output)
+python3 -c 'import json,os,sys; p=os.path.expanduser("~/.goalfy/config.json"); d=json.load(open(p)) if os.path.exists(p) else {}; sys.exit(0 if str(d.get("api_key","")).startswith("gfk_") else 1)' # local credential saved?
+python3 -c 'import json,os,sys; p=os.path.expanduser("~/.claude/settings.json"); d=json.load(open(p)) if os.path.exists(p) else {}; sys.exit(0 if str(d.get("env",{}).get("GOALFY_UDS_API_KEY","")).startswith("gfk_") else 1)' # MCP credential configured?
 claude plugin list | grep goalfydata                   # plugin installed?
 ```
 
-- All four pass → the user has a complete installation: **continue with Update**, asking the user for nothing
-- Some pass → run only the steps for the failing items; when whoami passes, skip Steps 1 and 3 (the key is already saved locally — do not ask for it again)
+- All five pass → the user has a complete installation: **continue with Update**, asking the user for nothing
+- Some pass → run only the steps for the failing items; skip Steps 1 and 3 only when both `whoami` and the local credential check pass
 - None pass → full installation from Step 1
 
-### Step 1: Confirm the API Key
+### Step 1: Keep credentials out of the conversation
 
-Output the template below to the user word for word (rendering any available `gf_ref` with the exact install code), and continue only after receiving the complete setup message or an exact API Key:
-
-```markdown
-# ACTION REQUIRED: Connect GoalfyData
-
-**Open https://goalfydata.ai/connect/skill and verify your email address.**
-
-**When verification is complete, copy the full setup message shown on the page and send it back to me. I will use its exact values to continue.**
-
-**Alternatively, you can create or manage an API Key manually at https://goalfydata.ai/settings and send me the exact key.**
-```
+Do not request an API Key. Continue with CLI installation and let Step 3 open the verified browser setup.
 
 ### Step 2: Install uds-cli
 
@@ -78,7 +69,10 @@ If the `uds-cli` command is not visible after installing, call it by absolute pa
 After installing, check whether the PATH is persisted (the install script writes it to shell config files automatically; this is a fallback check so that future sessions can use `uds-cli` directly):
 
 ```bash
-grep -l "\.goalfy/bin" "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" 2>/dev/null
+for file in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+  [ -f "$file" ] || continue
+  grep -l "\.goalfy/bin" "$file" || true
+done
 ```
 
 Output means it is persisted. If there is no output, you **must** write the persistent configuration — otherwise the user's future sessions still cannot find `uds-cli`.
@@ -89,17 +83,23 @@ After writing, run the grep check above again; this step is complete only when i
 
 ### Step 3: Log in
 
-Check: `"$HOME/.goalfy/bin/uds-cli" whoami` — exit code 0 means already logged in; skip to Step 4.
+Check: `"$HOME/.goalfy/bin/uds-cli" whoami >/dev/null 2>&1` — exit code 0 means already logged in; skip to Step 4. Always suppress both output streams so no credential prefix enters the conversation.
 
 ```bash
-"$HOME/.goalfy/bin/uds-cli" login --api-key <user-provided-key> --api-url https://api.goalfydata.ai
+"$HOME/.goalfy/bin/uds-cli" login --api-url https://api.goalfydata.ai
 ```
 
-Replace `<user-provided-key>` with the exact API Key received from the user — never execute the command with an example value or placeholder. If an exact install code was supplied, also pass it with `--install-code <code>`; otherwise omit that argument.
+If an exact install code was supplied, append `--install-code <code>`; otherwise omit it. The command opens `/connect/skill` with a public setup id and waits. Its private claim secret and resulting Key stay outside the browser URL and conversation.
 
-Success: report the real `Login succeeded` output and the masked API Key value printed by uds-cli.
+If the browser does not open automatically, give the user the public URL printed by the command. While it waits, output:
 
-On failure: `unknown flag: --api-key` means an outdated CLI — run `"$HOME/.goalfy/bin/uds-cli" self-update` and retry; `API Key validation failed` means an invalid key — return to Step 1.
+```markdown
+# ACTION REQUIRED: Finish connecting GoalfyData
+
+**Complete the email verification in the GoalfyData page that just opened. You do not need to copy or send any API Key.**
+```
+
+Success: report `Login succeeded` and the account email; never report a Key or prefix. On timeout or expiry, run the same login command again to create a fresh link.
 
 ### Step 4: Install the plugin
 
@@ -112,24 +112,49 @@ claude plugin install goalfydata@goalfydata
 
 On failure: for `source type not supported`, run `claude plugin marketplace update goalfydata` and retry.
 
-### Step 5: Configure the API Key
+### Step 5: Sync the local credential to Claude Code
 
-Check: `grep GOALFY_UDS_API_KEY "$HOME/.claude/settings.json"` — if present with the correct value, skip to Step 6.
+Check whether `~/.claude/settings.json` already matches `~/.goalfy/config.json` without printing either value:
 
-Goal: add (or update) the following key inside `env` in `~/.claude/settings.json`, keeping everything else in the file intact:
+```bash
+python3 - <<'PY'
+import json, os, sys
+home = os.path.expanduser('~')
+config = json.load(open(os.path.join(home, '.goalfy', 'config.json')))
+key = config.get('api_key')
+path = os.path.join(home, '.claude', 'settings.json')
+settings = json.load(open(path)) if os.path.exists(path) else {}
+sys.exit(0 if isinstance(key, str) and key.startswith('gfk_') and settings.get('env', {}).get('GOALFY_UDS_API_KEY') == key else 1)
+PY
+```
 
-```json
-{
-  "env": {
-    "GOALFY_UDS_API_KEY": "<user-provided-key>"
-  }
-}
+If the check fails, merge the locally saved credential without displaying it:
+
+```bash
+python3 - <<'PY'
+import json, os
+home = os.path.expanduser('~')
+config = json.load(open(os.path.join(home, '.goalfy', 'config.json')))
+key = config.get('api_key')
+if not isinstance(key, str) or not key.startswith('gfk_'):
+    raise SystemExit('uds-cli login has not produced a valid local credential')
+path = os.path.join(home, '.claude', 'settings.json')
+os.makedirs(os.path.dirname(path), exist_ok=True)
+settings = json.load(open(path)) if os.path.exists(path) else {}
+settings.setdefault('env', {})['GOALFY_UDS_API_KEY'] = key
+tmp = path + '.tmp'
+with open(tmp, 'w') as handle:
+    json.dump(settings, handle, indent=2)
+    handle.write('\n')
+os.chmod(tmp, 0o600)
+os.replace(tmp, path)
+PY
 ```
 
 Requirements:
 - This file holds the user's entire Claude Code configuration; corrupting it makes Claude Code unusable. Read the existing content first and merge — never overwrite the file wholesale
-- If the file does not exist, create it with the structure above
-- Verify after writing: the file is still valid JSON (`python3 -c "import json, os; json.load(open(os.path.expanduser('~/.claude/settings.json')))"`), and grep finds `GOALFY_UDS_API_KEY`
+- Never print, grep, compare prefixes, or interpolate the credential into a shell command
+- Re-run the non-printing equality check above after writing
 
 ### Step 6: Restart and verify
 
@@ -144,7 +169,7 @@ The MCP connection only takes effect after a restart; you cannot verify it until
 
 After the user confirms the restart, verify the connection yourself — do not ask the user to check anything: confirm the 20 GoalfyData MCP tools (`uds_query`, `uds_dataset_manage`, etc.) are available, and run one dataset list (for example the `uds_dataset_get` MCP tool) as the read-only self-check; its result also decides the closing message in the Report below. Do not create, modify, or delete data merely to test connectivity.
 
-If the self-check fails: confirm `GOALFY_UDS_API_KEY` exists in `~/.claude/settings.json` and the key shows as valid at https://goalfydata.ai/settings , then ask the user to fully restart again.
+If the self-check fails: re-run Step 5's non-printing equality check. If it fails, repeat Steps 3 and 5; otherwise ask the user to fully restart again. Never request or display the Key.
 
 ### Report
 
@@ -156,7 +181,7 @@ GoalfyData installation result:
 [Done]
 - uds-cli installed and logged in (version = the actual `uds-cli version` output, e.g. abc1234-yyyymmdd; account = the login email)
 - Plugin goalfydata installed
-- API Key written to ~/.claude/settings.json
+- Local credential synced to ~/.claude/settings.json without displaying it
 - 20 MCP tools loaded and a read-only request succeeded
 
 [Action required from you]
@@ -244,10 +269,10 @@ Run this section when the user wants to rotate the API Key (or the old key has b
 
 Execute in order (skip the Step 0 routing in the rotation case):
 
-1. Direct the user to get a new key: run Installation Step 1 (output the Connect GoalfyData template)
-2. Log in again with the new key: run Installation Step 3, **never skipped just because whoami passes** (the old key may not be deleted yet)
+1. Run Installation Step 3 again, **never skipped just because whoami passes**; the CLI opens a fresh verified browser setup and receives the replacement locally
+2. Do not ask the user to copy or send the new Key
 3. Update the MCP-side storage: run Installation Step 5, **unconditionally — never skipped because its check passes**. `~/.claude/settings.json` still holds the old key; without this update, MCP and new sessions keep using the old key after restart (whether login printed `WARNING: environment variable ...` only reflects the current session environment and must not be used as a reason to skip)
-4. Consistency check: confirm both `~/.goalfy/config.json` and `~/.claude/settings.json` now hold the new key (compare the first characters after gfk_)
+4. Consistency check: run Installation Step 5's non-printing equality check; never compare or display Key prefixes
 5. Output the template below to the user word for word:
 
 ```markdown
@@ -258,7 +283,7 @@ Execute in order (skip the Step 0 routing in the rotation case):
 **After restarting, if the old key has not been deleted yet, consider removing it at https://goalfydata.ai/settings to avoid mixing keys.**
 ```
 
-Acceptance (in the user's new session after restart): `uds-cli whoami` shows the new key prefix, and MCP tools no longer return unauthenticated.
+Acceptance (in the user's new session after restart): `uds-cli whoami >/dev/null 2>&1` exits 0 without surfacing credential output, and MCP tools no longer return unauthenticated.
 
 If the user no longer has this guide, output the template below to the user word for word:
 
@@ -278,9 +303,8 @@ If the user no longer has this guide, output the template below to the user word
 |---|---|
 | `command not found: uds-cli` | Use the absolute path `"$HOME/.goalfy/bin/uds-cli"`; only reinstall if the file does not exist (Installation Step 2) |
 | `Could not resolve host: cdn.goalfydata.ai` or installer writes are denied | Treat it as a Claude Code sandbox restriction. Retry the required Bash command with `dangerouslyDisableSandbox: true` through the platform permission flow; do not ask the user to run it in Terminal |
-| `unknown flag: --api-key` | Outdated CLI; run `self-update` first, then retry |
-| login reports validation failed | Direct the user to https://goalfydata.ai/settings to verify the key, recreating it if necessary |
+| Browser setup expires or times out | Run Installation Step 3 again to create a fresh one-time link |
 | `/mcp` shows not connected | Check `GOALFY_UDS_API_KEY` in settings.json, then ask the user to fully restart (you cannot restart on the user's behalf) |
-| Tools return unauthenticated | Key missing or invalid; return to Installation Step 1 |
+| Tools return unauthenticated | Run Installation Steps 3 and 5 again without requesting or displaying a Key |
 | Plugin update not taking effect | Ask the user to run `/reload-plugins` or fully restart |
 | login succeeds but subsequent commands return 401/unauthenticated | A stale key remains in the environment (which takes precedence over the saved login config). Follow "Rotating the API Key" and have the user restart |
